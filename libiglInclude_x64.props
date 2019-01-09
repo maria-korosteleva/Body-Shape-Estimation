@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\Maria\MyDocs\libs\libigl_jan\external\glfw\include;C:\Users\Maria\MyDocs\libs\libigl_jan\include;C:\Users\Maria\MyDocs\libs\libigl_jan\external\glad\include;C:\Users\Maria\MyDocs\libs\libigl_jan\external;C:\Users\Maria\MyDocs\libs\libigl_jan\external\libigl-imgui;C:\Users\Maria\MyDocs\libs\libigl_jan\external\imgui\examples;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>C:\Users\Maria\MyDocs\libs\libigl_jan\install\lib\igl.lib;C:\Users\Maria\MyDocs\libs\libigl_jan\external\glad\glad.lib;C:\Users\Maria\MyDocs\libs\libigl_jan\external\glfw\install\lib\glfw3.lib;C:\Users\Maria\MyDocs\libs\libigl_jan\external\libigl-imgui\imgui.lib;User32.lib;Gdi32.lib;Shell32.lib;Comdlg32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>
