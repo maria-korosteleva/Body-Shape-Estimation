@@ -52,6 +52,7 @@ int main()
     smpl.calcModel(pose, shape);
 
     // init optimizer
+
     // set the options
     // run optimization
     // get the results

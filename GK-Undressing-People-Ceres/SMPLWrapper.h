@@ -6,6 +6,8 @@ The class is able to calculate the SMPL model output based on pose and shape par
 TODO
     - Think about other ways to set gender
     - Check the folder structure
+    - move geeters and setters to the cpp
+    - Non-static num of vertices
 */
 
 #include <Eigen/Eigen/Dense>
@@ -21,14 +23,15 @@ public:
     SMPLWrapper(char, const char*);
     ~SMPLWrapper();
 
-    inline int getPoseSize()                       { return POSE_SIZE_; };
-    inline int getShapeSize()                      { return SHAPE_SIZE_; };
-    inline char getGender()                        { return gender_; };
-    inline Eigen::MatrixXi* getFaces()             { return &faces_; };
-    inline Eigen::MatrixXd* getTemplateVertices()  { return &verts_template_; };
-    inline Eigen::MatrixXd* getLastVertices()      { return &verts_; };
-    inline Eigen::VectorXd* getLastPose()          { return &pose_; };
-    inline Eigen::VectorXd* getLastShape()         { return &shape_; };
+    int getPoseSize()                       { return POSE_SIZE_; };
+    int getShapeSize()                      { return SHAPE_SIZE_; };
+    int getNumberVertices()                 { return NUM_VERTICES_; }
+    char getGender()                        { return gender_; };
+    Eigen::MatrixXi* getFaces()             { return &faces_; };
+    Eigen::MatrixXd* getTemplateVertices()  { return &verts_template_; };
+    Eigen::MatrixXd* getLastVertices()      { return &verts_; };
+    Eigen::VectorXd* getLastPose()          { return &pose_; };
+    Eigen::VectorXd* getLastShape()         { return &shape_; };
 
     Eigen::MatrixXd* calcModel(const Eigen::VectorXd, const Eigen::VectorXd);
 
@@ -39,6 +42,7 @@ private:
     static const int POSE_SIZE_ = 72;  // root rotation is included
     static const int TRANSLATION_SIZE_ = 3;
     static const int SHAPE_SIZE_ = 10;
+    static const int NUM_VERTICES_ = 6890;
     
     // initial info
     char gender_;
