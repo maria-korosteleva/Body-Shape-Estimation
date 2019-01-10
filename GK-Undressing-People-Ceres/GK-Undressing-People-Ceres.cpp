@@ -50,6 +50,7 @@ int main()
     shape[0] = -5.;
     shape[5] = -2;
     smpl.calcModel(pose, shape);
+
     // init optimizer
     // set the options
     // run optimization
@@ -57,13 +58,10 @@ int main()
     
     // Log the results
     // TODO: move outside (utils, optimizer, logger) 
+    igl::writeOBJ("C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/tmp.obj", *smpl.getLastVertices(), *smpl.getFaces());
 
     // Visualize the output
     // TODO: add the input too. Meekyong knows something about two meshes
-    
-    //std::cout << *smpl.getFaces() << "\n";
-
-    igl::writeOBJ("C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/tmp.obj", *smpl.getLastVertices(), *smpl.getFaces());
 
     igl::opengl::glfw::Viewer viewer;
     igl::opengl::glfw::imgui::ImGuiMenu menu;

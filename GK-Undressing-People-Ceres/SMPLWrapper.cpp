@@ -111,10 +111,10 @@ void SMPLWrapper::shapeSMPL_()
     for (int i = 0; i < this->SHAPE_SIZE_; i++)
     {
         this->verts_ += this->shape_[i] * this->shape_diffs_[i];
-        std::cout << i << " " << this->shape_[i] << " ";
+        std::cout << i << ":" << this->shape_[i] << " ";
     }
 
-    std::cout << "SMPL shaped...\n";
+    std::cout << "\nSMPL shaped...\n";
 }
 
 void SMPLWrapper::poseSMPL_()
