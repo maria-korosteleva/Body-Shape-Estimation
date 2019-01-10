@@ -10,6 +10,8 @@
 #include <igl/opengl/glfw/Viewer.h>
 #include <igl/opengl/glfw/imgui/ImGuiMenu.h>
 
+#include "SMPLWrapper.h"
+
 /*
     TODO
     + libigl installation
@@ -20,8 +22,9 @@
     - Idea: aloow start optimization from the last results
     - Idea: could keep some python scripts?
     - Idea: will the optimizer work for different types of the input blocks (so that optimization separation won't be needed)?
-    - libigl menu
+    + libigl menu
     - libigl as static library
+    - SMPL wrapper avalible for everyone
 */
 
 
@@ -41,7 +44,12 @@ int main()
     std::cout << "Input mesh loaded!\n";
 
     // Init SMPL wrapper
-    // give the path to smpl files
+    SMPLWrapper smpl('f', "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
+    Eigen::VectorXd pose;
+    Eigen::VectorXd shape = Eigen::VectorXd::Zero(smpl.getShapeSize());
+    shape[0] = -5.;
+    shape[5] = -2;
+    smpl.calcModel(pose, shape);
     // init optimizer
     // set the options
     // run optimization
@@ -52,9 +60,14 @@ int main()
 
     // Visualize the output
     // TODO: add the input too. Meekyong knows something about two meshes
+    
+    //std::cout << *smpl.getFaces() << "\n";
+
+    igl::writeOBJ("C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/tmp.obj", *smpl.getLastVertices(), *smpl.getFaces());
+
     igl::opengl::glfw::Viewer viewer;
     igl::opengl::glfw::imgui::ImGuiMenu menu;
     viewer.plugins.push_back(&menu);
-    viewer.data().set_mesh(verts, faces);
+    viewer.data().set_mesh(*smpl.getLastVertices(), *smpl.getFaces());
     viewer.launch();
 }
