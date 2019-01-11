@@ -11,14 +11,22 @@
 #include <igl/opengl/glfw/imgui/ImGuiMenu.h>
 
 #include "SMPLWrapper.h"
+#include "ShapeUnderClothOptimizer.h"
 
 /*
     TODO
     + libigl installation
     x Input mesh reader and storage
-    - Smpl wrapper
-    - the simpliest optimizer possible (no translation and pose, shape only, with known correspondance)
+    + Smpl wrapper - Shape
+    + the simpliest optimizer possible (no translation and pose, shape only, with known correspondance)
+    + move to simple types (double*) 
+    + Declare constexpressions for model sizes
+    - utils: Fill with zeros, print array, etc.
     - Do I need a separate logger? 
+    - glog output to file
+    - log result params
+    - log result objects
+    - SMPL wrapper POse
     - Idea: aloow start optimization from the last results
     - Idea: could keep some python scripts?
     - Idea: will the optimizer work for different types of the input blocks (so that optimization separation won't be needed)?
@@ -37,36 +45,30 @@ int main()
 
     // Load a mesh
     // TODO: make it type-independent
-    const std::string INPUT("D:/Data/DYNA/50004_chicken_wings/00100.obj");
+    const std::string INPUT("D:/Data/smpl_outs/smpl_1.obj");
     igl::readOBJ(INPUT, verts, faces);
     // TODO: Calculate a tree
 
     std::cout << "Input mesh loaded!\n";
 
-    // Init SMPL wrapper
     SMPLWrapper smpl('f', "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
-    Eigen::VectorXd pose;
-    Eigen::VectorXd shape = Eigen::VectorXd::Zero(smpl.getShapeSize());
-    shape[0] = -5.;
-    shape[5] = -2;
-    smpl.calcModel(pose, shape);
 
-    // init optimizer
+    ShapeUnderClothOptimizer optimizer(&smpl, &verts);
+    optimizer.findOptimalParameters();
+    double* shape_res = optimizer.getEstimatesShapeParams();
 
-    // set the options
-    // run optimization
-    // get the results
-    
     // Log the results
     // TODO: move outside (utils, optimizer, logger) 
-    igl::writeOBJ("C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/tmp.obj", *smpl.getLastVertices(), *smpl.getFaces());
+    //igl::writeOBJ("C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/tmp.obj", *smpl.getLastVertices(), *smpl.getFaces());
 
     // Visualize the output
     // TODO: add the input too. Meekyong knows something about two meshes
-
+    
     igl::opengl::glfw::Viewer viewer;
     igl::opengl::glfw::imgui::ImGuiMenu menu;
     viewer.plugins.push_back(&menu);
-    viewer.data().set_mesh(*smpl.getLastVertices(), *smpl.getFaces());
+    viewer.data().set_mesh(smpl.calcModel<double>(nullptr, shape_res), *smpl.getFaces());
     viewer.launch();
+
+    delete[] shape_res;
 }

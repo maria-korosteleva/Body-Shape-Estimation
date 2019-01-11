@@ -1,8 +1,6 @@
 #include "pch.h"
 #include "SMPLWrapper.h"
 
-#include <igl/readOBJ.h>
-
 
 SMPLWrapper::SMPLWrapper(char gender, const char* path)
 {
@@ -35,31 +33,14 @@ SMPLWrapper::~SMPLWrapper()
 }
 
 
-Eigen::MatrixXd* SMPLWrapper::calcModel(const Eigen::VectorXd pose, const Eigen::VectorXd shape)
-{
-    // init parameters
-    this->pose_ = pose;
-    this->shape_ = shape;
-    this->verts_ = this->verts_template_;
-
-    std::cout << "Calculating SMPL...\n";
-
-    this->shapeSMPL_();
-
-    this->poseSMPL_();
-
-    return &this->verts_;
-}
-
 void SMPLWrapper::readTemplate_()
 {
     std::string file_name(this->path_);
     file_name += this->gender_;
     file_name += "_shapeAv.obj";
     igl::readOBJ(file_name, this->verts_template_, this->faces_);
-
-    std::cout << "-Template loaded\n";
 }
+
 
 void SMPLWrapper::readJointMat_()
 {
@@ -82,9 +63,8 @@ void SMPLWrapper::readJointMat_()
         }
     }
     inFile.close();
-
-    std::cout << "-Joint matrix loaded\n";
 }
+
 
 void SMPLWrapper::readShapes_()
 {
@@ -93,7 +73,7 @@ void SMPLWrapper::readShapes_()
     file_path += "_blendshape/shape";
 
     Eigen::MatrixXi fakeFaces;
-    for (int i = 0; i < this->SHAPE_SIZE_; i++)
+    for (int i = 0; i < this->SHAPE_SIZE; i++)
     {
         std::string file_name(file_path);
         file_name += std::to_string(i);
@@ -103,21 +83,10 @@ void SMPLWrapper::readShapes_()
 
         this->shape_diffs_[i] -= this->verts_template_;
     }
-    std::cout << "-Shapes loaded\n";
 }
 
-void SMPLWrapper::shapeSMPL_()
-{
-    for (int i = 0; i < this->SHAPE_SIZE_; i++)
-    {
-        this->verts_ += this->shape_[i] * this->shape_diffs_[i];
-        std::cout << i << ":" << this->shape_[i] << " ";
-    }
 
-    std::cout << "\nSMPL shaped...\n";
-}
-
-void SMPLWrapper::poseSMPL_()
+void SMPLWrapper::poseSMPL_() const
 {
 
 }

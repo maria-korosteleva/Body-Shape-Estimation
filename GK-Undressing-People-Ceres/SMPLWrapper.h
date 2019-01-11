@@ -11,10 +11,23 @@ TODO
 */
 
 #include <Eigen/Eigen/Dense>
+#include <igl/readOBJ.h>
+
+namespace E = Eigen;
+
+template <typename T>
+using  MatrixXt = E::Matrix<T, E::Dynamic, E::Dynamic>;
 
 class SMPLWrapper
 {
 public:
+    static constexpr std::size_t SHAPE_SIZE = 10;
+    static constexpr std::size_t SPACE_DIM = 3;
+    static constexpr std::size_t POSE_SIZE = 72;
+    static constexpr std::size_t NUM_VERTICES = 6890;
+
+    E::MatrixXd shape_diffs_[10];  // store only differences between blendshapes and template
+
     /*
     Class should be initialized with the gender of the model to use and with the path to the model folder,
     that contains the files in a pre-defined structure.
@@ -23,48 +36,61 @@ public:
     SMPLWrapper(char, const char*);
     ~SMPLWrapper();
 
-    int getPoseSize()                       { return POSE_SIZE_; };
-    int getShapeSize()                      { return SHAPE_SIZE_; };
-    int getNumberVertices()                 { return NUM_VERTICES_; }
-    char getGender()                        { return gender_; };
-    Eigen::MatrixXi* getFaces()             { return &faces_; };
-    Eigen::MatrixXd* getTemplateVertices()  { return &verts_template_; };
-    Eigen::MatrixXd* getLastVertices()      { return &verts_; };
-    Eigen::VectorXd* getLastPose()          { return &pose_; };
-    Eigen::VectorXd* getLastShape()         { return &shape_; };
+    char getGender()                    { return gender_; };
+    E::MatrixXi* getFaces()             { return &faces_; };
+    E::MatrixXd* getTemplateVertices()  { return &verts_template_; };
 
-    Eigen::MatrixXd* calcModel(const Eigen::VectorXd, const Eigen::VectorXd);
+    template <typename T>
+    MatrixXt<T> calcModel(const T*, const T*) const;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 private:
-    // const sizes
-    static const int POSE_SIZE_ = 72;  // root rotation is included
-    static const int TRANSLATION_SIZE_ = 3;
-    static const int SHAPE_SIZE_ = 10;
-    static const int NUM_VERTICES_ = 6890;
-    
     // initial info
     char gender_;
     std::string path_;
 
     // model info
-    Eigen::MatrixXi faces_;
-    Eigen::MatrixXd verts_template_;
-    Eigen::MatrixXd jointMat_;
-    Eigen::MatrixXd shape_diffs_[SHAPE_SIZE_];  // store only differences between blendshapes and template
-
-    // last calculation info
-    Eigen::MatrixXd verts_;
-    Eigen::VectorXd pose_;
-    Eigen::VectorXd shape_;
+    E::MatrixXi faces_;
+    E::MatrixXd verts_template_;
+    E::MatrixXd jointMat_;
 
     // private functions
     void readTemplate_();
     void readJointMat_();
     void readShapes_();
 
-    void shapeSMPL_();
-    void poseSMPL_();
+    template <typename T>
+    void shapeSMPL_(const T*, MatrixXt<T>*) const;
+
+    void poseSMPL_() const;
 };
 
+
+template<typename T>
+inline MatrixXt<T> SMPLWrapper::calcModel(const T* pose, const T* shape) const
+{
+    MatrixXt<T> verts = this->verts_template_.cast<T>();
+
+    if (shape != nullptr)
+    {
+        this->shapeSMPL_(shape, &verts);
+    }
+
+    if (pose != nullptr)
+    {
+        this->poseSMPL_();
+    }
+
+    return verts;
+}
+
+
+template<typename T>
+inline void SMPLWrapper::shapeSMPL_(const T* shape, MatrixXt<T>* verts) const
+{
+    for (int i = 0; i < this->SHAPE_SIZE; i++)
+        for (int j = 0; j < this->NUM_VERTICES; j++)
+            for (int k = 0; k < this->SPACE_DIM; k++)
+                (*verts)(j, k) += shape[i] * this->shape_diffs_[i](j, k);
+}
