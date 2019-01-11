@@ -5,27 +5,25 @@
 #include "pch.h"
 #include <iostream>
 
-#include <igl/readOBJ.h>
-#include <igl/writeOBJ.h>
 #include <igl/opengl/glfw/Viewer.h>
 #include <igl/opengl/glfw/imgui/ImGuiMenu.h>
 
+#include "GeneralMesh.h"
 #include "SMPLWrapper.h"
 #include "ShapeUnderClothOptimizer.h"
 
 /*
     TODO
     + libigl installation
-    x Input mesh reader and storage
+    + Input mesh reader and storage
     + Smpl wrapper - Shape
     + the simpliest optimizer possible (no translation and pose, shape only, with known correspondance)
     + move to simple types (double*) 
     + Declare constexpressions for model sizes
     - utils: Fill with zeros, print array, etc.
-    - Do I need a separate logger? 
     - glog output to file
-    - log result params
-    - log result objects
+    - log result params & objects
+    - log result objects inside SMPL
     - SMPL wrapper POse
     - Idea: aloow start optimization from the last results
     - Idea: could keep some python scripts?
@@ -39,21 +37,13 @@
 int main()
 {
     // Get the input
-    // TODO move the routine outside
-    Eigen::MatrixXd verts;
-    Eigen::MatrixXi faces;
-
-    // Load a mesh
-    // TODO: make it type-independent
-    const std::string INPUT("D:/Data/smpl_outs/smpl_1.obj");
-    igl::readOBJ(INPUT, verts, faces);
-    // TODO: Calculate a tree
-
+    GeneralMesh input("D:/Data/smpl_outs/smpl_1.obj");
     std::cout << "Input mesh loaded!\n";
 
     SMPLWrapper smpl('f', "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
+    std::cout << "SMPL model loaded\n";
 
-    ShapeUnderClothOptimizer optimizer(&smpl, &verts);
+    ShapeUnderClothOptimizer optimizer(&smpl, input.getVertices());
     optimizer.findOptimalParameters();
     double* shape_res = optimizer.getEstimatesShapeParams();
 

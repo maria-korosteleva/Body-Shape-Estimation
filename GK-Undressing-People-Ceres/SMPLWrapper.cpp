@@ -23,8 +23,6 @@ SMPLWrapper::SMPLWrapper(char gender, const char* path)
     this->readTemplate_();
     this->readJointMat_();
     this->readShapes_();
-
-    std::cout << "SMPL model loaded\n";
 }
 
 
