@@ -73,7 +73,7 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
     // print summary
     Solver::Summary summary;
     Solve(options, &problem, &summary);
-    std::cout << summary.FullReport() << "\n";
+    std::cout << summary.FullReport() << std::endl;
 }
 
 

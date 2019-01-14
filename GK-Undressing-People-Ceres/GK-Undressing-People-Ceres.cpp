@@ -25,8 +25,8 @@
     + Declare constexpressions for model sizes
     + utils: Fill with zeros, print array, etc.  (only needed incide optimizer
     + glog output to file
-    - log result params & objects
-    - log result objects inside SMPL
+    + log result params & objects
+    + log result objects inside SMPL
     - SMPL wrapper Pose
     - point-to-surface distance
     - regularization
@@ -59,16 +59,6 @@ std::string getNewLogFolder(const char * tag = "test")
     CreateDirectory(logName.c_str(), NULL);
 
     return logName;
-}
-
-
-std::streambuf * redirectCoutToFile(std::string filename)
-{
-    std::ofstream out(filename);
-    std::streambuf *coutbuf = std::cout.rdbuf();    //save old buf
-    std::cout.rdbuf(out.rdbuf());                   //redirect std::cout to file!
-    std::cout << "testtest";
-    return coutbuf;
 }
 
 
@@ -110,12 +100,17 @@ int main()
 
     // Run optimization
     ShapeUnderClothOptimizer optimizer(&smpl, input.getVertices());
-    std::streambuf *coutbuf = redirectCoutToFile(logFolderName + "optimization.txt");  // redirect optimizer output 
+    
+    //// Redirect optimizer output to file
+    std::ofstream out(logFolderName + "optimization.txt");
+    std::streambuf *coutbuf = std::cout.rdbuf();    //save old buf
+    std::cout.rdbuf(out.rdbuf());                   //redirect std::cout to file!
     std::cout << logFolderName + "optimization.txt" << std::endl;
 
     optimizer.findOptimalParameters();
+
     std::cout.rdbuf(coutbuf);   //  reset cout to standard output again
-    //std::ofstream filebuf (*(std::cout.rdbuf()));
+    out.close();
     std::cout << "Optimization finished!\n";
 
     // Save the results
