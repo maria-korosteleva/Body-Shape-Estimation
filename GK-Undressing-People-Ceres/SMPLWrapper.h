@@ -12,6 +12,7 @@ TODO
 
 #include <Eigen/Eigen/Dense>
 #include <igl/readOBJ.h>
+#include <igl/writeOBJ.h>
 
 namespace E = Eigen;
 
@@ -42,6 +43,9 @@ public:
 
     template <typename T>
     MatrixXt<T> calcModel(const T*, const T*) const;
+
+    /*Allows for pose/shape be nullptr. Allows to get template/pose without shaping/shaping of the T-pose */
+    void saveToObj(const double*, const double*, const std::string) const;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

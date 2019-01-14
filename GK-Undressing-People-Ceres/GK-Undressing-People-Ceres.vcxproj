@@ -162,7 +162,6 @@
     <ClInclude Include="GeneralMesh.h" />
     <ClInclude Include="ModelToInputDistanceCostFunctor.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="ShapeUnderClothOptimizer.h" />
     <ClInclude Include="SMPLWrapper.h" />
   </ItemGroup>
@@ -178,9 +177,6 @@
     </ClCompile>
     <ClCompile Include="ShapeUnderClothOptimizer.cpp" />
     <ClCompile Include="SMPLWrapper.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="GK-Undressing-People-Ceres.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -26,10 +26,12 @@ void ShapeUnderClothOptimizer::setInput(Eigen::MatrixXd* input_verts)
     this->input_verts_ = input_verts;
 }
 
+
 double * ShapeUnderClothOptimizer::getEstimatesPoseParams()
 {
     return nullptr;
 }
+
 
 double * ShapeUnderClothOptimizer::getEstimatesShapeParams()
 {
@@ -48,6 +50,8 @@ double * ShapeUnderClothOptimizer::getEstimatesShapeParams()
 void ShapeUnderClothOptimizer::findOptimalParameters()
 {
     google::InitGoogleLogging("ShapeUnderClothing");
+
+    std::cout << "blabla" << std::endl;
 
     this->erase_params_();
 
@@ -70,10 +74,8 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
     Solver::Summary summary;
     Solve(options, &problem, &summary);
     std::cout << summary.FullReport() << "\n";
-
-    std::cout << "Found shape parameters: \n";
-    this->printArray_(this->shape_, SMPLWrapper::SHAPE_SIZE);
 }
+
 
 void ShapeUnderClothOptimizer::erase_params_()
 {
@@ -90,6 +92,7 @@ void ShapeUnderClothOptimizer::erase_params_()
     }
 }
 
+
 void ShapeUnderClothOptimizer::zeros_(double * arr, std::size_t size)
 {
     for (int i = 0; i < size; i++)
@@ -97,6 +100,7 @@ void ShapeUnderClothOptimizer::zeros_(double * arr, std::size_t size)
         arr[i] = 0.;
     }
 }
+
 
 void ShapeUnderClothOptimizer::printArray_(double * arr, std::size_t size)
 {

@@ -31,6 +31,13 @@ SMPLWrapper::~SMPLWrapper()
 }
 
 
+void SMPLWrapper::saveToObj(const double* pose, const double* shape, const std::string path) const
+{
+    E::MatrixXd verts = this->calcModel<double>(pose, shape);
+    igl::writeOBJ(path, verts, this->faces_);
+}
+
+
 void SMPLWrapper::readTemplate_()
 {
     std::string file_name(this->path_);
