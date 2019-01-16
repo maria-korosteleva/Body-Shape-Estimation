@@ -3,10 +3,12 @@
 //
 
 // WARNING! Uses win-specific features to create log directory 
-#include <Windows.h>
+//#include <Windows.h>
 #include "pch.h"
 #include <iostream>
 #include <ctime>
+
+#include <assert.h>
 
 #include <igl/opengl/glfw/Viewer.h>
 #include <igl/opengl/glfw/imgui/ImGuiMenu.h>
@@ -28,6 +30,7 @@
     + log result params & objects
     + log result objects inside SMPL
     - SMPL wrapper Pose
+    - clean-up and delete all the things
     - point-to-surface distance
     - regularization
     - directional pose estimation
@@ -38,6 +41,7 @@
     - libigl as static library
     - SMPL wrapper avalible for everyone
     - Readme with installation notes
+    - learning curve visualization
 */
 
 std::string getNewLogFolder(const char * tag = "test")
@@ -56,7 +60,7 @@ std::string getNewLogFolder(const char * tag = "test")
     logName += buffer;
     logName += "/";
     
-    CreateDirectory(logName.c_str(), NULL);
+    //CreateDirectory(logName.c_str(), NULL);
 
     return logName;
 }
@@ -95,9 +99,10 @@ int main()
     std::cout << "Input mesh loaded!\n";
     SMPLWrapper smpl('f', "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
     std::cout << "SMPL model loaded\n";
-
-    std::string logFolderName = getNewLogFolder("dev");
-
+    
+    //std::string logFolderName = getNewLogFolder("dev");
+    
+    /*
     // Run optimization
     ShapeUnderClothOptimizer optimizer(&smpl, input.getVertices());
     
@@ -117,14 +122,25 @@ int main()
     double* shape_res = optimizer.getEstimatesShapeParams();
     smpl.saveToObj(nullptr, shape_res, (logFolderName + "unposed_shaped.obj"));
     logSMPLParams(nullptr, shape_res, logFolderName);
+    */
+
+    double* pose = new double[SMPLWrapper::POSE_SIZE];
+    for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
+        pose[i] = 0.;
+    pose[51] = 10.;
+    //smpl.saveToObj(pose, nullptr, (logFolderName + "posed_unshaped.obj"));
 
     // Visualize the output
     // TODO: add the input too. Meekyong knows something about two meshes  
+    Eigen::MatrixXd verts = smpl.calcModel<double>(pose, nullptr);
+    Eigen::MatrixXi faces = smpl.getFaces();
     igl::opengl::glfw::Viewer viewer;
     igl::opengl::glfw::imgui::ImGuiMenu menu;
     viewer.plugins.push_back(&menu);
-    viewer.data().set_mesh(smpl.calcModel<double>(nullptr, shape_res), *smpl.getFaces());
+    viewer.data().set_mesh(verts, faces);
     viewer.launch();
 
-    delete[] shape_res;
+    // Cleaning
+    //delete[] shape_res;
+    delete[] pose;
 }

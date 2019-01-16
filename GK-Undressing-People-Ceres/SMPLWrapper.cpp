@@ -23,6 +23,7 @@ SMPLWrapper::SMPLWrapper(char gender, const char* path)
     this->readTemplate_();
     this->readJointMat_();
     this->readShapes_();
+    this->readWeights_();
 }
 
 
@@ -33,7 +34,7 @@ SMPLWrapper::~SMPLWrapper()
 
 void SMPLWrapper::saveToObj(const double* pose, const double* shape, const std::string path) const
 {
-    E::MatrixXd verts = this->calcModel<double>(pose, shape);
+    MatrixXt<double> verts = this->calcModel<double>(pose, shape);
     igl::writeOBJ(path, verts, this->faces_);
 }
 
@@ -43,7 +44,14 @@ void SMPLWrapper::readTemplate_()
     std::string file_name(this->path_);
     file_name += this->gender_;
     file_name += "_shapeAv.obj";
-    igl::readOBJ(file_name, this->verts_template_, this->faces_);
+
+    bool success = igl::readOBJ(file_name, this->verts_template_, this->faces_);
+    if (!success)
+    {
+        std::string message("Abort: Could not read SMPL template at ");
+        message += file_name;
+        throw std::exception(message.c_str());
+    }
 }
 
 
@@ -59,14 +67,15 @@ void SMPLWrapper::readJointMat_()
     int joints_n, verts_n;
     inFile >> joints_n;
     inFile >> verts_n;
+    // Sanity check
+    if (joints_n != SMPLWrapper::POSE_SIZE / 3 || verts_n != SMPLWrapper::NUM_VERTICES)
+        throw std::exception("Joint matrix info (number of joints and vertices) is incompatible with the model");
+
     this->jointMat_.resize(joints_n, verts_n);
     for (int i = 0; i < joints_n; i++)
-    {
         for (int j = 0; j < verts_n; j++)
-        {
             inFile >> this->jointMat_(i, j);
-        }
-    }
+
     inFile.close();
 }
 
@@ -77,8 +86,9 @@ void SMPLWrapper::readShapes_()
     file_path += this->gender_;
     file_path += "_blendshape/shape";
 
-    Eigen::MatrixXi fakeFaces;
-    for (int i = 0; i < this->SHAPE_SIZE; i++)
+    Eigen::MatrixXi fakeFaces(SMPLWrapper::NUM_VERTICES, SMPLWrapper::SPACE_DIM);
+
+    for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; i++)
     {
         std::string file_name(file_path);
         file_name += std::to_string(i);
@@ -91,7 +101,27 @@ void SMPLWrapper::readShapes_()
 }
 
 
-void SMPLWrapper::poseSMPL_() const
+void SMPLWrapper::readWeights_()
 {
+    std::string file_name(this->path_);
+    file_name += this->gender_;
+    file_name += "_weight.txt";
 
+    std::fstream inFile;
+    inFile.open(file_name, std::ios_base::in);
+    int joints_n, verts_n;
+    inFile >> joints_n;
+    inFile >> verts_n;
+    // Sanity check
+    if (joints_n != SMPLWrapper::POSE_SIZE / 3 || verts_n != SMPLWrapper::NUM_VERTICES)
+        throw std::exception("Joint matrix info (number of joints and vertices) is incompatible with the model");
+
+    this->weights_.resize(verts_n, joints_n);
+
+    for (int i = 0; i < verts_n; i++)
+        for (int j = 0; j < joints_n; j++)
+            inFile >> this->weights_(i, j);
+
+    inFile.close();
 }
+

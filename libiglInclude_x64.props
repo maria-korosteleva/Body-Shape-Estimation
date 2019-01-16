@@ -7,6 +7,7 @@
     <ClCompile>
       <AdditionalIncludeDirectories>C:\Users\Maria\MyDocs\libs\libigl_jan\external\glfw\include;C:\Users\Maria\MyDocs\libs\libigl_jan\include;C:\Users\Maria\MyDocs\libs\libigl_jan\external\glad\include;C:\Users\Maria\MyDocs\libs\libigl_jan\external;C:\Users\Maria\MyDocs\libs\libigl_jan\external\libigl-imgui;C:\Users\Maria\MyDocs\libs\libigl_jan\external\imgui\examples;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>C:\Users\Maria\MyDocs\libs\libigl_jan\install\lib\igl.lib;C:\Users\Maria\MyDocs\libs\libigl_jan\external\glad\glad.lib;C:\Users\Maria\MyDocs\libs\libigl_jan\external\glfw\install\lib\glfw3.lib;C:\Users\Maria\MyDocs\libs\libigl_jan\external\libigl-imgui\imgui.lib;User32.lib;Gdi32.lib;Shell32.lib;Comdlg32.lib;%(AdditionalDependencies)</AdditionalDependencies>

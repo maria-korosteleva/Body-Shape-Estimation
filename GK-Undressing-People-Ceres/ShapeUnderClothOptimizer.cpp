@@ -51,8 +51,6 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
 {
     google::InitGoogleLogging("ShapeUnderClothing");
 
-    std::cout << "blabla" << std::endl;
-
     this->erase_params_();
 
     // init parameters
