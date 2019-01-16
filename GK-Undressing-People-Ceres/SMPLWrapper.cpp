@@ -15,15 +15,19 @@ SMPLWrapper::SMPLWrapper(char gender, const char* path)
 
     // !!!! expects a pre-defined file structure
     // TODO remove specific structure expectation
-    this->path_ = path;
-    this->path_ += '/';
-    this->path_ += gender;
-    this->path_ += "_smpl/";
+    this->general_path_ = path;
+    this->general_path_ += '/';
+
+    this->gender_path_ = path;
+    this->gender_path_ += '/';
+    this->gender_path_ += gender;
+    this->gender_path_ += "_smpl/";
 
     this->readTemplate_();
     this->readJointMat_();
     this->readShapes_();
     this->readWeights_();
+    this->readHierarchy_();
 }
 
 
@@ -41,7 +45,7 @@ void SMPLWrapper::saveToObj(const double* pose, const double* shape, const std::
 
 void SMPLWrapper::readTemplate_()
 {
-    std::string file_name(this->path_);
+    std::string file_name(this->gender_path_);
     file_name += this->gender_;
     file_name += "_shapeAv.obj";
 
@@ -57,7 +61,7 @@ void SMPLWrapper::readTemplate_()
 
 void SMPLWrapper::readJointMat_()
 {
-    std::string file_name(this->path_);
+    std::string file_name(this->gender_path_);
     file_name += this->gender_;
     file_name += "_joints_mat.txt";
 
@@ -68,13 +72,13 @@ void SMPLWrapper::readJointMat_()
     inFile >> joints_n;
     inFile >> verts_n;
     // Sanity check
-    if (joints_n != SMPLWrapper::POSE_SIZE / 3 || verts_n != SMPLWrapper::NUM_VERTICES)
+    if (joints_n != SMPLWrapper::POSE_SIZE / SMPLWrapper::SPACE_DIM || verts_n != SMPLWrapper::NUM_VERTICES)
         throw std::exception("Joint matrix info (number of joints and vertices) is incompatible with the model");
 
-    this->jointMat_.resize(joints_n, verts_n);
+    this->jointRegressorMat_.resize(joints_n, verts_n);
     for (int i = 0; i < joints_n; i++)
         for (int j = 0; j < verts_n; j++)
-            inFile >> this->jointMat_(i, j);
+            inFile >> this->jointRegressorMat_(i, j);
 
     inFile.close();
 }
@@ -82,7 +86,7 @@ void SMPLWrapper::readJointMat_()
 
 void SMPLWrapper::readShapes_()
 {
-    std::string file_path(this->path_);
+    std::string file_path(this->gender_path_);
     file_path += this->gender_;
     file_path += "_blendshape/shape";
 
@@ -103,7 +107,7 @@ void SMPLWrapper::readShapes_()
 
 void SMPLWrapper::readWeights_()
 {
-    std::string file_name(this->path_);
+    std::string file_name(this->gender_path_);
     file_name += this->gender_;
     file_name += "_weight.txt";
 
@@ -113,14 +117,40 @@ void SMPLWrapper::readWeights_()
     inFile >> joints_n;
     inFile >> verts_n;
     // Sanity check
-    if (joints_n != SMPLWrapper::POSE_SIZE / 3 || verts_n != SMPLWrapper::NUM_VERTICES)
-        throw std::exception("Joint matrix info (number of joints and vertices) is incompatible with the model");
+    if (joints_n != SMPLWrapper::POSE_SIZE / SMPLWrapper::SPACE_DIM || verts_n != SMPLWrapper::NUM_VERTICES)
+        throw std::exception("Weights info (number of joints and vertices) is incompatible with the model");
 
     this->weights_.resize(verts_n, joints_n);
 
     for (int i = 0; i < verts_n; i++)
         for (int j = 0; j < joints_n; j++)
             inFile >> this->weights_(i, j);
+
+    inFile.close();
+}
+
+
+void SMPLWrapper::readHierarchy_()
+{
+    std::string file_name(this->general_path_);
+    file_name += "jointsHierarchy.txt";
+
+    std::fstream inFile;
+    inFile.open(file_name, std::ios_base::in);
+    int joints_n;
+    inFile >> joints_n;
+    // Sanity check
+    if (joints_n != SMPLWrapper::POSE_SIZE / SMPLWrapper::SPACE_DIM)
+    {
+        throw std::exception("Number of joints in joints hierarchy info is incompatible with the model");
+    }
+    
+    int tmpId;
+    for (int j = 0; j < joints_n; j++)
+    {
+        inFile >> tmpId;
+        inFile >> this->parents[tmpId];
+    }
 
     inFile.close();
 }

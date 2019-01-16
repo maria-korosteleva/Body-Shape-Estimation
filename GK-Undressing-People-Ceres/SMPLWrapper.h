@@ -54,13 +54,16 @@ public:
 private:
     // initial info
     char gender_;
-    std::string path_;
+    std::string gender_path_;
+    std::string general_path_;
 
     // model info
     E::MatrixXi faces_;
     E::MatrixXd verts_template_;
     E::MatrixXd shape_diffs_[10];  // store only differences between blendshapes and template
-    E::MatrixXd jointMat_;
+    E::MatrixXd jointRegressorMat_;
+    // The joints hierarchy is expectes to be so that the 
+    int parents[POSE_SIZE / SPACE_DIM];
     E::MatrixXd weights_;
 
     // private functions
@@ -68,11 +71,16 @@ private:
     void readJointMat_();
     void readShapes_();
     void readWeights_();
+    void readHierarchy_();
 
     template <typename T>
     void shapeSMPL_(const T*, MatrixXt<T>*) const;
     template <typename T>
     void poseSMPL_(const T*, MatrixXt<T>*) const;
+
+    // Used with SMPL python module as a reference 
+    template <typename T>
+    MatrixXt<T> getJointsGlobalTransformation_(const T*) const;
     
     // Composes weights (object local) and given vertices in the rest pose into LBSMatrix. 
     // Both are expected to be filled and alive at the moment of invocation.
@@ -86,7 +94,7 @@ template<typename T>
 inline MatrixXt<T> SMPLWrapper::calcModel(const T* pose, const T* shape) const
 {
     MatrixXt<T> verts = this->verts_template_.cast<T>();
-    std::cout << "Calc model" << "; ";
+    std::cout << "Calc model" << std::endl;
 
     if (shape != nullptr)
     {
@@ -120,19 +128,31 @@ inline void SMPLWrapper::poseSMPL_(const T* pose, MatrixXt<T>* verts) const
 {
     std::cout << "pose" << std::endl;
 
-    MatrixXt<T> jointLocations;
-    // Get the joint locations
+    MatrixXt<T> jointLocations = this->jointRegressorMat_.cast<T>() * (*verts);
+    //std::cout << jointLocations.rows() << ";  " << jointLocations.cols() << std::endl;
 
-    // Form the world transformation for joints (exclude thansformation due to the rest pose -- check if that's identical matrix)
+    MatrixXt<T> jointsTransformation = this->getJointsGlobalTransformation_(pose).transpose();
+    // remove extra column that indicates homogenious coordinates
+    //MatrixXt<T> nonHomoTransformation = jointsTransformation.leftCols(SMPLWrapper::SPACE_DIM);
 
-    // Update from the previous position of vertex and weight 
-    
-    // Get the matrix
+    // Get the LBS matrix
     MatrixXt<T> LBSMat = this->getLBSMatrix_<T>(verts);
     
     // Get the final vertices
-
+    //(*verts) = LBSMat * nonHomoTransformation;
 }
+
+
+template<typename T>
+inline MatrixXt<T> SMPLWrapper::getJointsGlobalTransformation_(const T *) const
+{
+    // Form the world transformation for joints (exclude thansformation due to the rest pose -- check if that's identical matrix)
+    // calculate individual matrices with only one parent involved
+    // combine into transformations for each joint 
+    // stack the matrices
+    return MatrixXt<T>(2, 2);
+}
+
 
 template<typename T>
 inline MatrixXt<T> SMPLWrapper::getLBSMatrix_(MatrixXt<T>* verts) const
