@@ -68,8 +68,9 @@ private:
     E::MatrixXd shape_diffs_[10];  // store only differences between blendshapes and template
     E::MatrixXd jointRegressorMat_;
     // The joints hierarchy is expectes to be so that the 
-    int parents_[JOINTS_NUM];
+    int joints_parents_[JOINTS_NUM];
     E::MatrixXd weights_;
+    E::MatrixXd joints_default_;
 
     // private functions
     void readTemplate_();
@@ -155,7 +156,7 @@ inline void SMPLWrapper::poseSMPL_(const T *  const pose, MatrixXt<T>& verts) co
     
     // Get the final vertices
     //(*verts) = LBSMat * nonHomoTransformation;
-    auto homoVerts = (LBSMat * jointsTransformation);
+    MatrixXt<T> homoVerts = (LBSMat * jointsTransformation);
 
 
     //for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
@@ -167,7 +168,7 @@ inline void SMPLWrapper::poseSMPL_(const T *  const pose, MatrixXt<T>& verts) co
     //    std::cout << std::endl;
     //}
 
-    std::cout << "Before cutting the column " << verts.rows() << " x " << verts.cols() << std::endl;
+    std::cout << "Before cutting the column " << homoVerts.rows() << " x " << homoVerts.cols() << std::endl;
 
     verts = homoVerts.leftCols(SMPLWrapper::SPACE_DIM);
 }
@@ -218,7 +219,7 @@ inline MatrixXt<T> SMPLWrapper::getJointsGlobalTransformation_(const T * const p
     for (int i = 1; i < SMPLWrapper::JOINTS_NUM; i++)
     {
         resultMats[i] = this->get3DLocalTransformMat_<T>(ePose.row(i), jointLocations.row(i))
-            * resultMats[this->parents_[i]] 
+            * resultMats[this->joints_parents_[i]] 
             * this->get3DTranslationMat_<T>(-jointLocations.row(i));
         //std::cout << "after matrix calc" << std::endl;
         // stack the matrices
@@ -270,16 +271,17 @@ inline MatrixXt<T> SMPLWrapper::get3DLocalTransformMat_(const E::MatrixBase<Deri
         //skew << 0, -jointAxisAngleTransform(2), jointAxisAngleTransform(1),
         //    jointAxisAngleTransform(2), 0, -jointAxisAngleTransform(0),
         //    -jointAxisAngleTransform(1), jointAxisAngleTransform(0), 0;
+        // TODO remove Auto to make this piece faster
         auto axis = jointAxisAngleRotation / norm;
         skew.setZero();
-        skew(0, 1) = -axis(2);
+        skew(0, 1) = - axis(2);
         skew(0, 2) = axis(1);
         skew(1, 0) = axis(2);
-        skew(1, 2) = -axis(0);
-        skew(2, 0) = -axis(1);
+        skew(1, 2) = - axis(0);
+        skew(2, 0) = - axis(1);
         skew(2, 1) = axis(0);
 
-        /*    std::cout << "\nSkew" << std::endl;
+        std::cout << "\nSkew" << std::endl;
         for (int i = 0; i < 3; i++)
         {
             for (int j = 0; j < 3; j++)
@@ -287,9 +289,9 @@ inline MatrixXt<T> SMPLWrapper::get3DLocalTransformMat_(const E::MatrixBase<Deri
                 std::cout << skew(i, j) << "; ";
             }
             std::cout << std::endl;
-        }*/
+        }
 
-        exponent += skew * sin(norm) + skew * skew * cos(norm);
+        exponent += skew * sin(norm) + skew * skew * ((T)1. - cos(norm));
     }
     
     /*

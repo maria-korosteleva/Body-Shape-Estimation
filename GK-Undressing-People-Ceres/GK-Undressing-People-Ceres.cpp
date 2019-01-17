@@ -136,7 +136,6 @@ int main()
     Eigen::MatrixXi faces = smpl.getFaces();
 
     Eigen::MatrixXd joints = smpl.calcJointLocations(nullptr);
-    std::cout << "After joints calculation" << std::endl;
     Eigen::MatrixXd red(3, 1);
     red << 1, 0, 0;
 

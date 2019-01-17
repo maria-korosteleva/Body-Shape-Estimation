@@ -28,6 +28,8 @@ SMPLWrapper::SMPLWrapper(char gender, const char* path)
     this->readShapes_();
     this->readWeights_();
     this->readHierarchy_();
+
+    //this->joints_default_ = this->jointRegressorMat_.cast<double>() * this->verts_template_;
 }
 
 
@@ -38,10 +40,20 @@ SMPLWrapper::~SMPLWrapper()
 
 E::MatrixXd SMPLWrapper::calcJointLocations(const double * shape)
 {
-    E::MatrixXd verts = this->calcModel<double>(nullptr, shape);
+    //E::MatrixXd verts = this->calcModel<double>(nullptr, shape);
 
-    std::cout << "joint locations calculation " << std::endl;
-    return this->jointRegressorMat_ * verts;
+    std::cout << "joint locations calculation " << this->jointRegressorMat_.rows() <<
+        " x " << this->jointRegressorMat_.cols() << "; " 
+        << this->verts_template_.rows() <<
+        " x " << this->verts_template_.cols() << std::endl;
+    E::MatrixXd joints(24, 3);
+    E::Matrix<double, Eigen::Dynamic, 3> tmp(6890, 3);
+    tmp.setRandom();
+    joints = this->jointRegressorMat_ * tmp;
+    std::cout << "After joints calculation" << std::endl;
+    //joints = 1. * this->verts_template_;
+    
+    return joints;
 }
 
 void SMPLWrapper::saveToObj(const double* pose, const double* shape, const std::string path) const
@@ -157,7 +169,7 @@ void SMPLWrapper::readHierarchy_()
     for (int j = 0; j < joints_n; j++)
     {
         inFile >> tmpId;
-        inFile >> this->parents_[tmpId];
+        inFile >> this->joints_parents_[tmpId];
     }
 
     inFile.close();
