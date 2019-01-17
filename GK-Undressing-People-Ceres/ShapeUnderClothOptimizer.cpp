@@ -60,7 +60,7 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
     // construct a problem
     Problem problem;
     CostFunction* cost_function =
-        new AutoDiffCostFunction<DistCost, SMPLWrapper::NUM_VERTICES, SMPLWrapper::SHAPE_SIZE>(new DistCost(this->smpl_, this->input_verts_));
+        new AutoDiffCostFunction<DistCost, SMPLWrapper::VERTICES_NUM, SMPLWrapper::SHAPE_SIZE>(new DistCost(this->smpl_, this->input_verts_));
     problem.AddResidualBlock(cost_function, nullptr, this->shape_);
 
     // Run the solver!

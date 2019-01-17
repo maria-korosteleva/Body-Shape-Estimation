@@ -127,17 +127,24 @@ int main()
     double* pose = new double[SMPLWrapper::POSE_SIZE];
     for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
         pose[i] = 0.;
-    pose[51] = 10.;
+    pose[1] = 1.;
     //smpl.saveToObj(pose, nullptr, (logFolderName + "posed_unshaped.obj"));
 
     // Visualize the output
     // TODO: add the input too. Meekyong knows something about two meshes  
     Eigen::MatrixXd verts = smpl.calcModel<double>(pose, nullptr);
     Eigen::MatrixXi faces = smpl.getFaces();
+
+    Eigen::MatrixXd joints = smpl.calcJointLocations(nullptr);
+    std::cout << "After joints calculation" << std::endl;
+    Eigen::MatrixXd red(3, 1);
+    red << 1, 0, 0;
+
     igl::opengl::glfw::Viewer viewer;
     igl::opengl::glfw::imgui::ImGuiMenu menu;
     viewer.plugins.push_back(&menu);
     viewer.data().set_mesh(verts, faces);
+    viewer.data().set_points(joints, red);
     viewer.launch();
 
     // Cleaning

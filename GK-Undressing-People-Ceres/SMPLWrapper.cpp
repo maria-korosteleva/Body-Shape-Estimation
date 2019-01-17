@@ -36,6 +36,14 @@ SMPLWrapper::~SMPLWrapper()
 }
 
 
+E::MatrixXd SMPLWrapper::calcJointLocations(const double * shape)
+{
+    E::MatrixXd verts = this->calcModel<double>(nullptr, shape);
+
+    std::cout << "joint locations calculation " << std::endl;
+    return this->jointRegressorMat_ * verts;
+}
+
 void SMPLWrapper::saveToObj(const double* pose, const double* shape, const std::string path) const
 {
     MatrixXt<double> verts = this->calcModel<double>(pose, shape);
@@ -72,7 +80,7 @@ void SMPLWrapper::readJointMat_()
     inFile >> joints_n;
     inFile >> verts_n;
     // Sanity check
-    if (joints_n != SMPLWrapper::POSE_SIZE / SMPLWrapper::SPACE_DIM || verts_n != SMPLWrapper::NUM_VERTICES)
+    if (joints_n != SMPLWrapper::JOINTS_NUM || verts_n != SMPLWrapper::VERTICES_NUM)
         throw std::exception("Joint matrix info (number of joints and vertices) is incompatible with the model");
 
     this->jointRegressorMat_.resize(joints_n, verts_n);
@@ -90,7 +98,7 @@ void SMPLWrapper::readShapes_()
     file_path += this->gender_;
     file_path += "_blendshape/shape";
 
-    Eigen::MatrixXi fakeFaces(SMPLWrapper::NUM_VERTICES, SMPLWrapper::SPACE_DIM);
+    Eigen::MatrixXi fakeFaces(SMPLWrapper::VERTICES_NUM, SMPLWrapper::SPACE_DIM);
 
     for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; i++)
     {
@@ -117,7 +125,7 @@ void SMPLWrapper::readWeights_()
     inFile >> joints_n;
     inFile >> verts_n;
     // Sanity check
-    if (joints_n != SMPLWrapper::POSE_SIZE / SMPLWrapper::SPACE_DIM || verts_n != SMPLWrapper::NUM_VERTICES)
+    if (joints_n != SMPLWrapper::JOINTS_NUM || verts_n != SMPLWrapper::VERTICES_NUM)
         throw std::exception("Weights info (number of joints and vertices) is incompatible with the model");
 
     this->weights_.resize(verts_n, joints_n);
@@ -140,7 +148,7 @@ void SMPLWrapper::readHierarchy_()
     int joints_n;
     inFile >> joints_n;
     // Sanity check
-    if (joints_n != SMPLWrapper::POSE_SIZE / SMPLWrapper::SPACE_DIM)
+    if (joints_n != SMPLWrapper::JOINTS_NUM)
     {
         throw std::exception("Number of joints in joints hierarchy info is incompatible with the model");
     }
@@ -149,7 +157,7 @@ void SMPLWrapper::readHierarchy_()
     for (int j = 0; j < joints_n; j++)
     {
         inFile >> tmpId;
-        inFile >> this->parents[tmpId];
+        inFile >> this->parents_[tmpId];
     }
 
     inFile.close();

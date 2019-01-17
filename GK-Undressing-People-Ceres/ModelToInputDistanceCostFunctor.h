@@ -29,7 +29,7 @@ inline bool ModelToInputDistanceCostFunctor::operator()(const T * const shape, T
     Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> verts_diff = (*this->input_verts_).cast<T>() - verts;
 
     // final residuals
-    for (int i = 0; i < SMPLWrapper::NUM_VERTICES; i++)
+    for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
     {
         residual[i] = sqrt(verts_diff(i, 0) * verts_diff(i, 0) + verts_diff(i, 0) * verts_diff(i, 0) + verts_diff(i, 0) * verts_diff(i, 0));
     }
