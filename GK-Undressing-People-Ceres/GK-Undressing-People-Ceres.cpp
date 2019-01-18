@@ -127,25 +127,25 @@ int main()
     double* pose = new double[SMPLWrapper::POSE_SIZE];
     for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
         pose[i] = 0.;
-    pose[1] = 1.;
+    pose[69] = 1.;
+    pose[51] = 1.;
+    pose[52] =0.5;
+    pose[53] = -1.;
+    pose[5] = 2.;
+    pose[0] = -1.;
     //smpl.saveToObj(pose, nullptr, (logFolderName + "posed_unshaped.obj"));
 
     // Visualize the output
     // TODO: add the input too. Meekyong knows something about two meshes  
     Eigen::MatrixXd verts = smpl.calcModel<double>(pose, nullptr);
-    //Eigen::MatrixXd verts = smpl.calcModel<double>(nullptr, nullptr);
     Eigen::MatrixXi faces = smpl.getFaces();
-
-    Eigen::MatrixXd joints = smpl.calcJointLocations(nullptr);
-    std::cout << "After joints calculation " << joints << std::endl;
-
-    //igl::opengl::glfw::Viewer viewer;
-    //igl::opengl::glfw::imgui::ImGuiMenu menu;
-    //viewer.plugins.push_back(&menu);
-    ////viewer.data().set_mesh(verts, faces);
-    ////viewer.data().set_points(Eigen::RowVector3d(1., 1., 0.), Eigen::RowVector3d(1., 1., 0.));
-    ////viewer.data().set_points(joints, Eigen::RowVector3d(1., 1., 0.));
-    //viewer.launch();
+    igl::opengl::glfw::Viewer viewer;
+    igl::opengl::glfw::imgui::ImGuiMenu menu;
+    viewer.plugins.push_back(&menu);
+    viewer.data().set_mesh(verts, faces);
+    //viewer.data().set_points(Eigen::RowVector3d(1., 1., 0.), Eigen::RowVector3d(1., 1., 0.));
+    //viewer.data().set_points(joints, Eigen::RowVector3d(1., 1., 0.));
+    viewer.launch();
 
     // Cleaning
     //delete[] shape_res;

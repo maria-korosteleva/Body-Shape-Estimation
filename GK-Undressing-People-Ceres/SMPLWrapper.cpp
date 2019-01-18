@@ -29,8 +29,8 @@ SMPLWrapper::SMPLWrapper(char gender, const char* path)
     this->readWeights_();
     this->readHierarchy_();
 
-    std::cout << "Joint locations calculation in constructor" << std::endl;
-    this->joints_default_ = this->jointRegressorMat_ * this->verts_template_;
+    //std::cout << "Joint locations calculation in constructor" << std::endl;
+    //this->joints_default_ = this->jointRegressorMat_ * this->verts_template_;
 }
 
 
