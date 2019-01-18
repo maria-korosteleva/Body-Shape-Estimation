@@ -15,7 +15,7 @@
 
 #include "GeneralMesh.h"
 #include "SMPLWrapper.h"
-#include "ShapeUnderClothOptimizer.h"
+//#include "ShapeUnderClothOptimizer.h"
 
 /*
     TODO
@@ -66,31 +66,31 @@ std::string getNewLogFolder(const char * tag = "test")
 }
 
 
-void logSMPLParams(double* pose, double* shape, std::string logFolderName)
-{
-    std::ofstream out(logFolderName + "smpl_params.txt");
-
-    out << "Pose params \n[ ";
-    if (pose != nullptr)
-        for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
-            out << pose[i] << " , ";
-    else
-        for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
-            out << "0." << " , ";
-
-    out << "]" << std::endl;
-
-    out << "Shape (betas) params \n[ ";
-    if (shape != nullptr)
-        for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; i++)
-            out << shape[i] << " , ";
-    else
-        for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; i++)
-            out << "0." << " , ";
-    out << "]" << std::endl;
-
-    out.close();
-}
+//void logSMPLParams(double* pose, double* shape, std::string logFolderName)
+//{
+//    std::ofstream out(logFolderName + "smpl_params.txt");
+//
+//    out << "Pose params \n[ ";
+//    if (pose != nullptr)
+//        for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
+//            out << pose[i] << " , ";
+//    else
+//        for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
+//            out << "0." << " , ";
+//
+//    out << "]" << std::endl;
+//
+//    out << "Shape (betas) params \n[ ";
+//    if (shape != nullptr)
+//        for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; i++)
+//            out << shape[i] << " , ";
+//    else
+//        for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; i++)
+//            out << "0." << " , ";
+//    out << "]" << std::endl;
+//
+//    out.close();
+//}
 
 
 int main()
@@ -100,7 +100,7 @@ int main()
     SMPLWrapper smpl('f', "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
     std::cout << "SMPL model loaded\n";
     
-    //std::string logFolderName = getNewLogFolder("dev");
+    std::string logFolderName = getNewLogFolder("dev");
     
     /*
     // Run optimization
@@ -133,18 +133,19 @@ int main()
     // Visualize the output
     // TODO: add the input too. Meekyong knows something about two meshes  
     Eigen::MatrixXd verts = smpl.calcModel<double>(pose, nullptr);
+    //Eigen::MatrixXd verts = smpl.calcModel<double>(nullptr, nullptr);
     Eigen::MatrixXi faces = smpl.getFaces();
 
     Eigen::MatrixXd joints = smpl.calcJointLocations(nullptr);
-    Eigen::MatrixXd red(3, 1);
-    red << 1, 0, 0;
+    std::cout << "After joints calculation " << joints << std::endl;
 
-    igl::opengl::glfw::Viewer viewer;
-    igl::opengl::glfw::imgui::ImGuiMenu menu;
-    viewer.plugins.push_back(&menu);
-    viewer.data().set_mesh(verts, faces);
-    viewer.data().set_points(joints, red);
-    viewer.launch();
+    //igl::opengl::glfw::Viewer viewer;
+    //igl::opengl::glfw::imgui::ImGuiMenu menu;
+    //viewer.plugins.push_back(&menu);
+    ////viewer.data().set_mesh(verts, faces);
+    ////viewer.data().set_points(Eigen::RowVector3d(1., 1., 0.), Eigen::RowVector3d(1., 1., 0.));
+    ////viewer.data().set_points(joints, Eigen::RowVector3d(1., 1., 0.));
+    //viewer.launch();
 
     // Cleaning
     //delete[] shape_res;

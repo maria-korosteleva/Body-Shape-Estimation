@@ -89,7 +89,7 @@ private:
     MatrixXt<T> getJointsGlobalTransformation_(const T * const, MatrixXt<T>&) const;
     // TODO Try to derive the T type from the Derived1
     // TODO add checks to the functions below
-    // Assumes that SPACE_DIM == 3
+    // Assumes that SPACE_DIM == 3 & default pose is a zero vector
     template <typename T, typename Derived1, typename Derived2>
     MatrixXt<T> get3DLocalTransformMat_(const E::MatrixBase<Derived1>&, const E::MatrixBase<Derived2>&) const;
     // Assumes that SPACE_DIM == 3
@@ -147,7 +147,7 @@ inline void SMPLWrapper::poseSMPL_(const T *  const pose, MatrixXt<T>& verts) co
     //std::cout << jointLocations.rows() << ";  " << jointLocations.cols() << std::endl;
 
     MatrixXt<T> jointsTransformation = this->getJointsGlobalTransformation_(pose, jointLocations); // .transpose();
-    // remove extra column that indicates homogenious coordinates
+    // Remove extra column that indicates homogenious coordinates
     //MatrixXt<T> nonHomoTransformation = jointsTransformation.leftCols(SMPLWrapper::SPACE_DIM);
 
     // Get the LBS matrix
@@ -202,8 +202,31 @@ inline MatrixXt<T> SMPLWrapper::getJointsGlobalTransformation_(const T * const p
     //}
     
 
-    resultMats[0] = this->get3DLocalTransformMat_<T>(ePose.row(0), jointLocations.row(0)) 
+    resultMats[0] = this->get3DLocalTransformMat_<T>(ePose.row(0), jointLocations.row(0))
         * this->get3DTranslationMat_<T>(- jointLocations.row(0));
+
+    //MatrixXt<T> local;
+    //local = this->get3DLocalTransformMat_<T>(ePose.row(0), jointLocations.row(0));
+    //std::cout << "Local Transform \n";
+    //for (int i = 0; i < SMPLWrapper::SPACE_DIM + 1; i++)
+    //{
+    //    for (int j = 0; j < SMPLWrapper::SPACE_DIM + 1; j++)
+    //    {
+    //        std::cout << local(i, j) << "; ";
+    //    }
+    //    std::cout << std::endl;
+    //}
+
+    //local = this->get3DTranslationMat_<T>(-jointLocations.row(0));
+    //std::cout << "Back Translation \n";
+    //for (int i = 0; i < SMPLWrapper::SPACE_DIM + 1; i++)
+    //{
+    //    for (int j = 0; j < SMPLWrapper::SPACE_DIM + 1; j++)
+    //    {
+    //        std::cout << local(i, j) << "; ";
+    //    }
+    //    std::cout << std::endl;
+    //}
 
     std::cout << "First mat \n";
     for (int i = 0; i < SMPLWrapper::SPACE_DIM + 1; i++)
@@ -214,8 +237,8 @@ inline MatrixXt<T> SMPLWrapper::getJointsGlobalTransformation_(const T * const p
         }
         std::cout << std::endl;
     }
-
     total.block(0, 0, homo_size, homo_size) = resultMats[0].transpose();
+
     for (int i = 1; i < SMPLWrapper::JOINTS_NUM; i++)
     {
         resultMats[i] = this->get3DLocalTransformMat_<T>(ePose.row(i), jointLocations.row(i))
@@ -260,20 +283,17 @@ inline MatrixXt<T> SMPLWrapper::get3DLocalTransformMat_(const E::MatrixBase<Deri
     }
     */
     // apply Rodrigues formula
-    E::Matrix<T, 3, 3> exponent;
-    exponent.setIdentity();
+    MatrixXt<T> exponent;
+    exponent.setIdentity(3, 3);
     T norm = jointAxisAngleRotation.norm();
 
     if (norm > 0.0001)  // don't waste computations on zero joint movement
     {
         // construct skew-simm matrix
-        E::Matrix<T, 3, 3> skew;
-        //skew << 0, -jointAxisAngleTransform(2), jointAxisAngleTransform(1),
-        //    jointAxisAngleTransform(2), 0, -jointAxisAngleTransform(0),
-        //    -jointAxisAngleTransform(1), jointAxisAngleTransform(0), 0;
+        MatrixXt<T> skew;
+        skew.setZero(3, 3);
         // TODO remove Auto to make this piece faster
         auto axis = jointAxisAngleRotation / norm;
-        skew.setZero();
         skew(0, 1) = - axis(2);
         skew(0, 2) = axis(1);
         skew(1, 0) = axis(2);
@@ -306,11 +326,10 @@ inline MatrixXt<T> SMPLWrapper::get3DLocalTransformMat_(const E::MatrixBase<Deri
     }
     */
     // construct final matrix 
-    E::Matrix<T, 4, 4> localTransform;
+    MatrixXt<T> localTransform;
+    localTransform.setIdentity(4, 4);
     localTransform.block(0, 0, 3, 3) = exponent;
     localTransform.block(0, 3, 3, 1) = jointLocation.transpose();
-    localTransform.block(3, 0, 1, 3) = E::Matrix<T, 3, 1>::Zero();
-    localTransform(3, 3) = (T) 1.;
 
     /*
     std::cout << "Final" << std::endl;
@@ -324,20 +343,18 @@ inline MatrixXt<T> SMPLWrapper::get3DLocalTransformMat_(const E::MatrixBase<Deri
     }
     */
 
-    return MatrixXt<T>(localTransform);
+    return localTransform;
 }
 
 
 template<typename T, typename Derived>
 inline MatrixXt<T> SMPLWrapper::get3DTranslationMat_(const E::MatrixBase<Derived>& translationVector) const
 {
-    E::Matrix<T, 4, 4> translation;
-    translation.block(0, 0, 3, 3) = E::Matrix<T, 3, 3>::Identity();
+    MatrixXt<T> translation;
+    translation.setIdentity(4, 4);
     translation.block(0, 3, 3, 1) = translationVector.transpose();
-    translation.block(3, 0, 1, 3) = E::Matrix<T, 3, 1>::Zero();
-    translation(3, 3) = (T) 1.;
 
-    return MatrixXt<T>(translation);
+    return translation;
 }
 
 
