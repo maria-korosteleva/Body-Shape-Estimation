@@ -2,6 +2,7 @@
 // It shows the example of how to use the code developed for the Undressing the input scan
 //
 
+#define DEBUG
 // WARNING! Uses win-specific features to create log directory 
 #include <Windows.h>
 #include "pch.h"
@@ -29,8 +30,10 @@
     + glog output to file
     + log result params & objects
     + log result objects inside SMPL
-    - SMPL wrapper Pose
-    - clean-up and delete all the things
+    + SMPL wrapper Pose
+    - Pose estimation using ceres
+    -- ceres rotations vs non-ceres
+    -- simplify function hierarchy 
     - point-to-surface distance
     - regularization
     - directional pose estimation
@@ -95,51 +98,54 @@ void logSMPLParams(double* pose, double* shape, std::string logFolderName)
 
 int main()
 {
+    std::string logFolderName = getNewLogFolder("output_experiments");
+    
     GeneralMesh input("D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin.obj");
+    // For convenience
+    igl::writeOBJ(logFolderName + "input.obj", *input.getVertices(), *input.getFaces());
     std::cout << "Input mesh loaded!\n";
     SMPLWrapper smpl('f', "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
     std::cout << "SMPL model loaded\n";
-    
-    std::string logFolderName = getNewLogFolder("pose_test");
-    
-    // Run optimization
-    ShapeUnderClothOptimizer optimizer(&smpl, input.getVertices());
-    
-    //// Redirect optimizer output to file
+
+    //// Run optimization
+    //ShapeUnderClothOptimizer optimizer(&smpl, input.getVertices());
+    //
+    ////// Redirect optimizer output to file
     //std::ofstream out(logFolderName + "optimization.txt");
     //std::streambuf *coutbuf = std::cout.rdbuf();    //save old buf
     //std::cout.rdbuf(out.rdbuf());                   //redirect std::cout to file!
     //std::cout << logFolderName + "optimization.txt" << std::endl;
 
-    optimizer.findOptimalParameters();
+    //optimizer.findOptimalParameters();
 
     //std::cout.rdbuf(coutbuf);   //  reset cout to standard output again
     //out.close();
     //std::cout << "Optimization finished!\n";
 
-    // Save the results
-    double* shape_res = optimizer.getEstimatesShapeParams();
-    double* pose_res = optimizer.getEstimatesPoseParams();
-    logSMPLParams(pose_res, shape_res, logFolderName);
-    smpl.saveToObj(pose_res, shape_res, (logFolderName + "posed_shaped.obj"));
-    smpl.saveToObj(nullptr, shape_res, (logFolderName + "unposed_shaped.obj"));
-    smpl.saveToObj(pose_res, nullptr, (logFolderName + "posed_unshaped.obj"));
+    //// Save the results
+    //double* shape_res = optimizer.getEstimatesShapeParams();
+    //double* pose_res = optimizer.getEstimatesPoseParams();
+    //logSMPLParams(pose_res, shape_res, logFolderName);
+    //smpl.saveToObj(pose_res, shape_res, (logFolderName + "posed_shaped.obj"));
+    //smpl.saveToObj(nullptr, shape_res, (logFolderName + "unposed_shaped.obj"));
+    //smpl.saveToObj(pose_res, nullptr, (logFolderName + "posed_unshaped.obj"));
     
 
-    /*double* pose = new double[SMPLWrapper::POSE_SIZE];
+    double* pose_res = new double[SMPLWrapper::POSE_SIZE];
     for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
-        pose[i] = 0.;
-    pose[69] = 1.;
-    pose[51] = 1.;
-    pose[52] =0.5;
-    pose[53] = -1.;
-    pose[5] = 2.;
-    pose[0] = -1.;*/
+        pose_res[i] = 0.;
+    pose_res[69] = 1.;
+    pose_res[51] = 1.;
+    pose_res[52] =0.5;
+    pose_res[53] = -1.;
+    pose_res[58] = 1;
+    pose_res[5] = 2.;
+    pose_res[0] = -1.;
     //smpl.saveToObj(pose, nullptr, (logFolderName + "posed_unshaped.obj"));
 
     // Visualize the output
     // TODO: add the input too. Meekyong knows something about two meshes  
-    Eigen::MatrixXd verts = smpl.calcModel<double>(pose_res, shape_res);
+    Eigen::MatrixXd verts = smpl.calcModel<double>(pose_res, nullptr);
     Eigen::MatrixXi faces = smpl.getFaces();
     igl::opengl::glfw::Viewer viewer;
     igl::opengl::glfw::imgui::ImGuiMenu menu;
@@ -150,6 +156,6 @@ int main()
     viewer.launch();
 
     // Cleaning
-    delete[] shape_res;
+    //delete[] shape_res;
     delete[] pose_res;
 }

@@ -75,7 +75,7 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
 
     // Run the solver!
     Solver::Options options;
-    options.linear_solver_type = ceres::DENSE_QR;
+    options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
     options.minimizer_progress_to_stdout = true;
 
     // print summary

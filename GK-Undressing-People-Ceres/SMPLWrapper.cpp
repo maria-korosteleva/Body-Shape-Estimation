@@ -4,6 +4,10 @@
 
 SMPLWrapper::SMPLWrapper(char gender, const char* path)
 {
+#ifdef USE_CERES
+    std::cerr << "Warning: Use of Ceres for SMPL posing is enabled." << std::endl;
+#endif // USE_CERES
+
     // set the info
     if (gender != 'f' && gender != 'm') 
     {
@@ -56,6 +60,7 @@ E::MatrixXd SMPLWrapper::calcJointLocations(const double * shape)
     
     return joints;
 }
+
 
 void SMPLWrapper::saveToObj(const double* pose, const double* shape, const std::string path) const
 {

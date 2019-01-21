@@ -2,12 +2,6 @@
 /*
 The class is a wrapper around SMPL model. In 
 The class is able to calculate the SMPL model output based on pose and shape parameters.
-
-TODO
-    - Think about other ways to set gender
-    - Check the folder structure
-    - move geeters and setters to the cpp
-    - Non-static num of vertices
 */
 
 #include <assert.h>
@@ -15,7 +9,13 @@ TODO
 #include <Eigen/Eigen/Dense>
 #include <igl/readOBJ.h>
 #include <igl/writeOBJ.h>
-//#include <igl/lbs_matrix.h>
+
+#define USE_CERES
+#ifdef USE_CERES
+// !!! Need for the SMPL posing to work with ceres 
+#include <ceres/rotation.h>
+#endif // USE_CERES
+
 
 namespace E = Eigen;
 
@@ -37,12 +37,12 @@ public:
     Class should be initialized with the gender of the model to use and with the path to the model folder,
     that contains the files in a pre-defined structure.
     gender is either "f" or "m"
-    // The joints hierarchy is expectes to be so that the parent's id is always less than the child's
+    The joints hierarchy is expectes to be so that the parent's id is always less than the child's
     */
     SMPLWrapper(char, const char*);
     ~SMPLWrapper();
 
-    char getGender()                    { return gender_; };
+    char getGender()                   { return gender_; };
     E::MatrixXi getFaces()             { return this->faces_; };
     E::MatrixXd getTemplateVertices()  { return this->verts_template_; };
 
@@ -80,20 +80,21 @@ private:
     void readWeights_();
     void readHierarchy_();
 
+    // for evaluation uses vertex info from the last parameter and uses last parameter for output
     template <typename T>
     void shapeSMPL_(const T * const, MatrixXt<T>&) const;
+    // for evaluation uses vertex info from the last parameter and uses last parameter for output
     template <typename T>
     void poseSMPL_(const T * const, MatrixXt<T>&) const;
 
-    // Used with SMPL python module as a reference 
+    // Used with SMPL python module as a reference
+    // Assumes that SPACE_DIM == 3
     template <typename T>
     MatrixXt<T> getJointsTransposedGlobalTransformation_(const T * const, MatrixXt<T>&) const;
     
-    // TODO Try to derive the T type from the Derived1
-    // TODO add checks to the functions below
-    // Assumes that SPACE_DIM == 3 & default pose is a zero vector
-    template <typename T, typename Derived1, typename Derived2>
-    MatrixXt<T> get3DLocalTransformMat_(const E::MatrixBase<Derived1>&, const E::MatrixBase<Derived2>&) const;
+    // Assumes that SPACE_DIM == 3
+    template <typename T, typename Derived2>
+    MatrixXt<T> get3DLocalTransformMat_(const T * const jointAxisAngleRotation, const E::MatrixBase<Derived2>&) const;
     
     // Assumes that SPACE_DIM == 3
     template <typename T, typename Derived>
@@ -169,25 +170,19 @@ inline void SMPLWrapper::poseSMPL_(const T *  const pose, MatrixXt<T>& verts) co
 template<typename T>
 inline MatrixXt<T> SMPLWrapper::getJointsTransposedGlobalTransformation_(const T * const pose, MatrixXt<T>& jointLocations) const
 {
-    // Form the world transformation for joints
-    // TODO add checks (exclude thansformation due to the rest pose -- check if that's identical matrix)
-    
-    // TODO decide if it's a good thing to store duplicates of result matrices in total and Result Mats
-    // -- Yes it's a good thing, I need them for different purposes
-
 #ifdef DEBUG
     std::cout << "global transform" << std::endl;
 #endif // DEBUG
 
     const int homo_size = (SMPLWrapper::SPACE_DIM + 1);
-    // Map pose to Eigen vector
-    const E::Map<const E::Matrix<T, SMPLWrapper::JOINTS_NUM, SMPLWrapper::SPACE_DIM>, 0, E::Stride<1, SMPLWrapper::SPACE_DIM>> ePose(pose);
-    // Joint's global transformation matrices 
     E::Matrix<T, SMPLWrapper::SPACE_DIM + 1, SMPLWrapper::SPACE_DIM + 1> jointGlobalMats[SMPLWrapper::JOINTS_NUM];
     // Stacked (transposed) global transformation matrices for points
     MatrixXt<T> pointTransformTotal(homo_size * SMPLWrapper::JOINTS_NUM, homo_size);
     
-    jointGlobalMats[0] = this->get3DLocalTransformMat_<T>(ePose.row(0), jointLocations.row(0));
+    // uses of function that assume input in 3D. 
+    assert(SMPLWrapper::SPACE_DIM == 3);
+
+    jointGlobalMats[0] = this->get3DLocalTransformMat_<T>(pose, jointLocations.row(0));
     MatrixXt<T> tmpPointGlobalTransform = jointGlobalMats[0] * this->get3DTranslationMat_<T>(- jointLocations.row(0));
     pointTransformTotal.block(0, 0, homo_size, homo_size) = tmpPointGlobalTransform.transpose();
 
@@ -195,7 +190,7 @@ inline MatrixXt<T> SMPLWrapper::getJointsTransposedGlobalTransformation_(const T
     {
         // Forward Kinematics Formula
         jointGlobalMats[i] = jointGlobalMats[this->joints_parents_[i]] 
-            * this->get3DLocalTransformMat_<T>(ePose.row(i), 
+            * this->get3DLocalTransformMat_<T>((pose + i*3),
                 jointLocations.row(i) - jointLocations.row(this->joints_parents_[i]));
         
         tmpPointGlobalTransform = jointGlobalMats[i] * this->get3DTranslationMat_<T>(-jointLocations.row(i));
@@ -207,20 +202,27 @@ inline MatrixXt<T> SMPLWrapper::getJointsTransposedGlobalTransformation_(const T
 }
 
 
-template<typename T, typename Derived1, typename Derived2>
-inline MatrixXt<T> SMPLWrapper::get3DLocalTransformMat_(const E::MatrixBase<Derived1>& jointAxisAngleRotation,
-    const E::MatrixBase<Derived2>& jointLocation) const //E::EigenBase<const T>
+template<typename T, typename Derived2>
+inline MatrixXt<T> SMPLWrapper::get3DLocalTransformMat_(const T * const jointAxisAngleRotation,
+    const E::MatrixBase<Derived2>& jointLocation) const //E::EigenBase<const T> const E::MatrixBase<Derived1>& 
 {    
-
-    
-
-
-
     MatrixXt<T> localTransform;
-    localTransform.setIdentity(4, 4);
+    localTransform.setIdentity(4, 4);   // in homogenious coordinates
     localTransform.block(0, 3, 3, 1) = jointLocation.transpose();
 
-    T norm = jointAxisAngleRotation.norm();
+#ifdef USE_CERES
+
+    T* rotationMat = new T[9];
+    ceres::AngleAxisToRotationMatrix(jointAxisAngleRotation, rotationMat);
+    localTransform.block(0, 0, 3, 3) = Eigen::Map<MatrixXt<T>>(rotationMat, 3, 3);
+
+    delete[] rotationMat;
+
+#else // USE_CERES
+
+    T norm = sqrt(jointAxisAngleRotation[0] * jointAxisAngleRotation[0] 
+        + jointAxisAngleRotation[1] * jointAxisAngleRotation[1]
+        + jointAxisAngleRotation[2] * jointAxisAngleRotation[2]);
     if (norm > 0.0001)  // don't waste computations on zero joint movement
     {
         // apply Rodrigues formula
@@ -229,18 +231,18 @@ inline MatrixXt<T> SMPLWrapper::get3DLocalTransformMat_(const E::MatrixBase<Deri
 
         MatrixXt<T> skew;
         skew.setZero(3, 3);
-        // TODO remove Auto to make this piece faster
-        auto axis = jointAxisAngleRotation / norm;
-        skew(0, 1) = -axis(2);
-        skew(0, 2) = axis(1);
-        skew(1, 0) = axis(2);
-        skew(1, 2) = -axis(0);
-        skew(2, 0) = -axis(1);
-        skew(2, 1) = axis(0);
+        skew(0, 1) = - jointAxisAngleRotation[2] / norm;
+        skew(0, 2) = jointAxisAngleRotation[1] / norm;
+        skew(1, 0) = jointAxisAngleRotation[2] / norm;
+        skew(1, 2) = - jointAxisAngleRotation[0] / norm;
+        skew(2, 0) = - jointAxisAngleRotation[1] / norm;
+        skew(2, 1) = jointAxisAngleRotation[0] / norm;
 
         exponent += skew * sin(norm) + skew * skew * ((T)1. - cos(norm));
         localTransform.block(0, 0, 3, 3) = exponent;
     }
+
+#endif // USE_CERES
 
     return localTransform;
 }
@@ -250,10 +252,8 @@ template<typename T, typename Derived>
 inline MatrixXt<T> SMPLWrapper::get3DTranslationMat_(const E::MatrixBase<Derived>& translationVector) const
 {
     MatrixXt<T> translation;
-    translation.setIdentity(4, 4);
+    translation.setIdentity(4, 4);  // in homogenious coordinates
     translation.block(0, 3, 3, 1) = translationVector.transpose();
-
-
 
     return translation;
 }
