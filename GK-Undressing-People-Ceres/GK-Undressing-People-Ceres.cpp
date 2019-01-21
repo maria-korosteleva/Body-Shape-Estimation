@@ -3,7 +3,7 @@
 //
 
 // WARNING! Uses win-specific features to create log directory 
-//#include <Windows.h>
+#include <Windows.h>
 #include "pch.h"
 #include <iostream>
 #include <ctime>
@@ -15,7 +15,7 @@
 
 #include "GeneralMesh.h"
 #include "SMPLWrapper.h"
-//#include "ShapeUnderClothOptimizer.h"
+#include "ShapeUnderClothOptimizer.h"
 
 /*
     TODO
@@ -60,71 +60,73 @@ std::string getNewLogFolder(const char * tag = "test")
     logName += buffer;
     logName += "/";
     
-    //CreateDirectory(logName.c_str(), NULL);
+    CreateDirectory(logName.c_str(), NULL);
 
     return logName;
 }
 
 
-//void logSMPLParams(double* pose, double* shape, std::string logFolderName)
-//{
-//    std::ofstream out(logFolderName + "smpl_params.txt");
-//
-//    out << "Pose params \n[ ";
-//    if (pose != nullptr)
-//        for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
-//            out << pose[i] << " , ";
-//    else
-//        for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
-//            out << "0." << " , ";
-//
-//    out << "]" << std::endl;
-//
-//    out << "Shape (betas) params \n[ ";
-//    if (shape != nullptr)
-//        for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; i++)
-//            out << shape[i] << " , ";
-//    else
-//        for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; i++)
-//            out << "0." << " , ";
-//    out << "]" << std::endl;
-//
-//    out.close();
-//}
+void logSMPLParams(double* pose, double* shape, std::string logFolderName)
+{
+    std::ofstream out(logFolderName + "smpl_params.txt");
+
+    out << "Pose params \n[ ";
+    if (pose != nullptr)
+        for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
+            out << pose[i] << " , ";
+    else
+        for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
+            out << "0." << " , ";
+
+    out << "]" << std::endl;
+
+    out << "Shape (betas) params \n[ ";
+    if (shape != nullptr)
+        for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; i++)
+            out << shape[i] << " , ";
+    else
+        for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; i++)
+            out << "0." << " , ";
+    out << "]" << std::endl;
+
+    out.close();
+}
 
 
 int main()
 {
-    GeneralMesh input("D:/Data/smpl_outs/smpl_1.obj");
+    GeneralMesh input("D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin.obj");
     std::cout << "Input mesh loaded!\n";
     SMPLWrapper smpl('f', "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
     std::cout << "SMPL model loaded\n";
     
-    std::string logFolderName = getNewLogFolder("dev");
+    std::string logFolderName = getNewLogFolder("pose_test");
     
-    /*
     // Run optimization
     ShapeUnderClothOptimizer optimizer(&smpl, input.getVertices());
     
     //// Redirect optimizer output to file
-    std::ofstream out(logFolderName + "optimization.txt");
-    std::streambuf *coutbuf = std::cout.rdbuf();    //save old buf
-    std::cout.rdbuf(out.rdbuf());                   //redirect std::cout to file!
-    std::cout << logFolderName + "optimization.txt" << std::endl;
+    //std::ofstream out(logFolderName + "optimization.txt");
+    //std::streambuf *coutbuf = std::cout.rdbuf();    //save old buf
+    //std::cout.rdbuf(out.rdbuf());                   //redirect std::cout to file!
+    //std::cout << logFolderName + "optimization.txt" << std::endl;
 
     optimizer.findOptimalParameters();
 
-    std::cout.rdbuf(coutbuf);   //  reset cout to standard output again
-    out.close();
-    std::cout << "Optimization finished!\n";
+    //std::cout.rdbuf(coutbuf);   //  reset cout to standard output again
+    //out.close();
+    //std::cout << "Optimization finished!\n";
 
     // Save the results
     double* shape_res = optimizer.getEstimatesShapeParams();
+    double* pose_res = optimizer.getEstimatesPoseParams();
+    logSMPLParams(pose_res, shape_res, logFolderName);
+    smpl.saveToObj(pose_res, shape_res, (logFolderName + "posed_shaped.obj"));
     smpl.saveToObj(nullptr, shape_res, (logFolderName + "unposed_shaped.obj"));
-    logSMPLParams(nullptr, shape_res, logFolderName);
-    */
+    smpl.saveToObj(pose_res, nullptr, (logFolderName + "posed_unshaped.obj"));
+    
 
-    double* pose = new double[SMPLWrapper::POSE_SIZE];
+    /*double* pose = new double[SMPLWrapper::POSE_SIZE];
     for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
         pose[i] = 0.;
     pose[69] = 1.;
@@ -132,12 +134,12 @@ int main()
     pose[52] =0.5;
     pose[53] = -1.;
     pose[5] = 2.;
-    pose[0] = -1.;
+    pose[0] = -1.;*/
     //smpl.saveToObj(pose, nullptr, (logFolderName + "posed_unshaped.obj"));
 
     // Visualize the output
     // TODO: add the input too. Meekyong knows something about two meshes  
-    Eigen::MatrixXd verts = smpl.calcModel<double>(pose, nullptr);
+    Eigen::MatrixXd verts = smpl.calcModel<double>(pose_res, shape_res);
     Eigen::MatrixXi faces = smpl.getFaces();
     igl::opengl::glfw::Viewer viewer;
     igl::opengl::glfw::imgui::ImGuiMenu menu;
@@ -148,6 +150,6 @@ int main()
     viewer.launch();
 
     // Cleaning
-    //delete[] shape_res;
-    delete[] pose;
+    delete[] shape_res;
+    delete[] pose_res;
 }

@@ -19,11 +19,10 @@ private:
 
 
 template<typename T>
-inline bool ModelToInputDistanceCostFunctor::operator()(const T * const shape, T * residual) const
+inline bool ModelToInputDistanceCostFunctor::operator()(const T * const pose, T * residual) const
 {
-    // shape smpl
-    T* pose = nullptr;
-    E::Matrix<T, E::Dynamic, E::Dynamic> verts = this->smpl_->calcModel<T>(pose, shape);
+    // evaluate smpl
+    E::Matrix<T, E::Dynamic, E::Dynamic> verts = this->smpl_->calcModel<T>(pose, nullptr);
 
     // difference with input
     Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> verts_diff = (*this->input_verts_).cast<T>() - verts;

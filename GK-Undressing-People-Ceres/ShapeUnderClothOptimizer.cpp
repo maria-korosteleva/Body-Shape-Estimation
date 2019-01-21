@@ -29,7 +29,15 @@ void ShapeUnderClothOptimizer::setInput(Eigen::MatrixXd* input_verts)
 
 double * ShapeUnderClothOptimizer::getEstimatesPoseParams()
 {
-    return nullptr;
+    if (this->pose_ != nullptr)
+    {
+        double * last_pose = new double[SMPLWrapper::POSE_SIZE];
+        for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
+            last_pose[i] = this->pose_[i];
+        return last_pose;
+    }
+    else
+        return nullptr;
 }
 
 
@@ -54,24 +62,48 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
     this->erase_params_();
 
     // init parameters
-    this->shape_ = new double[SMPLWrapper::SHAPE_SIZE];
-    this->zeros_(this->shape_, SMPLWrapper::SHAPE_SIZE);
+    // this->shape_ = new double[SMPLWrapper::SHAPE_SIZE];
+    // this->zeros_(this->shape_, SMPLWrapper::SHAPE_SIZE);
+    this->pose_ = new double[SMPLWrapper::POSE_SIZE];
+    this->zeros_(this->pose_, SMPLWrapper::POSE_SIZE);
 
     // construct a problem
     Problem problem;
     CostFunction* cost_function =
-        new AutoDiffCostFunction<DistCost, SMPLWrapper::VERTICES_NUM, SMPLWrapper::SHAPE_SIZE>(new DistCost(this->smpl_, this->input_verts_));
-    problem.AddResidualBlock(cost_function, nullptr, this->shape_);
+        new AutoDiffCostFunction<DistCost, SMPLWrapper::VERTICES_NUM, SMPLWrapper::POSE_SIZE>(new DistCost(this->smpl_, this->input_verts_));
+    problem.AddResidualBlock(cost_function, nullptr, this->pose_);
 
     // Run the solver!
     Solver::Options options;
-    options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
+    options.linear_solver_type = ceres::DENSE_QR;
     options.minimizer_progress_to_stdout = true;
 
     // print summary
     Solver::Summary summary;
     Solve(options, &problem, &summary);
     std::cout << summary.FullReport() << std::endl;
+
+#ifdef DEBUG
+    // Print last Gradient (?) and Jacobian
+    std::vector<double> gradient;
+    ceres::CRSMatrix jac;
+    problem.Evaluate(Problem::EvaluateOptions(), NULL, NULL, &gradient, &jac);
+    std::cout << "Gradient" << std::endl;
+    for (auto i = gradient.begin(); i != gradient.end(); ++i)
+    {
+        std::cout << *i << " ";
+    }
+    std::cout << std::endl;
+
+    //std::cout << "Jacobian (sparse)" << std::endl;
+    //std::vector<double> values = jac.values;
+    //for (auto i = values.begin(); i != values.end(); ++i)
+    //{
+    //    std::cout << *i << " ";
+    //}
+    //std::cout << std::endl;
+
+#endif // DEBUG
 }
 
 

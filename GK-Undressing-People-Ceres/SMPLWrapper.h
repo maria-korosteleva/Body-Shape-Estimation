@@ -111,7 +111,9 @@ template<typename T>
 inline MatrixXt<T> SMPLWrapper::calcModel(const T * const pose, const T *  const shape) const
 {
     MatrixXt<T> verts = this->verts_template_.cast<T>();
+#ifdef DEBUG
     std::cout << "Calc model" << std::endl;
+#endif // DEBUG
 
     if (shape != nullptr)
     {
@@ -121,10 +123,14 @@ inline MatrixXt<T> SMPLWrapper::calcModel(const T * const pose, const T *  const
     if (pose != nullptr)
     {
         this->poseSMPL_(pose, verts);
+#ifdef DEBUG
         std::cout << "Fin posing " << verts.rows() << " x " << verts.cols() << std::endl;
+#endif // DEBUG
     }
 
+#ifdef DEBUG
     std::cout << "Fin calculating" << std::endl;
+#endif // DEBUG
 
     return verts;
 }
@@ -144,7 +150,10 @@ inline void SMPLWrapper::shapeSMPL_(const T *  const shape, MatrixXt<T>& verts) 
 template<typename T>
 inline void SMPLWrapper::poseSMPL_(const T *  const pose, MatrixXt<T>& verts) const
 {
+#ifdef DEBUG
     std::cout << "pose" << std::endl;
+#endif // DEBUG
+
     MatrixXt<T> jointLocations = this->jointRegressorMat_.cast<T>() * verts;
 
     MatrixXt<T> jointsTransformation = this->getJointsTransposedGlobalTransformation_(pose, jointLocations); // .transpose();
@@ -166,7 +175,9 @@ inline MatrixXt<T> SMPLWrapper::getJointsTransposedGlobalTransformation_(const T
     // TODO decide if it's a good thing to store duplicates of result matrices in total and Result Mats
     // -- Yes it's a good thing, I need them for different purposes
 
+#ifdef DEBUG
     std::cout << "global transform" << std::endl;
+#endif // DEBUG
 
     const int homo_size = (SMPLWrapper::SPACE_DIM + 1);
     // Map pose to Eigen vector
@@ -200,31 +211,36 @@ template<typename T, typename Derived1, typename Derived2>
 inline MatrixXt<T> SMPLWrapper::get3DLocalTransformMat_(const E::MatrixBase<Derived1>& jointAxisAngleRotation,
     const E::MatrixBase<Derived2>& jointLocation) const //E::EigenBase<const T>
 {    
-    // apply Rodrigues formula
-    MatrixXt<T> exponent;
-    exponent.setIdentity(3, 3);
-    T norm = jointAxisAngleRotation.norm();
 
+    
+
+
+
+    MatrixXt<T> localTransform;
+    localTransform.setIdentity(4, 4);
+    localTransform.block(0, 3, 3, 1) = jointLocation.transpose();
+
+    T norm = jointAxisAngleRotation.norm();
     if (norm > 0.0001)  // don't waste computations on zero joint movement
     {
+        // apply Rodrigues formula
+        MatrixXt<T> exponent;
+        exponent.setIdentity(3, 3);
+
         MatrixXt<T> skew;
         skew.setZero(3, 3);
         // TODO remove Auto to make this piece faster
         auto axis = jointAxisAngleRotation / norm;
-        skew(0, 1) = - axis(2);
+        skew(0, 1) = -axis(2);
         skew(0, 2) = axis(1);
         skew(1, 0) = axis(2);
-        skew(1, 2) = - axis(0);
-        skew(2, 0) = - axis(1);
+        skew(1, 2) = -axis(0);
+        skew(2, 0) = -axis(1);
         skew(2, 1) = axis(0);
 
         exponent += skew * sin(norm) + skew * skew * ((T)1. - cos(norm));
+        localTransform.block(0, 0, 3, 3) = exponent;
     }
-
-    MatrixXt<T> localTransform;
-    localTransform.setIdentity(4, 4);
-    localTransform.block(0, 0, 3, 3) = exponent;
-    localTransform.block(0, 3, 3, 1) = jointLocation.transpose();
 
     return localTransform;
 }
@@ -236,6 +252,8 @@ inline MatrixXt<T> SMPLWrapper::get3DTranslationMat_(const E::MatrixBase<Derived
     MatrixXt<T> translation;
     translation.setIdentity(4, 4);
     translation.block(0, 3, 3, 1) = translationVector.transpose();
+
+
 
     return translation;
 }

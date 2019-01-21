@@ -1,5 +1,6 @@
 #pragma once
 #define GLOG_NO_ABBREVIATED_SEVERITIES
+#define DEBUG
 
 #include <Eigen/Eigen/Dense>
 #include "ceres/ceres.h"
