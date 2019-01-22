@@ -77,6 +77,8 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
     Solver::Options options;
     options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
     options.minimizer_progress_to_stdout = true;
+    //options.max_num_iterations = 150;
+    //options.use_nonmonotonic_steps
 
     // print summary
     Solver::Summary summary;

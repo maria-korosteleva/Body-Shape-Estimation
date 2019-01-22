@@ -31,13 +31,15 @@
     + log result params & objects
     + log result objects inside SMPL
     + SMPL wrapper Pose
-    - Pose estimation using ceres
-    -- ceres rotations vs non-ceres
-    -- simplify function hierarchy 
+    + Pose estimation using ceres
+    + ceres rotations vs non-ceres
+    + simplify function hierarchy 
     - point-to-surface distance
     - regularization
+    - move parameters outside
+    - make posing faster
     - directional pose estimation
-    - Idea: aloow start optimization from the last results
+    - Idea: allow start optimization from the last results
     - Idea: could keep some python scripts?
     - Idea: will the optimizer work for different types of the input blocks (so that optimization separation won't be needed)?
     + libigl menu
@@ -98,9 +100,9 @@ void logSMPLParams(double* pose, double* shape, std::string logFolderName)
 
 int main()
 {
-    std::string logFolderName = getNewLogFolder("smpl_out_shape_pose");
+    std::string logFolderName = getNewLogFolder("smpl_pose_50");
     
-    GeneralMesh input("D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin.obj");  // _custom_smpl
+    GeneralMesh input("D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin_custom_smpl.obj");  // _custom_smpl
     // For convenience
     igl::writeOBJ(logFolderName + "input.obj", *input.getVertices(), *input.getFaces());
     std::cout << "Input mesh loaded!\n";
@@ -110,7 +112,7 @@ int main()
     // Run optimization
     ShapeUnderClothOptimizer optimizer(&smpl, input.getVertices());
     
-    //// Redirect optimizer output to file
+    // Redirect optimizer output to file
     std::ofstream out(logFolderName + "optimization.txt");
     std::streambuf *coutbuf = std::cout.rdbuf();    //save old buf
     std::cout.rdbuf(out.rdbuf());                   //redirect std::cout to file!

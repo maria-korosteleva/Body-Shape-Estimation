@@ -30,7 +30,8 @@ inline bool ModelToInputDistanceCostFunctor::operator()(const T * const pose, co
     // final residuals
     for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
     {
-        residual[i] = sqrt(verts_diff(i, 0) * verts_diff(i, 0) + verts_diff(i, 0) * verts_diff(i, 0) + verts_diff(i, 0) * verts_diff(i, 0));
+        residual[i] = sqrt(verts_diff(i, 0) * verts_diff(i, 0) + verts_diff(i, 1) * verts_diff(i, 1) + verts_diff(i, 2) * verts_diff(i, 2));
     }
+
     return true;
 }

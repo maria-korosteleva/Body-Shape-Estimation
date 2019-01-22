@@ -7,6 +7,8 @@ TODO:
     - Add pose blendshape 
 */
 
+//#define DEBUG
+
 #include <assert.h>
 
 #include <Eigen/Eigen/Dense>
@@ -134,6 +136,17 @@ inline MatrixXt<T> SMPLWrapper::calcModel(const T * const pose, const T *  const
 
 #ifdef DEBUG
     std::cout << "Fin calculating" << std::endl;
+    //if (std::is_same_v<T, double>)
+    //{
+    //    for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
+    //    {
+    //        for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
+    //        {
+    //            std::cout << verts(i, j) << " ";
+    //        }
+    //        std::cout << std::endl;
+    //    }
+    //}
 #endif // DEBUG
 
     return verts;
