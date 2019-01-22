@@ -2,6 +2,9 @@
 /*
 The class is a wrapper around SMPL model. In 
 The class is able to calculate the SMPL model output based on pose and shape parameters.
+
+TODO: 
+    - Add pose blendshape 
 */
 
 #include <assert.h>
@@ -156,12 +159,11 @@ inline void SMPLWrapper::poseSMPL_(const T *  const pose, MatrixXt<T>& verts) co
 #endif // DEBUG
 
     MatrixXt<T> jointLocations = this->jointRegressorMat_.cast<T>() * verts;
-
     MatrixXt<T> jointsTransformation = this->getJointsTransposedGlobalTransformation_(pose, jointLocations); // .transpose();
 
     // TODO Use sparce matrices for LBS
     MatrixXt<T> LBSMat = this->getLBSMatrix_<T>(verts);
-    
+
     MatrixXt<T> homoVerts = LBSMat * jointsTransformation;
     verts = homoVerts.leftCols(SMPLWrapper::SPACE_DIM);
 }

@@ -62,16 +62,16 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
     this->erase_params_();
 
     // init parameters
-    // this->shape_ = new double[SMPLWrapper::SHAPE_SIZE];
-    // this->zeros_(this->shape_, SMPLWrapper::SHAPE_SIZE);
+    this->shape_ = new double[SMPLWrapper::SHAPE_SIZE];
+    this->zeros_(this->shape_, SMPLWrapper::SHAPE_SIZE);
     this->pose_ = new double[SMPLWrapper::POSE_SIZE];
     this->zeros_(this->pose_, SMPLWrapper::POSE_SIZE);
 
     // construct a problem
     Problem problem;
     CostFunction* cost_function =
-        new AutoDiffCostFunction<DistCost, SMPLWrapper::VERTICES_NUM, SMPLWrapper::POSE_SIZE>(new DistCost(this->smpl_, this->input_verts_));
-    problem.AddResidualBlock(cost_function, nullptr, this->pose_);
+        new AutoDiffCostFunction<DistCost, SMPLWrapper::VERTICES_NUM, SMPLWrapper::POSE_SIZE, SMPLWrapper::SHAPE_SIZE>(new DistCost(this->smpl_, this->input_verts_));
+    problem.AddResidualBlock(cost_function, nullptr, this->pose_, this->shape_);
 
     // Run the solver!
     Solver::Options options;
