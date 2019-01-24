@@ -34,11 +34,12 @@
     + Pose estimation using ceres
     + ceres rotations vs non-ceres
     + simplify function hierarchy 
-    - point-to-surface distance
-    - regularization
-    - move parameters outside
-    - make posing faster
-    - directional pose estimation
+    + regularization
+    - LBS optimization (sparse weight matrix etc)
+    - !! point-to-surface distance
+    - add translation
+    - move (important) parameters outside
+    - ? directional pose estimation
     - Idea: allow start optimization from the last results
     - Idea: could keep some python scripts?
     - Idea: will the optimizer work for different types of the input blocks (so that optimization separation won't be needed)?
@@ -100,7 +101,7 @@ void logSMPLParams(double* pose, double* shape, std::string logFolderName)
 
 int main()
 {
-    std::string logFolderName = getNewLogFolder("smpl_pose_50");
+    std::string logFolderName = getNewLogFolder("sp_reg_50");
     
     GeneralMesh input("D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin_custom_smpl.obj");  // _custom_smpl
     // For convenience
@@ -110,7 +111,8 @@ int main()
     std::cout << "SMPL model loaded\n";
 
     // Run optimization
-    ShapeUnderClothOptimizer optimizer(&smpl, input.getVertices());
+    ShapeUnderClothOptimizer optimizer(&smpl, input.getVertices(), "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
+    std::cout << "Optimizer loaded\n";
     
     // Redirect optimizer output to file
     std::ofstream out(logFolderName + "optimization.txt");
