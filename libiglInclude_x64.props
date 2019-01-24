@@ -5,7 +5,7 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\Maria\MyDocs\libs\libigl_jan\external\glfw\include;C:\Users\Maria\MyDocs\libs\libigl_jan\include;C:\Users\Maria\MyDocs\libs\libigl_jan\external\glad\include;C:\Users\Maria\MyDocs\libs\libigl_jan\external;C:\Users\Maria\MyDocs\libs\libigl_jan\external\libigl-imgui;C:\Users\Maria\MyDocs\libs\libigl_jan\external\imgui\examples;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Maria\MyDocs\libs\libigl_jan\include;C:\Users\Maria\MyDocs\libs\libigl_jan\external\glfw\include;C:\Users\Maria\MyDocs\libs\libigl_jan\external\glad\include;C:\Users\Maria\MyDocs\libs\libigl_jan\external\libigl-imgui;C:\Users\Maria\MyDocs\libs\libigl_jan\external\imgui\examples;C:\Users\Maria\MyDocs\libs\libigl_jan\external\imgui\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>

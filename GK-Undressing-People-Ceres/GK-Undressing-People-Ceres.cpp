@@ -38,6 +38,7 @@
     - LBS optimization (sparse weight matrix etc)
     - point-to-surface distance
     - add translation
+    - Log input name
 
     - move (important) parameters outside
     - ? directional pose estimation
@@ -112,17 +113,17 @@ void logSMPLParams(double* translation, double* pose, double* shape, std::string
 
 int main()
 {
-    std::string logFolderName = getNewLogFolder("spr_transl_50");
+    std::string logFolderName = getNewLogFolder("spr_transl_mean_50");
     
-    GeneralMesh input("D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin.obj");  // _custom_smpl
+    GeneralMesh input("D:/Data/smpl_outs/pose_50004_knees_270_dyna_fat.obj");  // _custom_smpl
     // For convenience
-    igl::writeOBJ(logFolderName + "input.obj", *input.getVertices(), *input.getFaces());
+    igl::writeOBJ(logFolderName + "input.obj", input.getVertices(), input.getFaces());
     std::cout << "Input mesh loaded!\n";
     SMPLWrapper smpl('f', "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
     std::cout << "SMPL model loaded\n";
 
     // Run optimization
-    ShapeUnderClothOptimizer optimizer(&smpl, input.getVertices(), "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
+    ShapeUnderClothOptimizer optimizer(&smpl, &input, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
     std::cout << "Optimizer loaded\n";
     
     // Redirect optimizer output to file
@@ -145,7 +146,6 @@ int main()
     smpl.saveToObj(translation_res, pose_res, shape_res, (logFolderName + "posed_shaped.obj"));
     smpl.saveToObj(translation_res, nullptr, shape_res, (logFolderName + "unposed_shaped.obj"));
     smpl.saveToObj(translation_res, pose_res, nullptr, (logFolderName + "posed_unshaped.obj"));
-    
 
  /*   double* pose_res = new double[SMPLWrapper::POSE_SIZE];
     double* shape_res = new double[SMPLWrapper::SHAPE_SIZE];

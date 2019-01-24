@@ -11,7 +11,7 @@ TODO:
 
 #include <assert.h>
 
-#include <Eigen/Eigen/Dense>
+#include <Eigen/Dense>
 #include <igl/readOBJ.h>
 #include <igl/writeOBJ.h>
 
@@ -47,9 +47,10 @@ public:
     SMPLWrapper(char, const char*);
     ~SMPLWrapper();
 
-    char getGender()                   { return gender_; };
-    E::MatrixXi getFaces()             { return this->faces_; };
-    E::MatrixXd getTemplateVertices()  { return this->verts_template_; };
+    char getGender()                    { return gender_; };
+    E::MatrixXi getFaces()              { return this->faces_; };
+    E::MatrixXd getTemplateVertices()   { return this->verts_template_; };
+    E::VectorXd getTemplateMeanPoint()  { return this->template_mean_point_; };
 
     // Pose/shape parameters can be nullptr: allows to get template/pose without shaping/shaping of the T-pose
     template <typename T>
@@ -72,11 +73,11 @@ private:
     // model info
     E::MatrixXi faces_;
     E::MatrixXd verts_template_;
+    E::VectorXd template_mean_point_;
     E::MatrixXd shape_diffs_[10];  // store only differences between blendshapes and template
     E::MatrixXd jointRegressorMat_;
     int joints_parents_[JOINTS_NUM];
     E::MatrixXd weights_;
-    E::MatrixXd joints_default_;
 
     // private functions
     void readTemplate_();

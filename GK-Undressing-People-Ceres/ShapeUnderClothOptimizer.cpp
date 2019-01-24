@@ -2,10 +2,12 @@
 #include "ShapeUnderClothOptimizer.h"
 
 
-ShapeUnderClothOptimizer::ShapeUnderClothOptimizer(SMPLWrapper* smpl, Eigen::MatrixXd* input_verts, const char* path_to_prior)
+ShapeUnderClothOptimizer::ShapeUnderClothOptimizer(SMPLWrapper* smpl, GeneralMesh* input, const char* path_to_prior)
 {
     this->smpl_ = smpl;
-    this->input_verts_ = input_verts;
+    this->input_ = input;
+
+    assert(input->getVertices().cols() == SMPLWrapper::SPACE_DIM && "World dimentions should be equal for SMPL and input mesh");
 
     // read prior info
     std::string path(path_to_prior);
@@ -27,9 +29,9 @@ void ShapeUnderClothOptimizer::setNewSMPLModel(SMPLWrapper* smpl)
 }
 
 
-void ShapeUnderClothOptimizer::setNewInput(Eigen::MatrixXd* input_verts)
+void ShapeUnderClothOptimizer::setNewInput(GeneralMesh * input)
 {
-    this->input_verts_ = input_verts;
+    this->input_ = input;
 }
 
 
@@ -53,6 +55,7 @@ double * ShapeUnderClothOptimizer::getEstimatesTranslationParams()
     else
         return nullptr;
 }
+
 
 double * ShapeUnderClothOptimizer::getEstimatesPoseParams()
 {
@@ -93,22 +96,44 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
 #endif // DEBUG
 
     // Init parameters
-    this->shape_ = new double[SMPLWrapper::SHAPE_SIZE];
-    this->zeros_(this->shape_, SMPLWrapper::SHAPE_SIZE);
+    this->translation_ = new double[SMPLWrapper::SPACE_DIM];
+    E::VectorXd translation_guess = this->input_->getMeanPoint() - this->smpl_->getTemplateMeanPoint();
+
+    assert(translation_guess.size() == SMPLWrapper::SPACE_DIM 
+        && "Calculated translation guess should have size equal to the SMPL world dimentionality");
+
+    for (int i = 0; i < SMPLWrapper::SPACE_DIM; ++i)
+        this->translation_[i] = translation_guess(i);
+
     this->pose_ = new double[SMPLWrapper::POSE_SIZE];
     this->zeros_(this->pose_, SMPLWrapper::POSE_SIZE);
-    this->translation_ = new double[SMPLWrapper::SPACE_DIM];
-    this->zeros_(this->translation_, SMPLWrapper::SPACE_DIM);
+    this->shape_ = new double[SMPLWrapper::SHAPE_SIZE];
+    this->zeros_(this->shape_, SMPLWrapper::SHAPE_SIZE);
 
 #ifdef DEBUG
+    std::cout << "Translation guess" << std::endl;
+    for (int i = 0; i < SMPLWrapper::SPACE_DIM; ++i)
+    {
+        std::cout << this->translation_[i] << " ";
+    }
+    std::cout << std::endl;
     std::cout << "Optimizer: construct a problem" << std::endl;
 #endif // DEBUG
 
     // Construct a problem
     Problem problem;
     CostFunction* cost_function =
-        new AutoDiffCostFunction<DistCost, SMPLWrapper::VERTICES_NUM, SMPLWrapper::SPACE_DIM, SMPLWrapper::POSE_SIZE, SMPLWrapper::SHAPE_SIZE>
-        (new DistCost(this->smpl_, this->input_verts_));
+        new AutoDiffCostFunction<DistCost, 
+                                SMPLWrapper::VERTICES_NUM, // num of residuals
+                                SMPLWrapper::SPACE_DIM, 
+                                SMPLWrapper::POSE_SIZE,
+                                SMPLWrapper::SHAPE_SIZE>(new DistCost(this->smpl_, this->input_));
+#ifdef DEBUG
+    std::cout << "Optimizer: add distance residual" << std::endl;
+#endif // DEBUG
+    problem.AddParameterBlock(this->translation_, SMPLWrapper::SPACE_DIM);
+    problem.AddParameterBlock(this->pose_, SMPLWrapper::POSE_SIZE);
+    problem.AddParameterBlock(this->shape_, SMPLWrapper::SHAPE_SIZE);
     problem.AddResidualBlock(cost_function, nullptr, this->translation_, this->pose_, this->shape_);
 
 #ifdef DEBUG
@@ -128,7 +153,7 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
     Solver::Options options;
     options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
     options.minimizer_progress_to_stdout = true;
-    //options.max_num_iterations = 500;
+    //options.max_num_iterations = 100;
     //options.use_nonmonotonic_steps
 
     // Print summary
@@ -205,11 +230,12 @@ void ShapeUnderClothOptimizer::readMeanPose_(const std::string path)
     inFile.close();
 
 #ifdef DEBUG
-    for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
-    {
-        std::cout << this->mean_pose_(i) << " ";
-    }
-    std::cout << std::endl;
+    std::cout << "Read mean pose" << std::endl;
+    //for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
+    //{
+    //    std::cout << this->mean_pose_(i) << " ";
+    //}
+    //std::cout << std::endl;
 #endif // DEBUG
 }
 
@@ -244,14 +270,15 @@ void ShapeUnderClothOptimizer::readStiffness_(const std::string path)
     inFile.close();
 
 #ifdef DEBUG
-    for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
-    {
-        for (int j = 0; j < SMPLWrapper::POSE_SIZE; j++)
-        {
-            std::cout << this->stiffness_(i, j) << " ";
-        }
-        std::cout << std::endl;
-    }
+    std::cout << "Read stiffness matrix" << std::endl;
+    //for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
+    //{
+    //    for (int j = 0; j < SMPLWrapper::POSE_SIZE; j++)
+    //    {
+    //        std::cout << this->stiffness_(i, j) << " ";
+    //    }
+    //    std::cout << std::endl;
+    //}
     
 #endif // DEBUG
 

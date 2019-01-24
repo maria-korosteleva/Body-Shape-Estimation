@@ -2,9 +2,11 @@
 #include "ModelToInputDistanceCostFunctor.h"
 
 
-ModelToInputDistanceCostFunctor::ModelToInputDistanceCostFunctor(SMPLWrapper * smpl, Eigen::MatrixXd * input_verts)
-    : smpl_(smpl), input_verts_(input_verts)
-{}
+ModelToInputDistanceCostFunctor::ModelToInputDistanceCostFunctor(SMPLWrapper * smpl, GeneralMesh * input)
+    : smpl_(smpl), input_(input)
+{
+    this->input_vertices_ = this->input_->getVertices();
+}
 
 
 ModelToInputDistanceCostFunctor::~ModelToInputDistanceCostFunctor()

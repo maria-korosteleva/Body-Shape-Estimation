@@ -1,20 +1,22 @@
 #pragma once
 
-#include <Eigen/Eigen/Dense>
+#include <Eigen/Dense>
 #include "SMPLWrapper.h"
+#include "GeneralMesh.h"
 
 class ModelToInputDistanceCostFunctor
 {
 public:
-    ModelToInputDistanceCostFunctor(SMPLWrapper*, Eigen::MatrixXd*);
+    ModelToInputDistanceCostFunctor(SMPLWrapper*, GeneralMesh*);
     ~ModelToInputDistanceCostFunctor();
 
     template <typename T>
     bool operator()(const T * const, const T * const, const T * const, T *) const;
 
 private:
-    SMPLWrapper* smpl_;
-    Eigen::MatrixXd* input_verts_;
+    SMPLWrapper * smpl_;
+    GeneralMesh * input_;
+    E::MatrixXd input_vertices_;
 };
 
 
@@ -27,14 +29,14 @@ inline bool ModelToInputDistanceCostFunctor::operator()(const T * const translat
     // translate
     for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
     {
-        for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)
+        for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
         {
             verts(i, j) += translation[j];
         }
     }
 
     // difference with input
-    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> verts_diff = (*this->input_verts_).cast<T>() - verts;
+    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> verts_diff = (this->input_vertices_).cast<T>() - verts;
 
     // final residuals
     for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)

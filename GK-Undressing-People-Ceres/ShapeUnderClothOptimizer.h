@@ -2,11 +2,12 @@
 #define GLOG_NO_ABBREVIATED_SEVERITIES
 //#define DEBUG
 
-#include <Eigen/Eigen/Dense>
+#include <Eigen/Dense>
 #include "ceres/ceres.h"
 #include "ceres/normal_prior.h"
 #include "glog/logging.h"
 
+#include "GeneralMesh.h"
 #include "SMPLWrapper.h"
 #include "ModelToInputDistanceCostFunctor.h"
 using DistCost = ModelToInputDistanceCostFunctor;
@@ -25,37 +26,37 @@ using ceres::ScaledLoss;
 class ShapeUnderClothOptimizer
 {
 public:
-    ShapeUnderClothOptimizer(SMPLWrapper*, Eigen::MatrixXd*, const char*);
+    ShapeUnderClothOptimizer(SMPLWrapper*, GeneralMesh*, const char*);
     ~ShapeUnderClothOptimizer();
     
     void setNewSMPLModel(SMPLWrapper*);
-    void setNewInput(Eigen::MatrixXd*);
+    void setNewInput(GeneralMesh*);
     void setNewPriorPath(const char*);
 
-    double* getEstimatesTranslationParams();
-    double* getEstimatesPoseParams();
-    double* getEstimatesShapeParams();
+    double * getEstimatesTranslationParams();
+    double * getEstimatesPoseParams();
+    double * getEstimatesShapeParams();
 
     void findOptimalParameters();
 
 private:
     // fixed
-    SMPLWrapper* smpl_ = nullptr;
-    Eigen::MatrixXd* input_verts_ = nullptr;
+    SMPLWrapper * smpl_ = nullptr;
+    GeneralMesh * input_ = nullptr;
     ceres::Matrix stiffness_;
     ceres::Vector mean_pose_;
 
     // last params
-    double* translation_ = nullptr;
-    double* pose_ = nullptr;
-    double* shape_ = nullptr;
+    double * translation_ = nullptr;
+    double * pose_ = nullptr;
+    double * shape_ = nullptr;
 
     void erase_params_();
 
     // utils
     void readMeanPose_(const std::string);
     void readStiffness_(const std::string);
-    static void zeros_(double*, std::size_t);
+    static void zeros_(double *, std::size_t);
     static void printArray_(double*, std::size_t);
 };
 

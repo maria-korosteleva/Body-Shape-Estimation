@@ -20,6 +20,9 @@ GeneralMesh::GeneralMesh(const char* input_filename_c)
     {
         throw std::exception("Unsupported type of input mesh. Supported types: .obj, .ply");
     }
+
+    // calculate mean point
+    this->mean_point_ = this->verts_.colwise().mean();
 }
 
 
