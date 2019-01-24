@@ -59,7 +59,7 @@ public:
     E::MatrixXd calcJointLocations(const double*);
 
     // Pose/shape parameters can be nullptr: allows to get template/pose without shaping/shaping of the T-pose
-    void saveToObj(const double*, const double*, const std::string) const;
+    void saveToObj(const double*, const double*, const double*, const std::string) const;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

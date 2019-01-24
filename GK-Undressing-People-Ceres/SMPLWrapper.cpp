@@ -62,9 +62,21 @@ E::MatrixXd SMPLWrapper::calcJointLocations(const double * shape)
 }
 
 
-void SMPLWrapper::saveToObj(const double* pose, const double* shape, const std::string path) const
+void SMPLWrapper::saveToObj(const double* translation, const double* pose, const double* shape, const std::string path) const
 {
     MatrixXt<double> verts = this->calcModel<double>(pose, shape);
+    
+    if (translation != nullptr)
+    {
+        for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
+        {
+            for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)
+            {
+                verts(i, j) += translation[j];
+            }
+        }
+    }
+
     igl::writeOBJ(path, verts, this->faces_);
 }
 

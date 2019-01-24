@@ -41,6 +41,19 @@ void ShapeUnderClothOptimizer::setNewPriorPath(const char * prior_path)
 }
 
 
+double * ShapeUnderClothOptimizer::getEstimatesTranslationParams()
+{
+    if (this->translation_ != nullptr)
+    {
+        double * last_translation = new double[SMPLWrapper::SPACE_DIM];
+        for (int i = 0; i < SMPLWrapper::SPACE_DIM; i++)
+            last_translation[i] = this->translation_[i];
+        return last_translation;
+    }
+    else
+        return nullptr;
+}
+
 double * ShapeUnderClothOptimizer::getEstimatesPoseParams()
 {
     if (this->pose_ != nullptr)
@@ -84,6 +97,8 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
     this->zeros_(this->shape_, SMPLWrapper::SHAPE_SIZE);
     this->pose_ = new double[SMPLWrapper::POSE_SIZE];
     this->zeros_(this->pose_, SMPLWrapper::POSE_SIZE);
+    this->translation_ = new double[SMPLWrapper::SPACE_DIM];
+    this->zeros_(this->translation_, SMPLWrapper::SPACE_DIM);
 
 #ifdef DEBUG
     std::cout << "Optimizer: construct a problem" << std::endl;
@@ -92,8 +107,9 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
     // Construct a problem
     Problem problem;
     CostFunction* cost_function =
-        new AutoDiffCostFunction<DistCost, SMPLWrapper::VERTICES_NUM, SMPLWrapper::POSE_SIZE, SMPLWrapper::SHAPE_SIZE>(new DistCost(this->smpl_, this->input_verts_));
-    problem.AddResidualBlock(cost_function, nullptr, this->pose_, this->shape_);
+        new AutoDiffCostFunction<DistCost, SMPLWrapper::VERTICES_NUM, SMPLWrapper::SPACE_DIM, SMPLWrapper::POSE_SIZE, SMPLWrapper::SHAPE_SIZE>
+        (new DistCost(this->smpl_, this->input_verts_));
+    problem.AddResidualBlock(cost_function, nullptr, this->translation_, this->pose_, this->shape_);
 
 #ifdef DEBUG
     std::cout << "Optimizer: Add regularizer" << std::endl;
@@ -146,6 +162,12 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
 
 void ShapeUnderClothOptimizer::erase_params_()
 {
+    if (this->translation_ != nullptr)
+    {
+        delete[] this->translation_;
+        this->translation_ = nullptr;
+    }
+
     if (this->pose_ != nullptr)
     {
         delete[] this->pose_;

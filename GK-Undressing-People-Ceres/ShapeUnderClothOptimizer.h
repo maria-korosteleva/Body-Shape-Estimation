@@ -32,6 +32,7 @@ public:
     void setNewInput(Eigen::MatrixXd*);
     void setNewPriorPath(const char*);
 
+    double* getEstimatesTranslationParams();
     double* getEstimatesPoseParams();
     double* getEstimatesShapeParams();
 
@@ -45,6 +46,7 @@ private:
     ceres::Vector mean_pose_;
 
     // last params
+    double* translation_ = nullptr;
     double* pose_ = nullptr;
     double* shape_ = nullptr;
 

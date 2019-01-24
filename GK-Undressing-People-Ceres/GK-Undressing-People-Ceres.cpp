@@ -36,8 +36,9 @@
     + simplify function hierarchy 
     + regularization
     - LBS optimization (sparse weight matrix etc)
-    - !! point-to-surface distance
+    - point-to-surface distance
     - add translation
+
     - move (important) parameters outside
     - ? directional pose estimation
     - Idea: allow start optimization from the last results
@@ -72,9 +73,19 @@ std::string getNewLogFolder(const char * tag = "test")
 }
 
 
-void logSMPLParams(double* pose, double* shape, std::string logFolderName)
+void logSMPLParams(double* translation, double* pose, double* shape, std::string logFolderName)
 {
     std::ofstream out(logFolderName + "smpl_params.txt");
+
+    out << "Translation \n[ ";
+    if (translation != nullptr)
+        for (int i = 0; i < SMPLWrapper::SPACE_DIM; i++)
+            out << translation[i] << " , ";
+    else
+        for (int i = 0; i < SMPLWrapper::SPACE_DIM; i++)
+            out << "0." << " , ";
+
+    out << "]" << std::endl;
 
     out << "Pose params \n[ ";
     if (pose != nullptr)
@@ -101,9 +112,9 @@ void logSMPLParams(double* pose, double* shape, std::string logFolderName)
 
 int main()
 {
-    std::string logFolderName = getNewLogFolder("sp_reg_50");
+    std::string logFolderName = getNewLogFolder("spr_transl_50");
     
-    GeneralMesh input("D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin_custom_smpl.obj");  // _custom_smpl
+    GeneralMesh input("D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin.obj");  // _custom_smpl
     // For convenience
     igl::writeOBJ(logFolderName + "input.obj", *input.getVertices(), *input.getFaces());
     std::cout << "Input mesh loaded!\n";
@@ -129,10 +140,11 @@ int main()
     // Save the results
     double* shape_res = optimizer.getEstimatesShapeParams();
     double* pose_res = optimizer.getEstimatesPoseParams();
-    logSMPLParams(pose_res, shape_res, logFolderName);
-    smpl.saveToObj(pose_res, shape_res, (logFolderName + "posed_shaped.obj"));
-    smpl.saveToObj(nullptr, shape_res, (logFolderName + "unposed_shaped.obj"));
-    smpl.saveToObj(pose_res, nullptr, (logFolderName + "posed_unshaped.obj"));
+    double* translation_res = optimizer.getEstimatesTranslationParams();
+    logSMPLParams(translation_res, pose_res, shape_res, logFolderName);
+    smpl.saveToObj(translation_res, pose_res, shape_res, (logFolderName + "posed_shaped.obj"));
+    smpl.saveToObj(translation_res, nullptr, shape_res, (logFolderName + "unposed_shaped.obj"));
+    smpl.saveToObj(translation_res, pose_res, nullptr, (logFolderName + "posed_unshaped.obj"));
     
 
  /*   double* pose_res = new double[SMPLWrapper::POSE_SIZE];
