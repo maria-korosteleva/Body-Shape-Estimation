@@ -12,6 +12,7 @@ TODO:
 #include <assert.h>
 
 #include <Eigen/Dense>
+#include <Eigen/SparseCore>
 #include <igl/readOBJ.h>
 #include <igl/writeOBJ.h>
 
@@ -77,7 +78,8 @@ private:
     E::MatrixXd shape_diffs_[10];  // store only differences between blendshapes and template
     E::MatrixXd jointRegressorMat_;
     int joints_parents_[JOINTS_NUM];
-    E::MatrixXd weights_;
+    // E::MatrixXd weights_;
+    E::SparseMatrix<double> weights_;
 
     // private functions
     void readTemplate_();
@@ -112,7 +114,7 @@ private:
     // Both are expected to be filled and alive at the moment of invocation.
     // Adapted copy of igl::lbs_matrix(..)
     template <typename T>
-    MatrixXt<T> getLBSMatrix_(MatrixXt<T>&) const;
+    E::SparseMatrix<T> getLBSMatrix_(MatrixXt<T>&) const;
 };
 
 
@@ -178,7 +180,7 @@ inline void SMPLWrapper::poseSMPL_(const T *  const pose, MatrixXt<T>& verts) co
     MatrixXt<T> jointsTransformation = this->getJointsTransposedGlobalTransformation_(pose, jointLocations);
 
     // TODO Use sparce matrices for LBS
-    MatrixXt<T> LBSMat = this->getLBSMatrix_<T>(verts);
+    E::SparseMatrix<T> LBSMat = this->getLBSMatrix_<T>(verts);
 
     verts = LBSMat * jointsTransformation;
 }
@@ -279,32 +281,56 @@ inline MatrixXt<T> SMPLWrapper::get3DTranslationMat_(const E::MatrixBase<Derived
 
 
 template<typename T>
-inline MatrixXt<T> SMPLWrapper::getLBSMatrix_(MatrixXt<T>& verts) const
+inline E::SparseMatrix<T> SMPLWrapper::getLBSMatrix_(MatrixXt<T>& verts) const
 {
     // assignments below doesn't work without casting
-    MatrixXt<T> weights = this->weights_.cast<T>();
-    MatrixXt<T> LBSMat;
+    // MatrixXt<T> weights = this->weights_.cast<T>();
+    //MatrixXt<T> LBSMat;
+    
     const int dim = SMPLWrapper::SPACE_DIM;
     const int nVerts = SMPLWrapper::VERTICES_NUM;
     const int nJoints = SMPLWrapper::JOINTS_NUM;  // Number of joints
 
+    std::cout << "LBSMat: start" << std::endl;
+
     // +1 goes for homogenious coordinates
-    LBSMat.resize(nVerts, (dim + 1) * nJoints);
-    for (int j = 0; j < nJoints; j++)
+    E::SparseMatrix<T, E::RowMajor> LBSMat(nVerts, (dim + 1) * nJoints);
+    LBSMat.reserve(E::VectorXi::Constant(nVerts, (dim + 1) * 4));     // only 4 non-zero weights for each vertex
+
+    // go over non-zero weight elements
+    for (int k = 0; k < this->weights_.outerSize(); ++k)
     {
-        E::Matrix<T, E::Dynamic, 1> Wj = weights.block(0, j, nVerts, 1);
-        for (int i = 0; i < (dim + 1); i++)
+        for (E::SparseMatrix<double>::InnerIterator it(this->weights_, k); it; ++it)
         {
-            if (i < dim)
+            T weight = (T)it.value();
+            int idx_vert = it.row();   // = row index = it.index(); = inner index in column major
+            int idx_joint = k;   // = k = it.col()
+            //std::cout << "One weight " << weight << " " << idx_vert << " " << idx_joint << std::endl;
+            for (int idx_dim = 0; idx_dim < SMPLWrapper::SPACE_DIM; idx_dim++)
             {
-                LBSMat.col(i + j * (dim + 1)) = Wj.cwiseProduct(verts.col(i));
+                //std::cout << "insert " << idx_vert << " " << idx_joint + idx_dim << std::endl;
+                LBSMat.insert(idx_vert, idx_joint + idx_dim) = weight * verts(idx_vert, idx_dim);
             }
-            else
-            {
-                LBSMat.col(i + j * (dim + 1)).array() = weights.block(0, j, nVerts, 1).array();
-            }
+            LBSMat.insert(idx_vert, idx_joint + SMPLWrapper::SPACE_DIM) = weight;
         }
     }
+
+    //for (int j = 0; j < nJoints; j++)
+    //{
+    //    //E::Matrix<T, E::Dynamic, 1> Wj = weights.block(0, j, nVerts, 1);
+    //    E::SparseMatrix<T> Wj (weights.block(0, j, nVerts, 1));
+    //    for (int i = 0; i < (dim + 1); i++)
+    //    {
+    //        if (i < dim)
+    //        {
+    //            LBSMat.col(i + j * (dim + 1)) = Wj.cwiseProduct(verts.col(i));
+    //        }
+    //        else
+    //        {
+    //            LBSMat.col(i + j * (dim + 1)) = weights.block(0, j, nVerts, 1);
+    //        }
+    //    }
+    //}
 
     return LBSMat;
 }

@@ -147,11 +147,19 @@ void SMPLWrapper::readWeights_()
     if (joints_n != SMPLWrapper::JOINTS_NUM || verts_n != SMPLWrapper::VERTICES_NUM)
         throw std::exception("Weights info (number of joints and vertices) is incompatible with the model");
 
-    this->weights_.resize(verts_n, joints_n);
-
+    std::vector<E::Triplet<double>> tripletList;
+    double tmp;
     for (int i = 0; i < verts_n; i++)
+    {
         for (int j = 0; j < joints_n; j++)
-            inFile >> this->weights_(i, j);
+        {
+            inFile >> tmp;
+            if (tmp > 0.00001)  // non-zero weight
+                tripletList.push_back(E::Triplet<double>(i, j, tmp));
+        }
+    }
+    this->weights_.resize(verts_n, joints_n);
+    this->weights_.setFromTriplets(tripletList.begin(), tripletList.end());
 
     inFile.close();
 }
