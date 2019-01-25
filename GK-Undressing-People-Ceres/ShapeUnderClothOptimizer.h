@@ -33,6 +33,8 @@ public:
     void setNewInput(GeneralMesh*);
     void setNewPriorPath(const char*);
 
+    // The getters below return a copy of the corresponding parameters
+    // So the caller is responsible for the memory allocated
     double * getEstimatesTranslationParams();
     double * getEstimatesPoseParams();
     double * getEstimatesShapeParams();
