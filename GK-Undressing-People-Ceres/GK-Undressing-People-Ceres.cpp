@@ -37,8 +37,8 @@
     + regularization
     - LBS optimization (sparse weight matrix etc)
     - point-to-surface distance
-    - add translation
-    - Log input name
+    + add translation
+    + Log input name
 
     - move (important) parameters outside
     - ? directional pose estimation
@@ -113,9 +113,11 @@ void logSMPLParams(double* translation, double* pose, double* shape, std::string
 
 int main()
 {
-    std::string logFolderName = getNewLogFolder("spr_transl_mean_50");
+    const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_fat.obj";
+
+    std::string logFolderName = getNewLogFolder("sprt_opt_50");
     
-    GeneralMesh input("D:/Data/smpl_outs/pose_50004_knees_270_dyna_fat.obj");  // _custom_smpl
+    GeneralMesh input(input_name);  // _custom_smpl
     // For convenience
     igl::writeOBJ(logFolderName + "input.obj", input.getVertices(), input.getFaces());
     std::cout << "Input mesh loaded!\n";
@@ -130,6 +132,7 @@ int main()
     std::ofstream out(logFolderName + "optimization.txt");
     std::streambuf *coutbuf = std::cout.rdbuf();    //save old buf
     std::cout.rdbuf(out.rdbuf());                   //redirect std::cout to file!
+    std::cout << "Input file: " << input_name << std::endl;
     std::cout << logFolderName + "optimization.txt" << std::endl;
 
     optimizer.findOptimalParameters();
