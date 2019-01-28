@@ -36,8 +36,9 @@ public:
     static constexpr std::size_t SHAPE_SIZE = 10;
     static constexpr std::size_t SPACE_DIM = 3;
     static constexpr std::size_t POSE_SIZE = 72;
-    static constexpr std::size_t VERTICES_NUM = 6890;
     static constexpr std::size_t JOINTS_NUM = POSE_SIZE / SPACE_DIM;
+    static constexpr std::size_t VERTICES_NUM = 6890;
+    static constexpr std::size_t WEIGHTS_BY_VERTEX = 4;     // number of joints each vertex depend on
 
     /*
     Class should be initialized with the gender of the model to use and with the path to the model folder,
@@ -78,7 +79,6 @@ private:
     E::MatrixXd shape_diffs_[10];  // store only differences between blendshapes and template
     E::MatrixXd jointRegressorMat_;
     int joints_parents_[JOINTS_NUM];
-    // E::MatrixXd weights_;
     E::SparseMatrix<double> weights_;
 
     // private functions
@@ -110,9 +110,9 @@ private:
     template <typename T, typename Derived>
     MatrixXt<T> get3DTranslationMat_(const E::MatrixBase<Derived>&) const;
     
-    // Composes weights (object local) and given vertices in the rest pose into LBSMatrix. 
+    // Composes weights (object local) and given vertices in the rest pose into (Sparse) LBSMatrix. 
     // Both are expected to be filled and alive at the moment of invocation.
-    // Adapted copy of igl::lbs_matrix(..)
+    // Inspired by igl::lbs_matrix(..)
     template <typename T>
     E::SparseMatrix<T> getLBSMatrix_(MatrixXt<T>&) const;
 };
@@ -283,19 +283,17 @@ inline MatrixXt<T> SMPLWrapper::get3DTranslationMat_(const E::MatrixBase<Derived
 template<typename T>
 inline E::SparseMatrix<T> SMPLWrapper::getLBSMatrix_(MatrixXt<T>& verts) const
 {
-    // assignments below doesn't work without casting
-    // MatrixXt<T> weights = this->weights_.cast<T>();
-    //MatrixXt<T> LBSMat;
-    
+  
     const int dim = SMPLWrapper::SPACE_DIM;
     const int nVerts = SMPLWrapper::VERTICES_NUM;
     const int nJoints = SMPLWrapper::JOINTS_NUM;  // Number of joints
-
+#ifdef DEBUG
     std::cout << "LBSMat: start" << std::endl;
-
+#endif // DEBUG
     // +1 goes for homogenious coordinates
-    E::SparseMatrix<T, E::RowMajor> LBSMat(nVerts, (dim + 1) * nJoints);
-    LBSMat.reserve(E::VectorXi::Constant(nVerts, (dim + 1) * 4));     // only 4 non-zero weights for each vertex
+    E::SparseMatrix<T> LBSMat(nVerts, (dim + 1) * nJoints);
+    std::vector<E::Triplet<T>> LBSTripletList;
+    LBSTripletList.reserve(nVerts * (dim + 1) * SMPLWrapper::WEIGHTS_BY_VERTEX);     // for faster filling performance
 
     // go over non-zero weight elements
     for (int k = 0; k < this->weights_.outerSize(); ++k)
@@ -303,34 +301,15 @@ inline E::SparseMatrix<T> SMPLWrapper::getLBSMatrix_(MatrixXt<T>& verts) const
         for (E::SparseMatrix<double>::InnerIterator it(this->weights_, k); it; ++it)
         {
             T weight = (T)it.value();
-            int idx_vert = it.row();   // = row index = it.index(); = inner index in column major
-            int idx_joint = k;   // = k = it.col()
-            //std::cout << "One weight " << weight << " " << idx_vert << " " << idx_joint << std::endl;
-            for (int idx_dim = 0; idx_dim < SMPLWrapper::SPACE_DIM; idx_dim++)
-            {
-                //std::cout << "insert " << idx_vert << " " << idx_joint + idx_dim << std::endl;
-                LBSMat.insert(idx_vert, idx_joint + idx_dim) = weight * verts(idx_vert, idx_dim);
-            }
-            LBSMat.insert(idx_vert, idx_joint + SMPLWrapper::SPACE_DIM) = weight;
+            int idx_vert = it.row();
+            int idx_joint = it.col();
+            // premultiply weigths by vertex homogenious coordinates
+            for (int idx_dim = 0; idx_dim < dim; idx_dim++)
+                LBSTripletList.push_back(E::Triplet<T>(idx_vert, idx_joint * (dim + 1) + idx_dim, weight * verts(idx_vert, idx_dim)));
+            LBSTripletList.push_back(E::Triplet<T>(idx_vert, idx_joint * (dim + 1) + dim, weight));
         }
     }
-
-    //for (int j = 0; j < nJoints; j++)
-    //{
-    //    //E::Matrix<T, E::Dynamic, 1> Wj = weights.block(0, j, nVerts, 1);
-    //    E::SparseMatrix<T> Wj (weights.block(0, j, nVerts, 1));
-    //    for (int i = 0; i < (dim + 1); i++)
-    //    {
-    //        if (i < dim)
-    //        {
-    //            LBSMat.col(i + j * (dim + 1)) = Wj.cwiseProduct(verts.col(i));
-    //        }
-    //        else
-    //        {
-    //            LBSMat.col(i + j * (dim + 1)) = weights.block(0, j, nVerts, 1);
-    //        }
-    //    }
-    //}
+    LBSMat.setFromTriplets(LBSTripletList.begin(), LBSTripletList.end());
 
     return LBSMat;
 }
