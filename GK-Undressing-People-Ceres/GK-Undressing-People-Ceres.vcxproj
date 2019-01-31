@@ -160,6 +160,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AbsoluteVertsToMeshDistance.h" />
     <ClInclude Include="GeneralMesh.h" />
     <ClInclude Include="ModelToInputDistanceCostFunctor.h" />
     <ClInclude Include="pch.h" />
@@ -167,6 +168,7 @@
     <ClInclude Include="SMPLWrapper.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AbsoluteVertsToMeshDistance.cpp" />
     <ClCompile Include="GeneralMesh.cpp" />
     <ClCompile Include="GK-Undressing-People-Ceres.cpp" />
     <ClCompile Include="ModelToInputDistanceCostFunctor.cpp" />

@@ -2,7 +2,7 @@
 // It shows the example of how to use the code developed for the Undressing the input scan
 //
 
-#define DEBUG
+//#define DEBUG
 // WARNING! Uses win-specific features to create log directory 
 #include <Windows.h>
 #include "pch.h"
@@ -17,6 +17,8 @@
 #include "GeneralMesh.h"
 #include "SMPLWrapper.h"
 #include "ShapeUnderClothOptimizer.h"
+
+//#include "AbsoluteVertsToMeshDistance.h"
 
 /*
     TODO
@@ -113,9 +115,10 @@ void logSMPLParams(double* translation, double* pose, double* shape, std::string
 
 int main()
 {
-    const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_fat.obj";
+    //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_fat.obj";
+    const char* input_name = "D:/Data/smpl_outs/smpl_2.obj";
 
-    std::string logFolderName = getNewLogFolder("sprt_opt_sparse_50");
+    std::string logFolderName = getNewLogFolder("sprtop_p-to-s_50");
 
     GeneralMesh input(input_name);  // _custom_smpl
     // For convenience
@@ -169,10 +172,40 @@ int main()
 
     //smpl.saveToObj(&pose_v[0], &shape_v[0], (logFolderName + "pose_50004_knees_270_dyna_thin_custom_smpl.obj"));
 
-    // Visualize the output
-    // TODO: add the input too. Meekyong knows something about two meshes  
+//     Visualize the output
+//     TODO: add the input too. Meekyong knows something about two meshes  
     Eigen::MatrixXd verts = smpl.calcModel<double>(pose_res, shape_res);
     Eigen::MatrixXi faces = smpl.getFaces();
+
+//    double * dists = new double[SMPLWrapper::VERTICES_NUM];
+//    AbsoluteVertsToMeshDistance distF(&input);
+//    double * smpl_verts = verts.data();
+//    distF.Evaluate(&smpl_verts, dists, NULL);
+//
+//#ifdef DEBUG
+//    std::cout << "MAIN Abs dists evaluate" << std::endl;
+//#endif // DEBUG
+//
+//    //Eigen::Map<const Eigen::Matrix<const double, Eigen::Dynamic, Eigen::Dynamic>> vertices(parameters[0], SMPLWrapper::VERTICES_NUM, SMPLWrapper::SPACE_DIM);
+//    //Eigen::Map<const Eigen::MatrixXd> vertices(parameters[0], SMPLWrapper::VERTICES_NUM, SMPLWrapper::SPACE_DIM);
+//    const Eigen::MatrixXd vertices = Eigen::Map<const Eigen::MatrixXd>(smpl_verts, SMPLWrapper::VERTICES_NUM, SMPLWrapper::SPACE_DIM);
+//
+//    Eigen::VectorXd sqrD;
+//    Eigen::MatrixXd closest_points;
+//    Eigen::VectorXi closest_face_ids;
+//
+//#ifdef DEBUG
+//    std::cout << "Abs dists evaluate: start igl calculation" << std::endl;
+//#endif // DEBUG
+//
+//    igl::point_mesh_squared_distance(vertices, input.getVertices(), input.getFaces(), sqrD, closest_face_ids, closest_points);
+//
+//#ifdef DEBUG
+//    std::cout << "Abs dists evaluate: Fin igl calculation" << std::endl;
+//#endif // DEBUG
+//
+//    delete[] dists;
+
     igl::opengl::glfw::Viewer viewer;
     igl::opengl::glfw::imgui::ImGuiMenu menu;
     viewer.plugins.push_back(&menu);
