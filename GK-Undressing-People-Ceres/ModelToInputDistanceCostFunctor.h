@@ -6,6 +6,20 @@
 #include "SMPLWrapper.h"
 #include "GeneralMesh.h"
 #include "AbsoluteVertsToMeshDistance.h"
+#include "igl/point_mesh_squared_distance.h"
+
+#define DEBUG
+
+class AbsoluteVertsToMeshDistanceFunctor {
+public:
+    AbsoluteVertsToMeshDistanceFunctor(GeneralMesh * input)
+        : toMesh_(input) {};
+    ~AbsoluteVertsToMeshDistanceFunctor() {};
+    bool operator()(double const * parameters, double * residuals) const;
+private:
+    GeneralMesh * toMesh_;
+};
+
 
 class ModelToInputDistanceCostFunctor
 {
@@ -15,22 +29,21 @@ public:
     ~ModelToInputDistanceCostFunctor();
 
     template <typename T>
-    bool operator()(const T * const, const T * const, const T * const, T *) const;
+    bool operator()(const T * const, const T * const, T *) const;
 
 private:
     SMPLWrapper * smpl_;
     GeneralMesh * input_;
-    E::MatrixXd input_vertices_;
 
     ceres::CostFunctionToFunctor<SMPLWrapper::VERTICES_NUM, SMPLWrapper::VERTICES_NUM * SMPLWrapper::SPACE_DIM> absDist_;
 };
 
 
 template<typename T>
-inline bool ModelToInputDistanceCostFunctor::operator()(const T * const translation, const T * const pose, const T * const shape, T * residual) const
+inline bool ModelToInputDistanceCostFunctor::operator()(const T * const translation, const T * const shape, T * residual) const     // const T * const pose, 
 {
     // evaluate smpl
-    E::Matrix<T, E::Dynamic, E::Dynamic> verts = this->smpl_->calcModel<T>(pose, shape);
+    E::Matrix<T, E::Dynamic, E::Dynamic> verts = this->smpl_->calcModel<T>(nullptr, shape);
 
     // translate
     for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)

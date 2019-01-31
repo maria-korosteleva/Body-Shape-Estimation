@@ -50,22 +50,27 @@ bool AbsoluteVertsToMeshDistance::Evaluate(double const * const * parameters, do
         // If jacobians[i] is not NULL, the user is required to compute the Jacobian of the residual vector 
         // with respect to parameters[i] and store it in this array, i.e.
         // jacobians[i][r * parameter_block_sizes_[i] + c] = d residual[r] / d parameters[i][c]
-        // jacobians[0][0] = -1;
-        // non-zero elements
+
         // Gradient for each vertex correspondes to the distance from this vertex to the input mesh. (Heuritics). 
 #ifdef DEBUG
         std::cout << "Abs dists evaluate: jacobian evaluation" << std::endl;
 #endif // DEBUG
         for (int i = 0; i < SMPLWrapper::VERTICES_NUM; ++i)
         {
-            for (int j = 0; i < SMPLWrapper::VERTICES_NUM; ++i)
+            for (int j = 0; j < SMPLWrapper::VERTICES_NUM; ++j)
             {
                 if (i == j)
+                {
+                    //std::cout << i << std::endl;
                     for (int k = 0; k < SMPLWrapper::SPACE_DIM; ++k)
                     {
                         jacobians[0][i * SMPLWrapper::VERTICES_NUM * SMPLWrapper::SPACE_DIM + j * SMPLWrapper::SPACE_DIM + k]
                             = 2 * (vertices(j, k) - closest_points(j, k));
+                    //    std::cout << jacobians[0][i * SMPLWrapper::VERTICES_NUM * SMPLWrapper::SPACE_DIM + j * SMPLWrapper::SPACE_DIM + k]
+                    //        << " ";
                     }
+                   // std::cout << std::endl;
+                }
                 else
                     for (int k = 0; k < SMPLWrapper::SPACE_DIM; ++k)
                     {

@@ -126,24 +126,21 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
         new AutoDiffCostFunction<DistCost, 
                                 SMPLWrapper::VERTICES_NUM, // num of residuals
                                 SMPLWrapper::SPACE_DIM, 
-                                SMPLWrapper::POSE_SIZE,
+                                //SMPLWrapper::POSE_SIZE,
                                 SMPLWrapper::SHAPE_SIZE>(new DistCost(this->smpl_, this->input_));
 #ifdef DEBUG
     std::cout << "Optimizer: add distance residual" << std::endl;
 #endif // DEBUG
-    problem.AddParameterBlock(this->translation_, SMPLWrapper::SPACE_DIM);
-    problem.AddParameterBlock(this->pose_, SMPLWrapper::POSE_SIZE);
-    problem.AddParameterBlock(this->shape_, SMPLWrapper::SHAPE_SIZE);
-    problem.AddResidualBlock(cost_function, nullptr, this->translation_, this->pose_, this->shape_);
+    problem.AddResidualBlock(cost_function, nullptr, this->translation_, this->shape_);     // this->pose_, 
 
 #ifdef DEBUG
     std::cout << "Optimizer: Add regularizer" << std::endl;
 #endif // DEBUG
 
     // Add regularizer
-    CostFunction* prior = new NormalPrior(this->stiffness_, this->mean_pose_);
-    LossFunction* scale_prior = new ScaledLoss(NULL, 0.001, ceres::TAKE_OWNERSHIP);
-    problem.AddResidualBlock(prior, scale_prior, this->pose_);
+    //CostFunction* prior = new NormalPrior(this->stiffness_, this->mean_pose_);
+    //LossFunction* scale_prior = new ScaledLoss(NULL, 0.001, ceres::TAKE_OWNERSHIP);
+    //problem.AddResidualBlock(prior, scale_prior, this->pose_);
 
 #ifdef DEBUG
     std::cout << "Optimizer: Run Solver" << std::endl;

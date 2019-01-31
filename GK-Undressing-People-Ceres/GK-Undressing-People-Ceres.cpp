@@ -3,6 +3,7 @@
 //
 
 //#define DEBUG
+//#define EIGEN_STACK_ALLOCATION_LIMIT 0
 // WARNING! Uses win-specific features to create log directory 
 #include <Windows.h>
 #include "pch.h"
@@ -39,19 +40,20 @@
     + regularization
     + LBS optimization (sparse weight matrix etc)
     - point-to-surface distance
+        - Idea: try numerical derivative for point-to-surface distance
     + add translation
     + Log input name
 
     - move (important) parameters outside
-    - ? directional pose estimation
+    - directional pose estimation -- idea: add it to the main objective as additional resudual 
     - Idea: allow start optimization from the last results
-    - Idea: could keep some python scripts?
-    - Idea: will the optimizer work for different types of the input blocks (so that optimization separation won't be needed)?
-    + libigl menu
     - libigl as static library
     - SMPL wrapper avalible for everyone
-    - Readme with installation notes
-    - learning curve visualization
+    + Idea: could keep some python scripts?
+    + Idea: will the optimizer work for different types of the input blocks (so that optimization separation won't be needed)?
+    + libigl menu
+    + Readme with installation notes
+    x learning curve visualization
 */
 
 std::string getNewLogFolder(const char * tag = "test")
@@ -132,16 +134,16 @@ int main()
     std::cout << "Optimizer loaded\n";
     
     // Redirect optimizer output to file
-    std::ofstream out(logFolderName + "optimization.txt");
-    std::streambuf *coutbuf = std::cout.rdbuf();    //save old buf
-    std::cout.rdbuf(out.rdbuf());                   //redirect std::cout to file!
-    std::cout << "Input file: " << input_name << std::endl;
-    std::cout << logFolderName + "optimization.txt" << std::endl;
+    //std::ofstream out(logFolderName + "optimization.txt");
+    //std::streambuf *coutbuf = std::cout.rdbuf();    //save old buf
+    //std::cout.rdbuf(out.rdbuf());                   //redirect std::cout to file!
+    //std::cout << "Input file: " << input_name << std::endl;
+    //std::cout << logFolderName + "optimization.txt" << std::endl;
 
     optimizer.findOptimalParameters();
 
-    std::cout.rdbuf(coutbuf);   //  reset cout to standard output again
-    out.close();
+    //std::cout.rdbuf(coutbuf);   //  reset cout to standard output again
+    //out.close();
     std::cout << "Optimization finished!\n";
 
     // Save the results
