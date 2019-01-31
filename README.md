@@ -14,7 +14,7 @@ The project is developed under Windows 10, using Visual Studio 2017 x64, and hav
 VS property sheets to work with the latter two libraries are provided for your reference.
 
 ## Tips for installing Ceres
-1. Make sure to use x64 compiler for all the installations
+1. Make sure to use x64 compiler for all installations.
 1. Ceres its dependencies need to be compiled as dlls. For that check the option "BUILD SHARES LIBS" when configuring the installation with CMAKE each time a new library in installed. 
 1. Add the paths to the dlls generated to the PATH environment variable. This will eliminate the need to copy dlls to the folder containg the .exe file of the project.
 1. Ceres required dependencies are glog and gflags. Glog depends on gflags, so it's needed to install the glags before glog.
