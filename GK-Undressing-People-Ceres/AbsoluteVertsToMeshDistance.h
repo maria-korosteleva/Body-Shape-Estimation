@@ -5,6 +5,8 @@
 #include "SMPLWrapper.h"
 #include "igl/point_mesh_squared_distance.h"
 
+//#define DEBUG
+
 class AbsoluteVertsToMeshDistance : public ceres::SizedCostFunction<SMPLWrapper::VERTICES_NUM, SMPLWrapper::VERTICES_NUM * SMPLWrapper::SPACE_DIM>
 {
 public:

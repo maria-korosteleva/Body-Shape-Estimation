@@ -102,8 +102,8 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
     assert(translation_guess.size() == SMPLWrapper::SPACE_DIM 
         && "Calculated translation guess should have size equal to the SMPL world dimentionality");
 
-    for (int i = 0; i < SMPLWrapper::SPACE_DIM; ++i)
-        this->translation_[i] = translation_guess(i);
+    //for (int i = 0; i < SMPLWrapper::SPACE_DIM; ++i)
+    //    this->translation_[i] = translation_guess(i);
 
     this->pose_ = new double[SMPLWrapper::POSE_SIZE];
     this->zeros_(this->pose_, SMPLWrapper::POSE_SIZE);
@@ -125,13 +125,11 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
     CostFunction* cost_function =
         new AutoDiffCostFunction<DistCost, 
                                 SMPLWrapper::VERTICES_NUM, // num of residuals
-                                SMPLWrapper::SPACE_DIM, 
-                                //SMPLWrapper::POSE_SIZE,
-                                SMPLWrapper::SHAPE_SIZE>(new DistCost(this->smpl_, this->input_));
+                                SMPLWrapper::SPACE_DIM>(new DistCost(this->smpl_, this->input_));      //SMPLWrapper::POSE_SIZE, SMPLWrapper::SHAPE_SIZE
 #ifdef DEBUG
     std::cout << "Optimizer: add distance residual" << std::endl;
 #endif // DEBUG
-    problem.AddResidualBlock(cost_function, nullptr, this->translation_, this->shape_);     // this->pose_, 
+    problem.AddResidualBlock(cost_function, nullptr, this->translation_);     // this->pose_, , this->shape_
 
 #ifdef DEBUG
     std::cout << "Optimizer: Add regularizer" << std::endl;
@@ -149,13 +147,17 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
     // Run the solver!
     Solver::Options options;
     options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
+    // options.linear_solver_type = ceres::DENSE_QR;
     options.minimizer_progress_to_stdout = true;
-    //options.max_num_iterations = 100;
-    //options.use_nonmonotonic_steps
+    // options.max_num_consecutive_invalid_steps = 20;     // default seems to be less than that
+    // options.trust_region_strategy_type = ceres::DOGLEG;
+    // options.max_num_iterations = 100;
+    // options.use_nonmonotonic_steps = true;
 
     // Print summary
     Solver::Summary summary;
     Solve(options, &problem, &summary);
+    std::cout << "Summary:" << std::endl;
     std::cout << summary.FullReport() << std::endl;
 
 #ifdef DEBUG

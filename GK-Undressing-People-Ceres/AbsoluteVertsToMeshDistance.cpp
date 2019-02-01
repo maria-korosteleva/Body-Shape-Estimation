@@ -20,9 +20,6 @@ bool AbsoluteVertsToMeshDistance::Evaluate(double const * const * parameters, do
     std::cout << this->parameter_block_sizes().size() << std::endl;
     std::cout << "Abs dists evaluate" << std::endl;
 #endif // DEBUG
-
-    //Eigen::Map<const Eigen::Matrix<const double, Eigen::Dynamic, Eigen::Dynamic>> vertices(parameters[0], SMPLWrapper::VERTICES_NUM, SMPLWrapper::SPACE_DIM);
-    //Eigen::Map<const Eigen::MatrixXd> vertices(parameters[0], SMPLWrapper::VERTICES_NUM, SMPLWrapper::SPACE_DIM);
     const Eigen::MatrixXd vertices = Eigen::Map<const Eigen::MatrixXd>(parameters[0], SMPLWrapper::VERTICES_NUM, SMPLWrapper::SPACE_DIM);
 
     Eigen::VectorXd sqrD;
@@ -37,53 +34,56 @@ bool AbsoluteVertsToMeshDistance::Evaluate(double const * const * parameters, do
 
 #ifdef DEBUG
     std::cout << "Abs dists evaluate: Fin igl calculation" << std::endl;
+    std::cout << "Dist Sum " << sqrD.sum() << std::endl;
 #endif // DEBUG
 
     assert(sqrD.size() == SMPLWrapper::VERTICES_NUM && "Size of the set of distances should equal main parameters");
     assert(closest_points.size() == SMPLWrapper::VERTICES_NUM && "Size of the set of distances should equal main parameters");
 
     for (int i = 0; i < SMPLWrapper::VERTICES_NUM; ++i)
-        residuals[i] = sqrD(i);
+    {
+        residuals[i] = sqrt(sqrD(i));
+    }
 
     if (jacobians != NULL && jacobians[0] != NULL) {
-        //jacobians[i] is a row - major array of size num_residuals x parameter_block_sizes_[i].
+        // jacobians[i] is a row - major array of size num_residuals x parameter_block_sizes_[i].
         // If jacobians[i] is not NULL, the user is required to compute the Jacobian of the residual vector 
         // with respect to parameters[i] and store it in this array, i.e.
         // jacobians[i][r * parameter_block_sizes_[i] + c] = d residual[r] / d parameters[i][c]
 
-        // Gradient for each vertex correspondes to the distance from this vertex to the input mesh. (Heuritics). 
+        // Gradient for each vertex correspondes to the distance from this vertex to the input mesh.
 #ifdef DEBUG
         std::cout << "Abs dists evaluate: jacobian evaluation" << std::endl;
 #endif // DEBUG
-        for (int i = 0; i < SMPLWrapper::VERTICES_NUM; ++i)
+        for (int i = 0; i < SMPLWrapper::VERTICES_NUM * SMPLWrapper::VERTICES_NUM * SMPLWrapper::SPACE_DIM; ++i)
         {
-            for (int j = 0; j < SMPLWrapper::VERTICES_NUM; ++j)
-            {
-                if (i == j)
-                {
-                    //std::cout << i << std::endl;
-                    for (int k = 0; k < SMPLWrapper::SPACE_DIM; ++k)
-                    {
-                        jacobians[0][i * SMPLWrapper::VERTICES_NUM * SMPLWrapper::SPACE_DIM + j * SMPLWrapper::SPACE_DIM + k]
-                            = 2 * (vertices(j, k) - closest_points(j, k));
-                    //    std::cout << jacobians[0][i * SMPLWrapper::VERTICES_NUM * SMPLWrapper::SPACE_DIM + j * SMPLWrapper::SPACE_DIM + k]
-                    //        << " ";
-                    }
-                   // std::cout << std::endl;
-                }
-                else
-                    for (int k = 0; k < SMPLWrapper::SPACE_DIM; ++k)
-                    {
-                        jacobians[0][i * SMPLWrapper::VERTICES_NUM * SMPLWrapper::SPACE_DIM + j * SMPLWrapper::SPACE_DIM + k] = 0.;
-                    }
-                /*std::cout << jacobians[0][i * SMPLWrapper::VERTICES_NUM * SMPLWrapper::SPACE_DIM + j * SMPLWrapper::SPACE_DIM + 0]
-                    << " "
-                    << jacobians[0][i * SMPLWrapper::VERTICES_NUM * SMPLWrapper::SPACE_DIM + j * SMPLWrapper::SPACE_DIM + 1]
-                    << " "
-                    << jacobians[0][i * SMPLWrapper::VERTICES_NUM * SMPLWrapper::SPACE_DIM + j * SMPLWrapper::SPACE_DIM + 2]
-                    << std::endl;*/
-            }
+            jacobians[0][i] = 0;
         }
+        for (int j = 0; j < SMPLWrapper::VERTICES_NUM; ++j)
+        {
+            //std::cout << j << std::endl;
+            for (int k = 0; k < SMPLWrapper::SPACE_DIM; ++k)
+            {
+                jacobians[0][j * SMPLWrapper::VERTICES_NUM * SMPLWrapper::SPACE_DIM + j * SMPLWrapper::SPACE_DIM + k]
+                    = (vertices(j, k) - closest_points(j, k)) / residuals[j];
+              //  std::cout << jacobians[0][j * SMPLWrapper::VERTICES_NUM * SMPLWrapper::SPACE_DIM + j * SMPLWrapper::SPACE_DIM + k]
+                //    << " ";
+            }
+            double length = (vertices(j, 0) - closest_points(j, 0)) * (vertices(j, 0) - closest_points(j, 0))
+                + (vertices(j, 1) - closest_points(j, 1)) * (vertices(j, 1) - closest_points(j, 1))
+                + (vertices(j, 2) - closest_points(j, 2)) * (vertices(j, 2) - closest_points(j, 2));
+            //std::cout << length << " ? " << sqrD(j) << std::endl;
+        }
+
+        //for (int i = 0; i < SMPLWrapper::VERTICES_NUM; ++i)
+        //{
+        //    for (int j = 0; j < SMPLWrapper::VERTICES_NUM * SMPLWrapper::SPACE_DIM; ++j)
+        //    {
+        //        std::cout << jacobians[0][i * SMPLWrapper::VERTICES_NUM * SMPLWrapper::SPACE_DIM + j]
+        //            << " ";
+        //    }
+        //    std::cout << std::endl;
+        //}
     }
 
     return true;

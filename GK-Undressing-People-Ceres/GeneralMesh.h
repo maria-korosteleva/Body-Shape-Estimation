@@ -10,9 +10,9 @@ public:
     GeneralMesh(const char*);
     ~GeneralMesh();
 
-    Eigen::MatrixXi getFaces()      { return this->faces_; };
-    Eigen::MatrixXd getVertices()   { return this->verts_; };
-    Eigen::VectorXd getMeanPoint()  { return this->mean_point_; };
+    const Eigen::MatrixXi& getFaces() const      { return this->faces_; };
+    const Eigen::MatrixXd& getVertices() const   { return this->verts_; };
+    const Eigen::VectorXd& getMeanPoint() const  { return this->mean_point_; };
 
 private:
     Eigen::MatrixXd verts_;

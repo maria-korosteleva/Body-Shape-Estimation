@@ -49,10 +49,10 @@ public:
     SMPLWrapper(char, const char*);
     ~SMPLWrapper();
 
-    char getGender()                    { return gender_; };
-    E::MatrixXi getFaces()              { return this->faces_; };
-    E::MatrixXd getTemplateVertices()   { return this->verts_template_; };
-    E::VectorXd getTemplateMeanPoint()  { return this->template_mean_point_; };
+    char getGender() const                    { return gender_; };
+    const E::MatrixXi& getFaces() const              { return this->faces_; };
+    const E::MatrixXd& getTemplateVertices() const   { return this->verts_template_; };
+    const E::VectorXd& getTemplateMeanPoint() const  { return this->template_mean_point_; };
 
     // Pose/shape parameters can be nullptr: allows to get template/pose without shaping/shaping of the T-pose
     template <typename T>

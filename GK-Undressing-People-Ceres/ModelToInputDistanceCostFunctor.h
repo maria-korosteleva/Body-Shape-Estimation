@@ -8,7 +8,7 @@
 #include "AbsoluteVertsToMeshDistance.h"
 #include "igl/point_mesh_squared_distance.h"
 
-#define DEBUG
+//#define DEBUG
 
 class AbsoluteVertsToMeshDistanceFunctor {
 public:
@@ -29,7 +29,7 @@ public:
     ~ModelToInputDistanceCostFunctor();
 
     template <typename T>
-    bool operator()(const T * const, const T * const, T *) const;
+    bool operator()(const T * const, T *) const;
 
 private:
     SMPLWrapper * smpl_;
@@ -40,10 +40,10 @@ private:
 
 
 template<typename T>
-inline bool ModelToInputDistanceCostFunctor::operator()(const T * const translation, const T * const shape, T * residual) const     // const T * const pose, 
+inline bool ModelToInputDistanceCostFunctor::operator()(const T * const translation, T * residual) const     // const T * const pose, const T * const shape, 
 {
     // evaluate smpl
-    E::Matrix<T, E::Dynamic, E::Dynamic> verts = this->smpl_->calcModel<T>(nullptr, shape);
+    E::Matrix<T, E::Dynamic, E::Dynamic> verts = this->smpl_->calcModel<T>(nullptr, nullptr);
 
     // translate
     for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
@@ -57,17 +57,18 @@ inline bool ModelToInputDistanceCostFunctor::operator()(const T * const translat
     // difference with input
     // Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> verts_diff = (this->input_vertices_).cast<T>() - verts;
     // distance to input
-    T * dists = new T[SMPLWrapper::VERTICES_NUM];
-    this->absDist_(verts.data(), dists);
+    //T * dists = new T[SMPLWrapper::VERTICES_NUM];
+
+    this->absDist_(verts.data(), residual);
 
     // final residuals
-    for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
-    {
-        //residual[i] = sqrt(verts_diff(i, 0) * verts_diff(i, 0) + verts_diff(i, 1) * verts_diff(i, 1) + verts_diff(i, 2) * verts_diff(i, 2));
-        residual[i] = sqrt(dists[i]);
-    }
+    //for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
+    //{
+    //    //residual[i] = sqrt(verts_diff(i, 0) * verts_diff(i, 0) + verts_diff(i, 1) * verts_diff(i, 1) + verts_diff(i, 2) * verts_diff(i, 2));
+    //    residual[i] = sqrt(dists[i]);
+    //}
 
-    delete[] dists;
+    //delete[] dists;
 
     return true;
 }

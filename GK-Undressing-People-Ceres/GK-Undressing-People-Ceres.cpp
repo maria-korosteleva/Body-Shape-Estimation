@@ -14,6 +14,7 @@
 
 #include <igl/opengl/glfw/Viewer.h>
 #include <igl/opengl/glfw/imgui/ImGuiMenu.h>
+#include <igl/point_mesh_squared_distance.h>
 
 #include "GeneralMesh.h"
 #include "SMPLWrapper.h"
@@ -120,7 +121,7 @@ int main()
     //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_fat.obj";
     const char* input_name = "D:/Data/smpl_outs/smpl_2.obj";
 
-    std::string logFolderName = getNewLogFolder("sprtop_p-to-s_50");
+    std::string logFolderName = getNewLogFolder("sprtop_p-to-s_trans_50");
 
     GeneralMesh input(input_name);  // _custom_smpl
     // For convenience
@@ -134,16 +135,16 @@ int main()
     std::cout << "Optimizer loaded\n";
     
     // Redirect optimizer output to file
-    //std::ofstream out(logFolderName + "optimization.txt");
-    //std::streambuf *coutbuf = std::cout.rdbuf();    //save old buf
-    //std::cout.rdbuf(out.rdbuf());                   //redirect std::cout to file!
-    //std::cout << "Input file: " << input_name << std::endl;
-    //std::cout << logFolderName + "optimization.txt" << std::endl;
+    std::ofstream out(logFolderName + "optimization.txt");
+    std::streambuf *coutbuf = std::cout.rdbuf();    //save old buf
+    std::cout.rdbuf(out.rdbuf());                   //redirect std::cout to file!
+    std::cout << "Input file: " << input_name << std::endl;
+    std::cout << logFolderName + "optimization.txt" << std::endl;
 
     optimizer.findOptimalParameters();
 
-    //std::cout.rdbuf(coutbuf);   //  reset cout to standard output again
-    //out.close();
+    std::cout.rdbuf(coutbuf);   //  reset cout to standard output again
+    out.close();
     std::cout << "Optimization finished!\n";
 
     // Save the results
@@ -151,9 +152,10 @@ int main()
     double* pose_res = optimizer.getEstimatesPoseParams();
     double* translation_res = optimizer.getEstimatesTranslationParams();
     logSMPLParams(translation_res, pose_res, shape_res, logFolderName);
+    std::cout << "Estimated translation" << translation_res[0] << " " << translation_res[1] << " " << translation_res[2] << std::endl;
     smpl.saveToObj(translation_res, pose_res, shape_res, (logFolderName + "posed_shaped.obj"));
-    smpl.saveToObj(translation_res, nullptr, shape_res, (logFolderName + "unposed_shaped.obj"));
-    smpl.saveToObj(translation_res, pose_res, nullptr, (logFolderName + "posed_unshaped.obj"));
+    //smpl.saveToObj(translation_res, nullptr, shape_res, (logFolderName + "unposed_shaped.obj"));
+    //smpl.saveToObj(translation_res, pose_res, nullptr, (logFolderName + "posed_unshaped.obj"));
 
     //double* pose_res = new double[SMPLWrapper::POSE_SIZE];
     //double* shape_res = new double[SMPLWrapper::SHAPE_SIZE];
@@ -177,7 +179,16 @@ int main()
 //     Visualize the output
 //     TODO: add the input too. Meekyong knows something about two meshes  
     Eigen::MatrixXd verts = smpl.calcModel<double>(pose_res, shape_res);
+    // translate
+    for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
+        for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
+            verts(i, j) += translation_res[j];
     Eigen::MatrixXi faces = smpl.getFaces();
+
+    Eigen::VectorXd sqrD;
+    Eigen::MatrixXd closest_points;
+    Eigen::VectorXi closest_face_ids;
+    igl::point_mesh_squared_distance(verts, input.getVertices(), input.getFaces(), sqrD, closest_face_ids, closest_points);
 
 //    double * dists = new double[SMPLWrapper::VERTICES_NUM];
 //    AbsoluteVertsToMeshDistance distF(&input);
@@ -208,12 +219,15 @@ int main()
 //
 //    delete[] dists;
 
+
+
     igl::opengl::glfw::Viewer viewer;
     igl::opengl::glfw::imgui::ImGuiMenu menu;
     viewer.plugins.push_back(&menu);
     viewer.data().set_mesh(verts, faces);
     //viewer.data().set_points(Eigen::RowVector3d(1., 1., 0.), Eigen::RowVector3d(1., 1., 0.));
-    //viewer.data().set_points(joints, Eigen::RowVector3d(1., 1., 0.));
+    viewer.data().add_points(closest_points, Eigen::RowVector3d(1., 1., 0.));
+    viewer.data().add_edges(verts, closest_points, Eigen::RowVector3d(1., 0., 0.));
     viewer.launch();
 
     // Cleaning

@@ -4,9 +4,9 @@
 
 ModelToInputDistanceCostFunctor::ModelToInputDistanceCostFunctor(SMPLWrapper * smpl, GeneralMesh * input)
     : smpl_(smpl), input_(input), 
-    absDist_(new AbsoluteVertsToMeshDistance(input))
-        //new ceres::NumericDiffCostFunction<AbsoluteVertsToMeshDistanceFunctor, ceres::CENTRAL, SMPLWrapper::VERTICES_NUM, SMPLWrapper::VERTICES_NUM * SMPLWrapper::SPACE_DIM>(
-        //    new AbsoluteVertsToMeshDistanceFunctor(input)))
+    absDist_(new ceres::NumericDiffCostFunction<AbsoluteVertsToMeshDistanceFunctor, ceres::CENTRAL, SMPLWrapper::VERTICES_NUM, SMPLWrapper::VERTICES_NUM * SMPLWrapper::SPACE_DIM>(
+            new AbsoluteVertsToMeshDistanceFunctor(input)))
+    // (new AbsoluteVertsToMeshDistance(input))
 {
 #ifdef DEBUG
     std::cout << "ModelToInputDistanceCost" << std::endl;
@@ -22,9 +22,9 @@ bool AbsoluteVertsToMeshDistanceFunctor::operator()(double const * parameters, d
 {
 #ifdef DEBUG
  //   std::cout << this->parameter_block_sizes().size() << std::endl;
-    
-#endif // DEBUG
     std::cout << "Abs dists evaluate" << std::endl;
+#endif // DEBUG
+    std::cout << "Numerical evaluate" << std::endl;
     const Eigen::MatrixXd vertices = Eigen::Map<const Eigen::MatrixXd>(parameters, SMPLWrapper::VERTICES_NUM, SMPLWrapper::SPACE_DIM);
 
     Eigen::VectorXd sqrD;
@@ -45,7 +45,7 @@ bool AbsoluteVertsToMeshDistanceFunctor::operator()(double const * parameters, d
     assert(closest_points.size() == SMPLWrapper::VERTICES_NUM && "Size of the set of distances should equal main parameters");
 
     for (int i = 0; i < SMPLWrapper::VERTICES_NUM; ++i)
-        residuals[i] = sqrD(i);
+        residuals[i] = sqrt(sqrD(i));
 
     return true;
 }
