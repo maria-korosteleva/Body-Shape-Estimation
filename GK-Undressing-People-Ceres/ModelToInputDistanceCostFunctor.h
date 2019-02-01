@@ -43,14 +43,25 @@ template<typename T>
 inline bool ModelToInputDistanceCostFunctor::operator()(const T * const translation, T * residual) const     // const T * const pose, const T * const shape, 
 {
     // evaluate smpl
-    E::Matrix<T, E::Dynamic, E::Dynamic> verts = this->smpl_->calcModel<T>(nullptr, nullptr);
+    //E::Matrix<T, E::Dynamic, E::Dynamic> verts = this->smpl_->calcModel<T>(nullptr, nullptr);
+    //E::Matrix<T, E::Dynamic, E::Dynamic> verts = this->smpl_->getTemplateVertices();
+
+    T* verts_d = new T[SMPLWrapper::SPACE_DIM * SMPLWrapper::VERTICES_NUM];
 
     // translate
-    for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
+    //for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
+    //{
+    //    for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
+    //    {
+    //        verts(i, j) += translation[j];
+    //    }
+    //}
+    // column-major
+    for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
     {
-        for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
+        for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
         {
-            verts(i, j) += translation[j];
+            verts_d[j * SMPLWrapper::VERTICES_NUM + i] = this->smpl_->getTemplateVertices()(i, j) + translation[j];
         }
     }
 
@@ -59,7 +70,7 @@ inline bool ModelToInputDistanceCostFunctor::operator()(const T * const translat
     // distance to input
     //T * dists = new T[SMPLWrapper::VERTICES_NUM];
 
-    this->absDist_(verts.data(), residual);
+    this->absDist_(verts_d, residual);
 
     // final residuals
     //for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
@@ -69,6 +80,7 @@ inline bool ModelToInputDistanceCostFunctor::operator()(const T * const translat
     //}
 
     //delete[] dists;
+    delete[] verts_d;
 
     return true;
 }

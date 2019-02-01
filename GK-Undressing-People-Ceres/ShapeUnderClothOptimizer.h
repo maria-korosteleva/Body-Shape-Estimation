@@ -1,6 +1,6 @@
 #pragma once
 #define GLOG_NO_ABBREVIATED_SEVERITIES
-//#define DEBUG
+#define DEBUG
 
 #include <Eigen/Dense>
 #include "ceres/ceres.h"
@@ -10,6 +10,7 @@
 #include "GeneralMesh.h"
 #include "SMPLWrapper.h"
 #include "ModelToInputDistanceCostFunctor.h"
+#include "AbsoluteVertsToMeshDistance.h"
 using DistCost = ModelToInputDistanceCostFunctor;
 
 using ceres::AutoDiffCostFunction;

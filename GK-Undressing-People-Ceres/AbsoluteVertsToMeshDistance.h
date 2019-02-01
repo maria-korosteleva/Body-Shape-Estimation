@@ -7,10 +7,10 @@
 
 //#define DEBUG
 
-class AbsoluteVertsToMeshDistance : public ceres::SizedCostFunction<SMPLWrapper::VERTICES_NUM, SMPLWrapper::VERTICES_NUM * SMPLWrapper::SPACE_DIM>
+class AbsoluteVertsToMeshDistance : public ceres::SizedCostFunction<SMPLWrapper::VERTICES_NUM, SMPLWrapper::SPACE_DIM>  // SMPLWrapper::VERTICES_NUM *
 {
 public:
-    AbsoluteVertsToMeshDistance(GeneralMesh *);
+    AbsoluteVertsToMeshDistance(SMPLWrapper*, GeneralMesh *);
     ~AbsoluteVertsToMeshDistance();
 
     virtual bool Evaluate(double const* const* parameters,
@@ -18,5 +18,6 @@ public:
         double** jacobians) const;
 private:
     GeneralMesh * toMesh_;
+    SMPLWrapper * smpl_;
 };
 

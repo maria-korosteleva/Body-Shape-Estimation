@@ -4,9 +4,9 @@
 
 ModelToInputDistanceCostFunctor::ModelToInputDistanceCostFunctor(SMPLWrapper * smpl, GeneralMesh * input)
     : smpl_(smpl), input_(input), 
-    absDist_(new ceres::NumericDiffCostFunction<AbsoluteVertsToMeshDistanceFunctor, ceres::CENTRAL, SMPLWrapper::VERTICES_NUM, SMPLWrapper::VERTICES_NUM * SMPLWrapper::SPACE_DIM>(
-            new AbsoluteVertsToMeshDistanceFunctor(input)))
-    // (new AbsoluteVertsToMeshDistance(input))
+    absDist_(new AbsoluteVertsToMeshDistance(smpl, input))
+    // (new ceres::NumericDiffCostFunction<AbsoluteVertsToMeshDistanceFunctor, ceres::CENTRAL, SMPLWrapper::VERTICES_NUM, SMPLWrapper::VERTICES_NUM * SMPLWrapper::SPACE_DIM>(
+    //new AbsoluteVertsToMeshDistanceFunctor(input)))
 {
 #ifdef DEBUG
     std::cout << "ModelToInputDistanceCost" << std::endl;

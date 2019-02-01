@@ -122,10 +122,10 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
 
     // Construct a problem
     Problem problem;
-    CostFunction* cost_function =
-        new AutoDiffCostFunction<DistCost, 
-                                SMPLWrapper::VERTICES_NUM, // num of residuals
-                                SMPLWrapper::SPACE_DIM>(new DistCost(this->smpl_, this->input_));      //SMPLWrapper::POSE_SIZE, SMPLWrapper::SHAPE_SIZE
+    CostFunction* cost_function = new AbsoluteVertsToMeshDistance(this->smpl_, this->input_);
+//        new AutoDiffCostFunction<DistCost, 
+//                                SMPLWrapper::VERTICES_NUM, // num of residuals
+//                                SMPLWrapper::SPACE_DIM>(new DistCost(this->smpl_, this->input_));      //SMPLWrapper::POSE_SIZE, SMPLWrapper::SHAPE_SIZE
 #ifdef DEBUG
     std::cout << "Optimizer: add distance residual" << std::endl;
 #endif // DEBUG
@@ -172,13 +172,22 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
     }
     std::cout << std::endl;
 
-    //std::cout << "Jacobian (sparse)" << std::endl;
+    std::cout << "Jacobian (sparse)" << std::endl;
     //std::vector<double> values = jac.values;
     //for (auto i = values.begin(); i != values.end(); ++i)
     //{
     //    std::cout << *i << " ";
     //}
     //std::cout << std::endl;
+
+    for (int i = 0; i < jac.num_rows; ++i)
+    {
+        for (int j = jac.rows[i]; j < jac.rows[i + 1]; ++j)
+        {
+            std::cout << jac.cols[j] << ":" << jac.values[j] << " ";
+        }
+        std::cout << std::endl;
+    }
 
 #endif // DEBUG
 }
