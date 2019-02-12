@@ -43,9 +43,59 @@ SMPLWrapper::~SMPLWrapper()
 }
 
 
+E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * const shape, E::MatrixXd* shape_jac) const
+{
+    // assignment won't work without cast
+    E::MatrixXd verts = this->verts_template_;
+#ifdef DEBUG
+    std::cout << "Calc model" << std::endl;
+#endif // DEBUG
+
+    if (shape != nullptr)
+    {
+        this->shapeSMPL_(shape, verts, shape_jac);
+    }
+
+    if (pose != nullptr)
+    {
+        this->poseSMPL_(pose, verts);
+        // check for shape jacobian
+        if (shape_jac != nullptr)
+        {
+            for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; ++i)
+            {
+                // TODO: add the use of pre-computed LBS Matrices 
+                // TODO: test
+                this->poseSMPL_(pose, shape_jac[i]);
+            }
+        }
+#ifdef DEBUG
+        std::cout << "Fin posing " << verts.rows() << " x " << verts.cols() << std::endl;
+#endif // DEBUG
+    }
+
+#ifdef DEBUG
+    std::cout << "Fin calculating" << std::endl;
+    //if (std::is_same_v<T, double>)
+    //{
+    //    for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
+    //    {
+    //        for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
+    //        {
+    //            std::cout << verts(i, j) << " ";
+    //        }
+    //        std::cout << std::endl;
+    //    }
+    //}
+#endif // DEBUG
+
+    return verts;
+}
+
+
 E::MatrixXd SMPLWrapper::calcJointLocations(const double * shape)
 {
-    E::MatrixXd verts = this->calcModel<double>(nullptr, shape);
+    E::MatrixXd verts = this->calcModelTemplate<double>(nullptr, shape);
     
     return this->jointRegressorMat_ * verts;
 }
@@ -53,7 +103,7 @@ E::MatrixXd SMPLWrapper::calcJointLocations(const double * shape)
 
 void SMPLWrapper::saveToObj(const double* translation, const double* pose, const double* shape, const std::string path) const
 {
-    MatrixXt<double> verts = this->calcModel<double>(pose, shape);
+    MatrixXt<double> verts = this->calcModelTemplate<double>(pose, shape);
     
     if (translation != nullptr)
     {
@@ -193,5 +243,49 @@ void SMPLWrapper::readHierarchy_()
     }
 
     inFile.close();
+}
+
+
+void SMPLWrapper::shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::MatrixXd* shape_jac) const
+{
+    for (int i = 0; i < this->SHAPE_SIZE; i++)
+    {
+        verts += shape[i] * this->shape_diffs_[i];
+    }
+
+    if (shape_jac != nullptr)
+    {
+        for (int i = 0; i < this->SHAPE_SIZE; i++)
+        {
+            shape_jac[i] = this->shape_diffs_[i];
+        }
+    }
+}
+
+
+void SMPLWrapper::poseSMPL_(const double * const, E::MatrixXd &) const
+{
+}
+
+
+E::MatrixXd SMPLWrapper::getJointsTransposedGlobalTransformation_(const double * const, E::MatrixXd &) const
+{
+    return E::MatrixXd();
+}
+
+
+E::MatrixXd SMPLWrapper::get3DLocalTransformMat_(const double * const jointAxisAngleRotation, const E::MatrixXd &) const
+{
+    return E::MatrixXd();
+}
+
+E::MatrixXd SMPLWrapper::get3DTranslationMat_(const E::MatrixXd &) const
+{
+    return E::MatrixXd();
+}
+
+E::SparseMatrix<double> SMPLWrapper::getLBSMatrix_(E::MatrixXd &) const
+{
+    return E::SparseMatrix<double>();
 }
 

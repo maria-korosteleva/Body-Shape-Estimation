@@ -102,8 +102,8 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
     assert(translation_guess.size() == SMPLWrapper::SPACE_DIM 
         && "Calculated translation guess should have size equal to the SMPL world dimentionality");
 
-    //for (int i = 0; i < SMPLWrapper::SPACE_DIM; ++i)
-    //    this->translation_[i] = translation_guess(i);
+    for (int i = 0; i < SMPLWrapper::SPACE_DIM; ++i)
+        this->translation_[i] = translation_guess(i);
 
     this->pose_ = new double[SMPLWrapper::POSE_SIZE];
     this->zeros_(this->pose_, SMPLWrapper::POSE_SIZE);
@@ -129,7 +129,7 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
 #ifdef DEBUG
     std::cout << "Optimizer: add distance residual" << std::endl;
 #endif // DEBUG
-    problem.AddResidualBlock(cost_function, nullptr, this->translation_);     // this->pose_, , this->shape_
+    problem.AddResidualBlock(cost_function, nullptr, this->translation_, this->shape_);     // this->pose_, , this->shape_
 
 #ifdef DEBUG
     std::cout << "Optimizer: Add regularizer" << std::endl;

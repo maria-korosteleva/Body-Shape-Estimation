@@ -22,7 +22,9 @@ bool AbsoluteVertsToMeshDistance::Evaluate(double const * const * parameters, do
 #endif // DEBUG
     //const Eigen::MatrixXd vertices = Eigen::Map<const Eigen::MatrixXd>(parameters[0], SMPLWrapper::VERTICES_NUM, SMPLWrapper::SPACE_DIM);
 
-    Eigen::MatrixXd verts = this->smpl_->calcModel<double>(nullptr, nullptr);
+    // shape [1] and pose [2]
+    Eigen::MatrixXd shape_jac[SMPLWrapper::SHAPE_SIZE];
+    Eigen::MatrixXd verts = this->smpl_->calcModel(nullptr, parameters[1], shape_jac);
 
     // translate
     for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
@@ -56,14 +58,16 @@ bool AbsoluteVertsToMeshDistance::Evaluate(double const * const * parameters, do
         residuals[i] = sqrt(sqrD(i));
     }
 
-    // wrt translation
-    if (jacobians != NULL && jacobians[0] != NULL) {
-        // jacobians[i] is a row - major array of size num_residuals x parameter_block_sizes_[i].
+    // Jacobians
+    // jacobians[i] is a row - major array of size num_residuals x parameter_block_sizes_[i].
         // If jacobians[i] is not NULL, the user is required to compute the Jacobian of the residual vector 
         // with respect to parameters[i] and store it in this array, i.e.
         // jacobians[i][r * parameter_block_sizes_[i] + c] = d residual[r] / d parameters[i][c]
+    // Main idea: Gradient for each vertex correspondes to the distance from this vertex to the input mesh.
 
-        // Gradient for each vertex correspondes to the distance from this vertex to the input mesh.
+    // wrt translation
+    if (jacobians != NULL && jacobians[0] != NULL) {
+        
 #ifdef DEBUG
         std::cout << "Abs dists evaluate: jacobian evaluation" << std::endl;
 #endif // DEBUG
@@ -97,6 +101,32 @@ bool AbsoluteVertsToMeshDistance::Evaluate(double const * const * parameters, do
         //    }
         //    std::cout << std::endl;
         //}
+    }
+
+    // w.r.t. shape
+    if (jacobians != NULL && jacobians[1] != NULL) {
+        for (int res_id = 0; res_id < SMPLWrapper::VERTICES_NUM; ++res_id)
+        {
+            //std::cout << j << std::endl;
+            for (int sh_id = 0; sh_id < SMPLWrapper::SHAPE_SIZE; ++sh_id)
+            {
+                jacobians[1][res_id * SMPLWrapper::SHAPE_SIZE + sh_id] = 0;
+                for (int d = 0; d < SMPLWrapper::SPACE_DIM; ++d)
+                {
+                    // sum derivatives for each coordinate w.r.t. current shape parameter
+                    jacobians[1][res_id * SMPLWrapper::SHAPE_SIZE + sh_id]
+                        += (verts(res_id, d) - closest_points(res_id, d)) * shape_jac[sh_id](res_id, d);
+                }
+                jacobians[1][res_id * SMPLWrapper::SHAPE_SIZE + sh_id] /= residuals[res_id];
+                //std::cout << jacobians[0][j * SMPLWrapper::SPACE_DIM + k]
+                ///   << " ";
+            }
+            /*double length = (verts(j, 0) - closest_points(j, 0)) * (vertices(j, 0) - closest_points(j, 0))
+                + (vertices(j, 1) - closest_points(j, 1)) * (vertices(j, 1) - closest_points(j, 1))
+                + (vertices(j, 2) - closest_points(j, 2)) * (vertices(j, 2) - closest_points(j, 2));*/
+            //std::cout << length << " ? " << sqrD(j) << std::endl;
+            //std::cout << std::endl;
+        }
     }
 
     return true;

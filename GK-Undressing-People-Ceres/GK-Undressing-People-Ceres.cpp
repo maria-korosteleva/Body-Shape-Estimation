@@ -119,9 +119,9 @@ void logSMPLParams(double* translation, double* pose, double* shape, std::string
 int main()
 {
     //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_fat.obj";
-    const char* input_name = "D:/Data/smpl_outs/smpl_2.obj";
+    const char* input_name = "D:/Data/smpl_outs/smpl_4.obj";
 
-    std::string logFolderName = getNewLogFolder("sprtop_p-to-s_trans_50");
+    std::string logFolderName = getNewLogFolder("shape_trans_analyt_50");
 
     GeneralMesh input(input_name);  // _custom_smpl
     // For convenience
@@ -178,7 +178,7 @@ int main()
 
 //     Visualize the output
 //     TODO: add the input too. Meekyong knows something about two meshes  
-    Eigen::MatrixXd verts = smpl.calcModel<double>(pose_res, shape_res);
+    Eigen::MatrixXd verts = smpl.calcModelTemplate<double>(pose_res, shape_res);
     // translate
     for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
         for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)

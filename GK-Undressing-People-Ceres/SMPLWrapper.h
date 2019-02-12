@@ -56,7 +56,9 @@ public:
 
     // Pose/shape parameters can be nullptr: allows to get template/pose without shaping/shaping of the T-pose
     template <typename T>
-    MatrixXt<T> calcModel(const T * const, const T * const) const;
+    MatrixXt<T> calcModelTemplate(const T * const, const T * const) const;
+    // non-templated version that can calculate jacobian
+    E::MatrixXd calcModel(const double * const, const double * const, E::MatrixXd* shape_jac = nullptr) const;
 
     // Warning! Function doesn't work properly "sometimes". See issue #364 on Quire
     E::MatrixXd calcJointLocations(const double*);
@@ -90,36 +92,49 @@ private:
 
     // for evaluation uses vertex info from the last parameter and uses last parameter for output
     template <typename T>
-    void shapeSMPL_(const T * const, MatrixXt<T>&) const;
+    void shapeSMPLTemplate_(const T * const, MatrixXt<T>&) const;
+    // non-templated version that can calculate jacobian
+    // if not nullptr, shape_jac is expected to be an array of MatrixXd, one matrix for each shape parameter
+    void shapeSMPL_(const double * const, E::MatrixXd&, E::MatrixXd* shape_jac = nullptr) const;
     // for evaluation uses vertex info from the last parameter and uses last parameter for output
     template <typename T>
-    void poseSMPL_(const T * const, MatrixXt<T>&) const;
+    void poseSMPLTemplate_(const T * const, MatrixXt<T>&) const;
+    // non-templated version that can calculate jacobian
+    void poseSMPL_(const double * const, E::MatrixXd&) const;
 
     // Assumes that SPACE_DIM == 3
     // Assumes the default joint angles to be all zeros
     // Returns matrix of dimentions (SPACE_DIM + 1) * JOINTS_NUM  x  SPACE_DIM 
     // of stacked transposed global transformation matrices of each joint, with the row of homogenious coordinates removed
     template <typename T>
-    MatrixXt<T> getJointsTransposedGlobalTransformation_(const T * const, MatrixXt<T>&) const;
+    MatrixXt<T> getJointsTransposedGlobalTransformationTemplate_(const T * const, MatrixXt<T>&) const;
+    // non-templated version that can calculate jacobian
+    E::MatrixXd getJointsTransposedGlobalTransformation_(const double * const, E::MatrixXd&) const;
     
     // Assumes that SPACE_DIM == 3
     template <typename T, typename Derived2>
-    MatrixXt<T> get3DLocalTransformMat_(const T * const jointAxisAngleRotation, const E::MatrixBase<Derived2>&) const;
+    MatrixXt<T> get3DLocalTransformMatTemplate_(const T * const jointAxisAngleRotation, const E::MatrixBase<Derived2>&) const;
+    // non-templated version that can calculate jacobian
+    E::MatrixXd get3DLocalTransformMat_(const double * const jointAxisAngleRotation, const E::MatrixXd&) const;
     
     // Assumes that SPACE_DIM == 3
     template <typename T, typename Derived>
-    MatrixXt<T> get3DTranslationMat_(const E::MatrixBase<Derived>&) const;
+    MatrixXt<T> get3DTranslationMatTemplate_(const E::MatrixBase<Derived>&) const;
+    // non-templated version that can calculate jacobian
+    E::MatrixXd get3DTranslationMat_(const E::MatrixXd&) const;
     
     // Composes weights (object local) and given vertices in the rest pose into (Sparse) LBSMatrix. 
     // Both are expected to be filled and alive at the moment of invocation.
     // Inspired by igl::lbs_matrix(..)
     template <typename T>
-    E::SparseMatrix<T> getLBSMatrix_(MatrixXt<T>&) const;
+    E::SparseMatrix<T> getLBSMatrixTemplate_(MatrixXt<T>&) const;
+    // non-templated version
+    E::SparseMatrix<double> getLBSMatrix_(E::MatrixXd&) const;
 };
 
 
 template<typename T>
-inline MatrixXt<T> SMPLWrapper::calcModel(const T * const pose, const T *  const shape) const
+inline MatrixXt<T> SMPLWrapper::calcModelTemplate(const T * const pose, const T *  const shape) const
 {
     // assignment won't work without cast
     MatrixXt<T> verts = this->verts_template_.cast<T>();
@@ -129,12 +144,12 @@ inline MatrixXt<T> SMPLWrapper::calcModel(const T * const pose, const T *  const
 
     if (shape != nullptr)
     {
-        this->shapeSMPL_(shape, verts);
+        this->shapeSMPLTemplate_(shape, verts);
     }
 
     if (pose != nullptr)
     {
-        this->poseSMPL_(pose, verts);
+        this->poseSMPLTemplate_(pose, verts);
 #ifdef DEBUG
         std::cout << "Fin posing " << verts.rows() << " x " << verts.cols() << std::endl;
 #endif // DEBUG
@@ -160,7 +175,7 @@ inline MatrixXt<T> SMPLWrapper::calcModel(const T * const pose, const T *  const
 
 
 template<typename T>
-inline void SMPLWrapper::shapeSMPL_(const T * const shape, MatrixXt<T>& verts) const
+inline void SMPLWrapper::shapeSMPLTemplate_(const T * const shape, MatrixXt<T>& verts) const
 {
     for (int i = 0; i < this->SHAPE_SIZE; i++)
     {
@@ -170,24 +185,24 @@ inline void SMPLWrapper::shapeSMPL_(const T * const shape, MatrixXt<T>& verts) c
 
 
 template<typename T>
-inline void SMPLWrapper::poseSMPL_(const T *  const pose, MatrixXt<T>& verts) const
+inline void SMPLWrapper::poseSMPLTemplate_(const T *  const pose, MatrixXt<T>& verts) const
 {
 #ifdef DEBUG
     std::cout << "pose" << std::endl;
 #endif // DEBUG
     // doesn't work without cast, regardless of https://groups.google.com/forum/#!topic/ceres-solver/7ZH21XX6HWU
     MatrixXt<T> jointLocations = this->jointRegressorMat_.cast<T>() * verts;
-    MatrixXt<T> jointsTransformation = this->getJointsTransposedGlobalTransformation_(pose, jointLocations);
+    MatrixXt<T> jointsTransformation = this->getJointsTransposedGlobalTransformationTemplate_(pose, jointLocations);
 
     // TODO Use sparce matrices for LBS
-    E::SparseMatrix<T> LBSMat = this->getLBSMatrix_<T>(verts);
+    E::SparseMatrix<T> LBSMat = this->getLBSMatrixTemplate_<T>(verts);
 
     verts = LBSMat * jointsTransformation;
 }
 
 
 template<typename T>
-inline MatrixXt<T> SMPLWrapper::getJointsTransposedGlobalTransformation_(const T * const pose, MatrixXt<T>& jointLocations) const
+inline MatrixXt<T> SMPLWrapper::getJointsTransposedGlobalTransformationTemplate_(const T * const pose, MatrixXt<T>& jointLocations) const
 {
 #ifdef DEBUG
     std::cout << "global transform" << std::endl;
@@ -201,8 +216,8 @@ inline MatrixXt<T> SMPLWrapper::getJointsTransposedGlobalTransformation_(const T
     // Stacked (transposed) global transformation matrices for points
     MatrixXt<T> pointTransformTotal(homo_size * SMPLWrapper::JOINTS_NUM, SMPLWrapper::SPACE_DIM);
 
-    jointGlobalMats[0] = this->get3DLocalTransformMat_<T>(pose, jointLocations.row(0));
-    MatrixXt<T> tmpPointGlobalTransform = jointGlobalMats[0] * this->get3DTranslationMat_<T>(- jointLocations.row(0));
+    jointGlobalMats[0] = this->get3DLocalTransformMatTemplate_<T>(pose, jointLocations.row(0));
+    MatrixXt<T> tmpPointGlobalTransform = jointGlobalMats[0] * this->get3DTranslationMatTemplate_<T>(- jointLocations.row(0));
     pointTransformTotal.block(0, 0, homo_size, SMPLWrapper::SPACE_DIM) 
         = tmpPointGlobalTransform.transpose().leftCols(SMPLWrapper::SPACE_DIM);
 
@@ -210,10 +225,10 @@ inline MatrixXt<T> SMPLWrapper::getJointsTransposedGlobalTransformation_(const T
     {
         // Forward Kinematics Formula
         jointGlobalMats[i] = jointGlobalMats[this->joints_parents_[i]] 
-            * this->get3DLocalTransformMat_<T>((pose + i*3),
+            * this->get3DLocalTransformMatTemplate_<T>((pose + i*3),
                 jointLocations.row(i) - jointLocations.row(this->joints_parents_[i]));
         
-        tmpPointGlobalTransform = jointGlobalMats[i] * this->get3DTranslationMat_<T>(-jointLocations.row(i));
+        tmpPointGlobalTransform = jointGlobalMats[i] * this->get3DTranslationMatTemplate_<T>(-jointLocations.row(i));
 
         pointTransformTotal.block(i * homo_size, 0, homo_size, SMPLWrapper::SPACE_DIM) 
             = tmpPointGlobalTransform.transpose().leftCols(SMPLWrapper::SPACE_DIM);
@@ -224,7 +239,7 @@ inline MatrixXt<T> SMPLWrapper::getJointsTransposedGlobalTransformation_(const T
 
 
 template<typename T, typename Derived2>
-inline MatrixXt<T> SMPLWrapper::get3DLocalTransformMat_(const T * const jointAxisAngleRotation,
+inline MatrixXt<T> SMPLWrapper::get3DLocalTransformMatTemplate_(const T * const jointAxisAngleRotation,
     const E::MatrixBase<Derived2>& jointLocation) const 
 {    
     MatrixXt<T> localTransform;
@@ -270,7 +285,7 @@ inline MatrixXt<T> SMPLWrapper::get3DLocalTransformMat_(const T * const jointAxi
 
 
 template<typename T, typename Derived>
-inline MatrixXt<T> SMPLWrapper::get3DTranslationMat_(const E::MatrixBase<Derived>& translationVector) const
+inline MatrixXt<T> SMPLWrapper::get3DTranslationMatTemplate_(const E::MatrixBase<Derived>& translationVector) const
 {
     MatrixXt<T> translation;
     translation.setIdentity(4, 4);  // in homogenious coordinates
@@ -281,7 +296,7 @@ inline MatrixXt<T> SMPLWrapper::get3DTranslationMat_(const E::MatrixBase<Derived
 
 
 template<typename T>
-inline E::SparseMatrix<T> SMPLWrapper::getLBSMatrix_(MatrixXt<T>& verts) const
+inline E::SparseMatrix<T> SMPLWrapper::getLBSMatrixTemplate_(MatrixXt<T>& verts) const
 {
   
     const int dim = SMPLWrapper::SPACE_DIM;
