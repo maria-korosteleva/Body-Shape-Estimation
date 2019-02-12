@@ -7,7 +7,8 @@
 
 //#define DEBUG
 
-class AbsoluteVertsToMeshDistance : public ceres::SizedCostFunction<SMPLWrapper::VERTICES_NUM, SMPLWrapper::SPACE_DIM, SMPLWrapper::SHAPE_SIZE>  // SMPLWrapper::VERTICES_NUM *
+class AbsoluteVertsToMeshDistance : 
+    public ceres::SizedCostFunction<SMPLWrapper::VERTICES_NUM, SMPLWrapper::SPACE_DIM, SMPLWrapper::SHAPE_SIZE, SMPLWrapper::POSE_SIZE>  // SMPLWrapper::VERTICES_NUM *
 {
 public:
     AbsoluteVertsToMeshDistance(SMPLWrapper*, GeneralMesh *);

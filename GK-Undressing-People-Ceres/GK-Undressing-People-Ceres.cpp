@@ -121,7 +121,7 @@ int main()
     //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_fat.obj";
     const char* input_name = "D:/Data/smpl_outs/smpl_4.obj";
 
-    std::string logFolderName = getNewLogFolder("shape_trans_analyt_50");
+    std::string logFolderName = getNewLogFolder("st_pose_analyt_50");
 
     GeneralMesh input(input_name);  // _custom_smpl
     // For convenience
@@ -154,8 +154,8 @@ int main()
     logSMPLParams(translation_res, pose_res, shape_res, logFolderName);
     std::cout << "Estimated translation" << translation_res[0] << " " << translation_res[1] << " " << translation_res[2] << std::endl;
     smpl.saveToObj(translation_res, pose_res, shape_res, (logFolderName + "posed_shaped.obj"));
-    //smpl.saveToObj(translation_res, nullptr, shape_res, (logFolderName + "unposed_shaped.obj"));
-    //smpl.saveToObj(translation_res, pose_res, nullptr, (logFolderName + "posed_unshaped.obj"));
+    smpl.saveToObj(translation_res, nullptr, shape_res, (logFolderName + "unposed_shaped.obj"));
+    smpl.saveToObj(translation_res, pose_res, nullptr, (logFolderName + "posed_unshaped.obj"));
 
     //double* pose_res = new double[SMPLWrapper::POSE_SIZE];
     //double* shape_res = new double[SMPLWrapper::SHAPE_SIZE];

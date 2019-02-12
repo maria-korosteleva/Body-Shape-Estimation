@@ -58,7 +58,7 @@ public:
     template <typename T>
     MatrixXt<T> calcModelTemplate(const T * const, const T * const) const;
     // non-templated version that can calculate jacobian
-    E::MatrixXd calcModel(const double * const, const double * const, E::MatrixXd* shape_jac = nullptr) const;
+    E::MatrixXd calcModel(const double * const, const double * const, E::MatrixXd* pose_jac = nullptr, E::MatrixXd* shape_jac = nullptr) const;
 
     // Warning! Function doesn't work properly "sometimes". See issue #364 on Quire
     E::MatrixXd calcJointLocations(const double*);
@@ -100,7 +100,7 @@ private:
     template <typename T>
     void poseSMPLTemplate_(const T * const, MatrixXt<T>&) const;
     // non-templated version that can calculate jacobian
-    void poseSMPL_(const double * const, E::MatrixXd&) const;
+    void poseSMPL_(const double * const, E::MatrixXd&, E::MatrixXd* pose_jac = nullptr) const;
 
     // Assumes that SPACE_DIM == 3
     // Assumes the default joint angles to be all zeros
@@ -109,13 +109,14 @@ private:
     template <typename T>
     MatrixXt<T> getJointsTransposedGlobalTransformationTemplate_(const T * const, MatrixXt<T>&) const;
     // non-templated version that can calculate jacobian
-    E::MatrixXd getJointsTransposedGlobalTransformation_(const double * const, E::MatrixXd&) const;
+    E::MatrixXd getJointsTransposedGlobalTransformation_(const double * const, E::MatrixXd&, E::MatrixXd* jac = nullptr) const;
     
     // Assumes that SPACE_DIM == 3
     template <typename T, typename Derived2>
     MatrixXt<T> get3DLocalTransformMatTemplate_(const T * const jointAxisAngleRotation, const E::MatrixBase<Derived2>&) const;
     // non-templated version that can calculate jacobian
-    E::MatrixXd get3DLocalTransformMat_(const double * const jointAxisAngleRotation, const E::MatrixXd&) const;
+    // fills the dependence of the Transformation matric on all three coordinates for the input rotation
+    E::MatrixXd get3DLocalTransformMat_(const double * const jointAxisAngleRotation, const E::MatrixXd&, E::MatrixXd* jac = nullptr) const;
     
     // Assumes that SPACE_DIM == 3
     template <typename T, typename Derived>

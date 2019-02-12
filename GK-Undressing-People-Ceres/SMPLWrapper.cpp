@@ -43,7 +43,7 @@ SMPLWrapper::~SMPLWrapper()
 }
 
 
-E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * const shape, E::MatrixXd* shape_jac) const
+E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * const shape, E::MatrixXd * pose_jac, E::MatrixXd * shape_jac) const
 {
     // assignment won't work without cast
     E::MatrixXd verts = this->verts_template_;
@@ -58,10 +58,11 @@ E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * con
 
     if (pose != nullptr)
     {
-        this->poseSMPL_(pose, verts);
-        // check for shape jacobian
+        this->poseSMPL_(pose, verts, pose_jac);
+
         if (shape_jac != nullptr)
         {
+            // WARNING! This will significantly increse iteration time
             for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; ++i)
             {
                 // TODO: add the use of pre-computed LBS Matrices 
@@ -263,29 +264,172 @@ void SMPLWrapper::shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::
 }
 
 
-void SMPLWrapper::poseSMPL_(const double * const, E::MatrixXd &) const
+void SMPLWrapper::poseSMPL_(const double * const pose, E::MatrixXd & verts, E::MatrixXd* pose_jac) const
 {
+#ifdef DEBUG
+    std::cout << "pose (analytic)" << std::endl;
+#endif // DEBUG
+
+    E::MatrixXd jointLocations = this->jointRegressorMat_ * verts;
+    E::MatrixXd jointsTransformation;
+
+    jointsTransformation = this->getJointsTransposedGlobalTransformation_(pose, jointLocations, pose_jac);
+
+    // TODO Use sparce matrices for LBS
+    E::MatrixXd LBSMat = this->getLBSMatrix_(verts);
+
+    verts = LBSMat * jointsTransformation;
+
+    if (pose_jac != nullptr)
+    {
+        for (int i = 0; i < SMPLWrapper::POSE_SIZE; ++i)
+            pose_jac[i].applyOnTheLeft(LBSMat);
+    }
 }
 
 
-E::MatrixXd SMPLWrapper::getJointsTransposedGlobalTransformation_(const double * const, E::MatrixXd &) const
+E::MatrixXd SMPLWrapper::getJointsTransposedGlobalTransformation_(const double * const pose, E::MatrixXd & jointLocations, E::MatrixXd* jac) const
 {
-    return E::MatrixXd();
+#ifdef DEBUG
+    std::cout << "global transform (analytic)" << std::endl;
+#endif // DEBUG
+
+    // uses functions that assume input in 3D (see below)
+    assert(SMPLWrapper::SPACE_DIM == 3 && "The function can only be used in 3D world");
+
+    static constexpr int HOMO_SIZE = SMPLWrapper::SPACE_DIM + 1;
+    E::Matrix<double, HOMO_SIZE, HOMO_SIZE> jointGlobalMats[SMPLWrapper::JOINTS_NUM];
+    E::MatrixXd jointJac[SMPLWrapper::JOINTS_NUM][SMPLWrapper::POSE_SIZE];      // for jacobian calculations, 4x4 or empty
+    // Stacked (transposed) global transformation matrices for points
+    E::MatrixXd pointTransformTotal(HOMO_SIZE * SMPLWrapper::JOINTS_NUM, SMPLWrapper::SPACE_DIM);
+
+    if (jac != nullptr)
+    {
+        jointGlobalMats[0] = this->get3DLocalTransformMat_(pose, jointLocations.row(0), jointJac[0]);
+        // fill jac piece
+    }
+    else
+    {
+        jointGlobalMats[0] = this->get3DLocalTransformMat_(pose, jointLocations.row(0));
+    }
+    E::MatrixXd tmpPointGlobalTransform = jointGlobalMats[0] * this->get3DTranslationMat_(-jointLocations.row(0));
+    pointTransformTotal.block(0, 0, HOMO_SIZE, SMPLWrapper::SPACE_DIM)
+        = tmpPointGlobalTransform.transpose().leftCols(SMPLWrapper::SPACE_DIM);
+
+    for (int i = 1; i < SMPLWrapper::JOINTS_NUM; i++)
+    {
+        if (jac != nullptr)
+        {
+            // Forward Kinematics Formula
+            jointGlobalMats[i] = jointGlobalMats[this->joints_parents_[i]]
+                * this->get3DLocalTransformMat_((pose + i * 3), 
+                    jointLocations.row(i) - jointLocations.row(this->joints_parents_[i]), 
+                    &jointJac[i][i * SMPLWrapper::SPACE_DIM]);
+            // update parent dependencies
+
+            // fill jac piece
+        }
+        else
+        {
+            // Forward Kinematics Formula
+            jointGlobalMats[i] = jointGlobalMats[this->joints_parents_[i]]
+                * this->get3DLocalTransformMat_((pose + i * 3), 
+                    jointLocations.row(i) - jointLocations.row(this->joints_parents_[i]));
+        }
+        
+        // collect transform for final matrix
+        tmpPointGlobalTransform = jointGlobalMats[i] * this->get3DTranslationMat_(-jointLocations.row(i));
+
+        pointTransformTotal.block(i * HOMO_SIZE, 0, HOMO_SIZE, SMPLWrapper::SPACE_DIM)
+            = tmpPointGlobalTransform.transpose().leftCols(SMPLWrapper::SPACE_DIM);
+    }
+
+    return pointTransformTotal;
 }
 
 
-E::MatrixXd SMPLWrapper::get3DLocalTransformMat_(const double * const jointAxisAngleRotation, const E::MatrixXd &) const
+E::MatrixXd SMPLWrapper::get3DLocalTransformMat_(const double * const jointAxisAngleRotation, const E::MatrixXd & jointLocation, E::MatrixXd* jac) const
 {
-    return E::MatrixXd();
+    E::MatrixXd localTransform;
+    localTransform.setIdentity(4, 4);   // in homogenious coordinates
+    localTransform.block(0, 3, 3, 1) = jointLocation.transpose();
+
+#undef USE_CERES
+#ifdef USE_CERES
+
+    double* rotationMat = new double[9];
+    ceres::AngleAxisToRotationMatrix(jointAxisAngleRotation, rotationMat);
+    localTransform.block(0, 0, 3, 3) = Eigen::Map<E::MatrixXd>(rotationMat, 3, 3);
+
+    delete[] rotationMat;
+
+#else // USE_CERES
+
+    double norm = sqrt(jointAxisAngleRotation[0] * jointAxisAngleRotation[0]
+        + jointAxisAngleRotation[1] * jointAxisAngleRotation[1]
+        + jointAxisAngleRotation[2] * jointAxisAngleRotation[2]);
+    if (norm > 0.0001)  // don't waste computations on zero joint movement
+    {
+        // apply Rodrigues formula
+        E::MatrixXd exponent;
+        exponent.setIdentity(3, 3);
+
+        E::MatrixXd skew;
+        skew.setZero(3, 3);
+        skew(0, 1) = -jointAxisAngleRotation[2] / norm;
+        skew(0, 2) = jointAxisAngleRotation[1] / norm;
+        skew(1, 0) = jointAxisAngleRotation[2] / norm;
+        skew(1, 2) = -jointAxisAngleRotation[0] / norm;
+        skew(2, 0) = -jointAxisAngleRotation[1] / norm;
+        skew(2, 1) = jointAxisAngleRotation[0] / norm;
+
+        exponent += skew * sin(norm) + skew * skew * (1. - cos(norm));
+        localTransform.block(0, 0, 3, 3) = exponent;
+    }
+
+#endif // USE_CERES
+#define USE_CERES
+    return localTransform;
 }
 
-E::MatrixXd SMPLWrapper::get3DTranslationMat_(const E::MatrixXd &) const
+E::MatrixXd SMPLWrapper::get3DTranslationMat_(const E::MatrixXd & translationVector) const
 {
-    return E::MatrixXd();
+    E::MatrixXd translation;
+    translation.setIdentity(4, 4);  // in homogenious coordinates
+    translation.block(0, 3, 3, 1) = translationVector.transpose();
+
+    return translation;
 }
 
-E::SparseMatrix<double> SMPLWrapper::getLBSMatrix_(E::MatrixXd &) const
+E::SparseMatrix<double> SMPLWrapper::getLBSMatrix_(E::MatrixXd & verts) const
 {
-    return E::SparseMatrix<double>();
+    const int dim = SMPLWrapper::SPACE_DIM;
+    const int nVerts = SMPLWrapper::VERTICES_NUM;
+    const int nJoints = SMPLWrapper::JOINTS_NUM;  // Number of joints
+#ifdef DEBUG
+    std::cout << "LBSMat: start (analytic)" << std::endl;
+#endif // DEBUG
+    // +1 goes for homogenious coordinates
+    E::SparseMatrix<double> LBSMat(nVerts, (dim + 1) * nJoints);
+    std::vector<E::Triplet<double>> LBSTripletList;
+    LBSTripletList.reserve(nVerts * (dim + 1) * SMPLWrapper::WEIGHTS_BY_VERTEX);     // for faster filling performance
+
+    // go over non-zero weight elements
+    for (int k = 0; k < this->weights_.outerSize(); ++k)
+    {
+        for (E::SparseMatrix<double>::InnerIterator it(this->weights_, k); it; ++it)
+        {
+            double weight = it.value();
+            int idx_vert = it.row();
+            int idx_joint = it.col();
+            // premultiply weigths by vertex homogenious coordinates
+            for (int idx_dim = 0; idx_dim < dim; idx_dim++)
+                LBSTripletList.push_back(E::Triplet<double>(idx_vert, idx_joint * (dim + 1) + idx_dim, weight * verts(idx_vert, idx_dim)));
+            LBSTripletList.push_back(E::Triplet<double>(idx_vert, idx_joint * (dim + 1) + dim, weight));
+        }
+    }
+    LBSMat.setFromTriplets(LBSTripletList.begin(), LBSTripletList.end());
+
+    return LBSMat;
 }
 

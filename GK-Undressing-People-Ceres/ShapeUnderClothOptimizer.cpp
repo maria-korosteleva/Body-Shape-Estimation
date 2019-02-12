@@ -129,7 +129,7 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
 #ifdef DEBUG
     std::cout << "Optimizer: add distance residual" << std::endl;
 #endif // DEBUG
-    problem.AddResidualBlock(cost_function, nullptr, this->translation_, this->shape_);     // this->pose_, , this->shape_
+    problem.AddResidualBlock(cost_function, nullptr, this->translation_, this->shape_, this->pose_);     // this->pose_, , this->shape_
 
 #ifdef DEBUG
     std::cout << "Optimizer: Add regularizer" << std::endl;
