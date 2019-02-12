@@ -5,11 +5,11 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\Maria\MyDocs\libs\ceres-solver-1.14.0\build_x64\config;C:\Users\Maria\MyDocs\libs\eigen-eigen-5a0156e40feb;C:\Users\Maria\MyDocs\libs\gflags\install_x64\include;C:\Users\Maria\MyDocs\libs\glog\install_x64\include;C:\Users\Maria\MyDocs\libs\ceres-solver-1.14.0\install_x64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Maria\MyDocs\libs\ceres-solver\build_x64\config;C:\Users\Maria\MyDocs\libs\eigen-eigen-5a0156e40feb;C:\Users\Maria\MyDocs\libs\gflags\install_x64\include;C:\Users\Maria\MyDocs\libs\glog\install_x64\include;C:\Users\Maria\MyDocs\libs\ceres-solver\install_x64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>C:\Program Files (x86)\Windows Kits\10\Lib\10.0.17763.0\um\x86\shlwapi.lib;C:\Users\Maria\MyDocs\libs\ceres-solver-1.14.0\install_x64\lib\ceres.lib;C:\Users\Maria\MyDocs\libs\glog\install_x64\lib\glog.lib;C:\Users\Maria\MyDocs\libs\gflags\install_x64\lib\gflags_nothreads.lib;C:\Users\Maria\MyDocs\libs\gflags\install_x64\lib\gflags.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Users\Maria\MyDocs\libs\glog\install_x64;C:\Users\Maria\MyDocs\libs\gflags\install_x64;C:\Users\Maria\MyDocs\libs\ceres-solver-1.14.0\install_x64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>C:\Program Files (x86)\Windows Kits\10\Lib\10.0.17763.0\um\x86\shlwapi.lib;C:\Users\Maria\MyDocs\libs\ceres-solver\install_x64\lib\ceres.lib;C:\Users\Maria\MyDocs\libs\glog\install_x64\lib\glog.lib;C:\Users\Maria\MyDocs\libs\gflags\install_x64\lib\gflags_nothreads.lib;C:\Users\Maria\MyDocs\libs\gflags\install_x64\lib\gflags.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Users\Maria\MyDocs\libs\glog\install_x64;C:\Users\Maria\MyDocs\libs\gflags\install_x64;C:\Users\Maria\MyDocs\libs\ceres-solver\install_x64</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup />

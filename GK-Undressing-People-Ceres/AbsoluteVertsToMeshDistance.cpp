@@ -56,6 +56,7 @@ bool AbsoluteVertsToMeshDistance::Evaluate(double const * const * parameters, do
         residuals[i] = sqrt(sqrD(i));
     }
 
+    // wrt translation
     if (jacobians != NULL && jacobians[0] != NULL) {
         // jacobians[i] is a row - major array of size num_residuals x parameter_block_sizes_[i].
         // If jacobians[i] is not NULL, the user is required to compute the Jacobian of the residual vector 
@@ -77,14 +78,14 @@ bool AbsoluteVertsToMeshDistance::Evaluate(double const * const * parameters, do
             {
                 jacobians[0][j * SMPLWrapper::SPACE_DIM + k]
                     = (verts(j, k) - closest_points(j, k)) / residuals[j];
-                std::cout << jacobians[0][j * SMPLWrapper::SPACE_DIM + k]
-                   << " ";
+                //std::cout << jacobians[0][j * SMPLWrapper::SPACE_DIM + k]
+                ///   << " ";
             }
             /*double length = (verts(j, 0) - closest_points(j, 0)) * (vertices(j, 0) - closest_points(j, 0))
                 + (vertices(j, 1) - closest_points(j, 1)) * (vertices(j, 1) - closest_points(j, 1))
                 + (vertices(j, 2) - closest_points(j, 2)) * (vertices(j, 2) - closest_points(j, 2));*/
             //std::cout << length << " ? " << sqrD(j) << std::endl;
-            std::cout << std::endl;
+            //std::cout << std::endl;
         }
 
         //for (int i = 0; i < SMPLWrapper::VERTICES_NUM; ++i)
