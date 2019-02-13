@@ -58,6 +58,8 @@ public:
     template <typename T>
     MatrixXt<T> calcModelTemplate(const T * const, const T * const) const;
     // non-templated version that can calculate jacobian
+    // When initialized pose_jac is expected to have space for POSE_SIZE Matrices, 
+    // shape_jac is expected to have space for SHAPE_SIZE Matrices
     E::MatrixXd calcModel(const double * const, const double * const, E::MatrixXd* pose_jac = nullptr, E::MatrixXd* shape_jac = nullptr) const;
 
     // Warning! Function doesn't work properly "sometimes". See issue #364 on Quire
@@ -108,14 +110,15 @@ private:
     // of stacked transposed global transformation matrices of each joint, with the row of homogenious coordinates removed
     template <typename T>
     MatrixXt<T> getJointsTransposedGlobalTransformationTemplate_(const T * const, MatrixXt<T>&) const;
-    // non-templated version that can calculate jacobian
+    // non-templated version that can calculate analytic jacobian
     E::MatrixXd getJointsTransposedGlobalTransformation_(const double * const, E::MatrixXd&, E::MatrixXd* jac = nullptr) const;
     
     // Assumes that SPACE_DIM == 3
     template <typename T, typename Derived2>
     MatrixXt<T> get3DLocalTransformMatTemplate_(const T * const jointAxisAngleRotation, const E::MatrixBase<Derived2>&) const;
     // non-templated version that can calculate jacobian
-    // fills the dependence of the Transformation matric on all three coordinates for the input rotation
+    // fills the dependence of the Transformation matric on all three coordinates for the input rotation. 
+    // When initialized jac is expected to have space for POSE_SIZE Matrices
     E::MatrixXd get3DLocalTransformMat_(const double * const jointAxisAngleRotation, const E::MatrixXd&, E::MatrixXd* jac = nullptr) const;
     
     // Assumes that SPACE_DIM == 3

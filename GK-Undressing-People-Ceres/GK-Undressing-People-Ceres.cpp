@@ -119,9 +119,10 @@ void logSMPLParams(double* translation, double* pose, double* shape, std::string
 int main()
 {
     //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_fat.obj";
-    const char* input_name = "D:/Data/smpl_outs/smpl_4.obj";
+    //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_fat.obj";
+    const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";
 
-    std::string logFolderName = getNewLogFolder("st_pose_analyt_50");
+    std::string logFolderName = getNewLogFolder("t_pose_analyt_reg_50");
 
     GeneralMesh input(input_name);  // _custom_smpl
     // For convenience

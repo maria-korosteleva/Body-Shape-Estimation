@@ -23,9 +23,10 @@ bool AbsoluteVertsToMeshDistance::Evaluate(double const * const * parameters, do
     //const Eigen::MatrixXd vertices = Eigen::Map<const Eigen::MatrixXd>(parameters[0], SMPLWrapper::VERTICES_NUM, SMPLWrapper::SPACE_DIM);
 
     // shape [1] and pose [2]
-    Eigen::MatrixXd shape_jac[SMPLWrapper::SHAPE_SIZE];
+    //Eigen::MatrixXd shape_jac[SMPLWrapper::SHAPE_SIZE];
     Eigen::MatrixXd pose_jac[SMPLWrapper::POSE_SIZE];
-    Eigen::MatrixXd verts = this->smpl_->calcModel(parameters[2], parameters[1], pose_jac, shape_jac);
+    //Eigen::MatrixXd verts = this->smpl_->calcModel(parameters[2], parameters[1], pose_jac, shape_jac);
+    Eigen::MatrixXd verts = this->smpl_->calcModel(parameters[1], nullptr, pose_jac, nullptr);
 
     // translate
     for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
@@ -105,40 +106,40 @@ bool AbsoluteVertsToMeshDistance::Evaluate(double const * const * parameters, do
     }
 
     // w.r.t. shape
-    if (jacobians != NULL && jacobians[1] != NULL) {
-        for (int res_id = 0; res_id < SMPLWrapper::VERTICES_NUM; ++res_id)
-        {
-            //std::cout << j << std::endl;
-            for (int sh_id = 0; sh_id < SMPLWrapper::SHAPE_SIZE; ++sh_id)
-            {
-                // TODO multiply using EIGEN
-                jacobians[1][res_id * SMPLWrapper::SHAPE_SIZE + sh_id] = 0;
-                for (int d = 0; d < SMPLWrapper::SPACE_DIM; ++d)
-                {
-                    // sum derivatives for each coordinate w.r.t. current shape parameter
-                    jacobians[1][res_id * SMPLWrapper::SHAPE_SIZE + sh_id]
-                        += (verts(res_id, d) - closest_points(res_id, d)) * shape_jac[sh_id](res_id, d);
-                }
-                jacobians[1][res_id * SMPLWrapper::SHAPE_SIZE + sh_id] /= residuals[res_id];
-            }
-        }
-    }
+    //if (jacobians != NULL && jacobians[1] != NULL) {
+    //    for (int res_id = 0; res_id < SMPLWrapper::VERTICES_NUM; ++res_id)
+    //    {
+    //        //std::cout << j << std::endl;
+    //        for (int sh_id = 0; sh_id < SMPLWrapper::SHAPE_SIZE; ++sh_id)
+    //        {
+    //            // TODO multiply using EIGEN
+    //            jacobians[1][res_id * SMPLWrapper::SHAPE_SIZE + sh_id] = 0;
+    //            for (int d = 0; d < SMPLWrapper::SPACE_DIM; ++d)
+    //            {
+    //                // sum derivatives for each coordinate w.r.t. current shape parameter
+    //                jacobians[1][res_id * SMPLWrapper::SHAPE_SIZE + sh_id]
+    //                    += (verts(res_id, d) - closest_points(res_id, d)) * shape_jac[sh_id](res_id, d);
+    //            }
+    //            jacobians[1][res_id * SMPLWrapper::SHAPE_SIZE + sh_id] /= residuals[res_id];
+    //        }
+    //    }
+    //}
 
     // w.r.t. pose
-    if (jacobians != NULL && jacobians[2] != NULL) {
+    if (jacobians != NULL && jacobians[1] != NULL) {
         for (int res_id = 0; res_id < SMPLWrapper::VERTICES_NUM; ++res_id)
         {
             for (int p_id = 0; p_id < SMPLWrapper::POSE_SIZE; ++p_id)
             {
                 // TODO multiply using EIGEN
-                jacobians[2][res_id * SMPLWrapper::POSE_SIZE + p_id] = 0;
+                jacobians[1][res_id * SMPLWrapper::POSE_SIZE + p_id] = 0;
                 for (int d = 0; d < SMPLWrapper::SPACE_DIM; ++d)
                 {
                     // sum derivatives for each coordinate w.r.t. current pose parameter
-                    jacobians[2][res_id * SMPLWrapper::POSE_SIZE + p_id]
+                    jacobians[1][res_id * SMPLWrapper::POSE_SIZE + p_id]
                         += (verts(res_id, d) - closest_points(res_id, d)) * pose_jac[p_id](res_id, d);
                 }
-                jacobians[2][res_id * SMPLWrapper::POSE_SIZE + p_id] /= residuals[res_id];
+                jacobians[1][res_id * SMPLWrapper::POSE_SIZE + p_id] /= residuals[res_id];
             }
         }
     }

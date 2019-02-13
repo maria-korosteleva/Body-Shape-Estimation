@@ -106,7 +106,16 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
         this->translation_[i] = translation_guess(i);
 
     this->pose_ = new double[SMPLWrapper::POSE_SIZE];
-    this->zeros_(this->pose_, SMPLWrapper::POSE_SIZE);
+    //this->zeros_(this->pose_, SMPLWrapper::POSE_SIZE);
+    // anything but non-zero guess
+    for (int i = 0; i < SMPLWrapper::POSE_SIZE; ++i)
+    {
+        this->pose_[i] = 0.01 * (rand() % 10);
+    }
+    //for (int i = SMPLWrapper::SPACE_DIM; i < SMPLWrapper::POSE_SIZE; ++i)
+    //{
+    //    this->pose_[i] = this->mean_pose_[i];  
+    //}
     this->shape_ = new double[SMPLWrapper::SHAPE_SIZE];
     this->zeros_(this->shape_, SMPLWrapper::SHAPE_SIZE);
 
@@ -129,16 +138,16 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
 #ifdef DEBUG
     std::cout << "Optimizer: add distance residual" << std::endl;
 #endif // DEBUG
-    problem.AddResidualBlock(cost_function, nullptr, this->translation_, this->shape_, this->pose_);     // this->pose_, , this->shape_
+    problem.AddResidualBlock(cost_function, nullptr, this->translation_, this->pose_);     // this->pose_, , this->shape_
 
 #ifdef DEBUG
     std::cout << "Optimizer: Add regularizer" << std::endl;
 #endif // DEBUG
 
     // Add regularizer
-    //CostFunction* prior = new NormalPrior(this->stiffness_, this->mean_pose_);
-    //LossFunction* scale_prior = new ScaledLoss(NULL, 0.001, ceres::TAKE_OWNERSHIP);
-    //problem.AddResidualBlock(prior, scale_prior, this->pose_);
+    CostFunction* prior = new NormalPrior(this->stiffness_, this->mean_pose_);
+    LossFunction* scale_prior = new ScaledLoss(NULL, 0.001, ceres::TAKE_OWNERSHIP);
+    problem.AddResidualBlock(prior, scale_prior, this->pose_);
 
 #ifdef DEBUG
     std::cout << "Optimizer: Run Solver" << std::endl;
@@ -182,9 +191,9 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
 
     for (int i = 0; i < jac.num_rows; ++i)
     {
-        for (int j = jac.rows[i]; j < jac.rows[i + 1]; ++j)
+        for (int j = jac.rows[i]+3; j < jac.rows[i + 1]; ++j)   // only pose jacobian
         {
-            std::cout << jac.cols[j] << ":" << jac.values[j] << " ";
+            std::cout << jac.values[j] << " ";
         }
         std::cout << std::endl;
     }
