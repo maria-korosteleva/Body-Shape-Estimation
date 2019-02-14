@@ -119,7 +119,7 @@ private:
     // non-templated version that can calculate jacobian
     // fills the dependence of the Transformation matric on all three coordinates for the input rotation. 
     // When initialized jac is expected to have space for POSE_SIZE Matrices
-    E::MatrixXd get3DLocalTransformMat_(const double * const jointAxisAngleRotation, const E::MatrixXd&, E::MatrixXd* jac = nullptr) const;
+    E::MatrixXd get3DLocalTransformMat_(const double * const jointAxisAngleRotation, const E::MatrixXd&, E::MatrixXd* = nullptr) const;
     
     // Assumes that SPACE_DIM == 3
     template <typename T, typename Derived>

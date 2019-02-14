@@ -108,10 +108,13 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
     this->pose_ = new double[SMPLWrapper::POSE_SIZE];
     //this->zeros_(this->pose_, SMPLWrapper::POSE_SIZE);
     // anything but non-zero guess
+    std::cout << "pose init params: ";
     for (int i = 0; i < SMPLWrapper::POSE_SIZE; ++i)
     {
         this->pose_[i] = 0.01 * (rand() % 10);
+        std::cout << this->pose_[i] << " ";
     }
+    std::cout << std::endl;
     //for (int i = SMPLWrapper::SPACE_DIM; i < SMPLWrapper::POSE_SIZE; ++i)
     //{
     //    this->pose_[i] = this->mean_pose_[i];  
