@@ -96,7 +96,7 @@ E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * con
 
 E::MatrixXd SMPLWrapper::calcJointLocations(const double * shape)
 {
-    E::MatrixXd verts = this->calcModelTemplate<double>(nullptr, shape);
+    E::MatrixXd verts = this->calcModel(nullptr, shape);
     
     return this->jointRegressorMat_ * verts;
 }
@@ -104,7 +104,7 @@ E::MatrixXd SMPLWrapper::calcJointLocations(const double * shape)
 
 void SMPLWrapper::saveToObj(const double* translation, const double* pose, const double* shape, const std::string path) const
 {
-    MatrixXt<double> verts = this->calcModelTemplate<double>(pose, shape);
+    MatrixXt<double> verts = this->calcModel(pose, shape);
     
     if (translation != nullptr)
     {
@@ -267,7 +267,7 @@ void SMPLWrapper::shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::
 }
 
 
-void SMPLWrapper::poseSMPL_(const double * const pose, E::MatrixXd & verts, E::MatrixXd* pose_jac) const
+void SMPLWrapper::poseSMPL_(const double * const pose, E::MatrixXd & verts, E::MatrixXd * pose_jac) const
 {
 #ifdef DEBUG
     std::cout << "pose (analytic)" << std::endl;
@@ -279,6 +279,7 @@ void SMPLWrapper::poseSMPL_(const double * const pose, E::MatrixXd & verts, E::M
     jointsTransformation = this->getJointsTransposedGlobalTransformation_(pose, jointLocations, pose_jac);
 
     // TODO Use sparce matrices for LBS
+    //E::MatrixXd LBSMat = this->getLBSMatrix_(verts);
     E::MatrixXd LBSMat = this->getLBSMatrix_(verts);
 
     verts = LBSMat * jointsTransformation;
@@ -404,18 +405,18 @@ E::MatrixXd SMPLWrapper::getJointsTransposedGlobalTransformation_(const double *
 }
 
 
-E::MatrixXd SMPLWrapper::get3DLocalTransformMat_(const double * const jointAxisAngleRotation, const E::MatrixXd & jointToParentDist, E::MatrixXd* localTransfromJac) const
+E::MatrixXd SMPLWrapper::get3DLocalTransformMat_(const double * const jointAxisAngleRotation, const E::MatrixXd & jointToParentDist, E::MatrixXd* localTransformJac) const
 {
     E::MatrixXd localTransform;
     localTransform.setIdentity(4, 4);   // in homogenious coordinates
     localTransform.block(0, 3, 3, 1) = jointToParentDist.transpose(); // g(0)
 
-    if (localTransfromJac != nullptr)
+    if (localTransformJac != nullptr)
     {
         for (int i = 0; i < 3; ++i)
         {
-            localTransfromJac[i].setZero(4, 4);
-            localTransfromJac[i].block(0, 3, 3, 1) = jointToParentDist.transpose();   // For the default pose transformation
+            localTransformJac[i].setZero(4, 4);
+            localTransformJac[i].block(0, 3, 3, 1) = jointToParentDist.transpose();   // For the default pose transformation
         }
     }
 
@@ -438,7 +439,7 @@ E::MatrixXd SMPLWrapper::get3DLocalTransformMat_(const double * const jointAxisA
         exponent += skew * sin(norm) + skew * skew * (1. - cos(norm));
         localTransform.block(0, 0, 3, 3) = exponent;
 
-        if (localTransfromJac != nullptr)
+        if (localTransformJac != nullptr)
         {
             // desided to leave initialization of this matrices here for the readibility purposes
             E::MatrixXd skewDeriv[3];
@@ -478,7 +479,7 @@ E::MatrixXd SMPLWrapper::get3DLocalTransformMat_(const double * const jointAxisA
             for (int i = 0; i < 3; ++i)
             {
                 // Derivation is in the notebook, double check with https://math.stackexchange.com/questions/2276003/derivative-of-rotation-matrix
-                localTransfromJac[i].block(0, 0, 3, 3) =
+                localTransformJac[i].block(0, 0, 3, 3) =
                     skew * (cos(norm) * jointAxisAngleRotation[i] / norm)
                     + sin(norm) / norm * (skewDeriv[i] - skew * jointAxisAngleRotation[i] / norm)
                     + skew * skew * (sin(norm) * jointAxisAngleRotation[i] / norm)

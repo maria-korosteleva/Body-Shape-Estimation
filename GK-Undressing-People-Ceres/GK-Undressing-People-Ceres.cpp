@@ -156,7 +156,6 @@ int main()
     double* pose_res = optimizer.getEstimatesPoseParams();
     double* translation_res = optimizer.getEstimatesTranslationParams();
     logSMPLParams(translation_res, pose_res, shape_res, logFolderName);
-    std::cout << "Estimated translation" << translation_res[0] << " " << translation_res[1] << " " << translation_res[2] << std::endl;
     smpl.saveToObj(translation_res, pose_res, shape_res, (logFolderName + "posed_shaped.obj"));
     smpl.saveToObj(translation_res, nullptr, shape_res, (logFolderName + "unposed_shaped.obj"));
     smpl.saveToObj(translation_res, pose_res, nullptr, (logFolderName + "posed_unshaped.obj"));
@@ -182,7 +181,7 @@ int main()
 
 //     Visualize the output
 //     TODO: add the input too. Meekyong knows something about two meshes  
-    Eigen::MatrixXd verts = smpl.calcModelTemplate<double>(pose_res, shape_res);
+    Eigen::MatrixXd verts = smpl.calcModel(pose_res, shape_res);
     // translate
     for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
         for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
