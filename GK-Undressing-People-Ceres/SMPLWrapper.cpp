@@ -32,6 +32,7 @@ SMPLWrapper::SMPLWrapper(char gender, const char* path)
     this->readShapes_();
     this->readWeights_();
     this->readHierarchy_();
+    this->readKeyVertices_();
 
     this->template_mean_point_ = this->verts_template_.colwise().mean();
 
@@ -104,7 +105,7 @@ E::MatrixXd SMPLWrapper::calcJointLocations(const double * shape)
 
 void SMPLWrapper::saveToObj(const double* translation, const double* pose, const double* shape, const std::string path) const
 {
-    MatrixXt<double> verts = this->calcModel(pose, shape);
+    E::MatrixXd verts = this->calcModel(pose, shape);
     
     if (translation != nullptr)
     {
@@ -241,6 +242,34 @@ void SMPLWrapper::readHierarchy_()
     {
         inFile >> tmpId;
         inFile >> this->joints_parents_[tmpId];
+    }
+
+    inFile.close();
+}
+
+
+void SMPLWrapper::readKeyVertices_()
+{
+    std::string file_name(this->general_path_);
+    file_name += "key_vertices.txt";
+
+    std::fstream inFile;
+    inFile.open(file_name, std::ios_base::in);
+    int keys_n;
+    inFile >> keys_n;
+    // Sanity check
+    if (keys_n <= 0)
+    {
+        throw std::exception("Number of key vertices should be a positive number!");
+    }
+
+    std::string key_name;
+    int vertexId;
+    for (int i = 0; i < keys_n; i++)
+    {
+        inFile >> key_name;
+        inFile >> vertexId;
+        this->key_vertices_.insert(DictEntry(key_name, vertexId));
     }
 
     inFile.close();
@@ -488,6 +517,7 @@ E::MatrixXd SMPLWrapper::get3DLocalTransformMat_(const double * const jointAxisA
 
     return localTransform;
 }
+
 
 E::MatrixXd SMPLWrapper::get3DTranslationMat_(const E::MatrixXd & translationVector) const
 {

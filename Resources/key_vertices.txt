@@ -1,0 +1,21 @@
+20
+head 411 
+nose 331
+RHand 5475
+LHand 2200
+RElb 5113
+LElb 1635
+RShould 4721 
+LShould 1239
+LFoot 3438
+RFoot 6838 
+LKnee 1013 
+RKnee 4533
+LHip 3475 
+RHip 4985 
+back 3471 
+belly 1769
+RHandFing 5888
+LHandFing 2430
+RFootFing 6646
+LFootFing 3244

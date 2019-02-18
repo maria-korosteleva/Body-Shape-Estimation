@@ -174,7 +174,7 @@ int main()
     const char* input_name = "D:/Data/smpl_outs/pose_hand_up.obj";
     //const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";
 
-    std::string logFolderName = getNewLogFolder("pose_reg_tr_visu_50");
+    std::string logFolderName = getNewLogFolder("prtr_key_verts_50");
 
     input = new GeneralMesh(input_name);
     //// For convenience

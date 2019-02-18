@@ -10,6 +10,7 @@ TODO:
 //#define DEBUG
 
 #include <assert.h>
+#include<map>
 
 #include <Eigen/Dense>
 #include <Eigen/SparseCore>
@@ -25,10 +26,8 @@ TODO:
 
 namespace E = Eigen;
 
-template <typename T>
-using  MatrixXt = E::Matrix<T, E::Dynamic, E::Dynamic>;
-template <typename T>
-using  constMatrixXt = E::Matrix<const T, E::Dynamic, E::Dynamic>;
+using Dictionary = std::map<std::string, int>;
+using DictEntry = std::pair<std::string, int>;
 
 class SMPLWrapper
 {
@@ -53,6 +52,7 @@ public:
     const E::MatrixXi& getFaces() const              { return this->faces_; };
     const E::MatrixXd& getTemplateVertices() const   { return this->verts_template_; };
     const E::VectorXd& getTemplateMeanPoint() const  { return this->template_mean_point_; };
+    const Dictionary& getKeyVertices() const         { return key_vertices_; }
 
     // Pose/shape parameters can be nullptr: allows to get template/pose without shaping/shaping of the T-pose
     // When initialized pose_jac is expected to have space for POSE_SIZE Matrices, 
@@ -80,6 +80,7 @@ private:
     E::MatrixXd jointRegressorMat_;
     int joints_parents_[JOINTS_NUM];
     E::SparseMatrix<double> weights_;
+    Dictionary key_vertices_;
 
     // private functions
     void readTemplate_();
@@ -87,6 +88,7 @@ private:
     void readShapes_();
     void readWeights_();
     void readHierarchy_();
+    void readKeyVertices_();
 
     // for evaluation uses vertex info from the last parameter and uses last parameter for output
     // if not nullptr, shape_jac is expected to be an array of SHAPE_SIZE of MatrixXd, one matrix for each shape parameter
