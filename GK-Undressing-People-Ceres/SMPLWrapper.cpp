@@ -278,9 +278,7 @@ void SMPLWrapper::poseSMPL_(const double * const pose, E::MatrixXd & verts, E::M
 
     jointsTransformation = this->getJointsTransposedGlobalTransformation_(pose, jointLocations, pose_jac);
 
-    // TODO Use sparce matrices for LBS
-    //E::MatrixXd LBSMat = this->getLBSMatrix_(verts);
-    E::MatrixXd LBSMat = this->getLBSMatrix_(verts);
+    E::SparseMatrix<double> LBSMat = this->getLBSMatrix_(verts);
 
     verts = LBSMat * jointsTransformation;
 
