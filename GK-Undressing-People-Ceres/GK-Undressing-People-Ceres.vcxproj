@@ -164,7 +164,6 @@
   <ItemGroup>
     <ClInclude Include="AbsoluteVertsToMeshDistance.h" />
     <ClInclude Include="GeneralMesh.h" />
-    <ClInclude Include="ModelToInputDistanceCostFunctor.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="ShapeUnderClothOptimizer.h" />
     <ClInclude Include="SMPLWrapper.h" />
@@ -173,7 +172,6 @@
     <ClCompile Include="AbsoluteVertsToMeshDistance.cpp" />
     <ClCompile Include="GeneralMesh.cpp" />
     <ClCompile Include="GK-Undressing-People-Ceres.cpp" />
-    <ClCompile Include="ModelToInputDistanceCostFunctor.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

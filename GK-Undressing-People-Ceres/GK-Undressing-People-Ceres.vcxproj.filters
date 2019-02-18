@@ -24,9 +24,6 @@
     <ClInclude Include="ShapeUnderClothOptimizer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ModelToInputDistanceCostFunctor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="GeneralMesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -45,9 +42,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ShapeUnderClothOptimizer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ModelToInputDistanceCostFunctor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="GeneralMesh.cpp">

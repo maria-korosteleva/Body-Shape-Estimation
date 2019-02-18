@@ -9,9 +9,7 @@
 
 #include "GeneralMesh.h"
 #include "SMPLWrapper.h"
-#include "ModelToInputDistanceCostFunctor.h"
 #include "AbsoluteVertsToMeshDistance.h"
-using DistCost = ModelToInputDistanceCostFunctor;
 
 using ceres::AutoDiffCostFunction;
 using ceres::NumericDiffCostFunction;

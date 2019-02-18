@@ -107,18 +107,6 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
 
     this->pose_ = new double[SMPLWrapper::POSE_SIZE];
     this->zeros_(this->pose_, SMPLWrapper::POSE_SIZE);
-    // anything but non-zero guess
-    //std::cout << "pose init params: ";
-    //for (int i = 0; i < SMPLWrapper::POSE_SIZE; ++i)
-    //{
-    //    this->pose_[i] = 0.01 * (rand() % 10);
-    //    std::cout << this->pose_[i] << " ";
-    //}
-    //std::cout << std::endl;
-    //for (int i = SMPLWrapper::SPACE_DIM; i < SMPLWrapper::POSE_SIZE; ++i)
-    //{
-    //    this->pose_[i] = this->mean_pose_[i];  
-    //}
     this->shape_ = new double[SMPLWrapper::SHAPE_SIZE];
     this->zeros_(this->shape_, SMPLWrapper::SHAPE_SIZE);
 
@@ -134,15 +122,11 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
 
     // Construct a problem
     Problem problem;
-    CostFunction* cost_function = new AbsoluteVertsToMeshDistance(this->smpl_, this->input_);
-//        new AutoDiffCostFunction<DistCost, 
-//                                SMPLWrapper::VERTICES_NUM, // num of residuals
-//                                SMPLWrapper::SPACE_DIM>(new DistCost(this->smpl_, this->input_));      //SMPLWrapper::POSE_SIZE, SMPLWrapper::SHAPE_SIZE
+
 #ifdef DEBUG
     std::cout << "Optimizer: add distance residual" << std::endl;
-    std::cerr << "Num of Residuals " << cost_function->num_residuals() << std::endl;
 #endif // DEBUG
-    
+    CostFunction* cost_function = new AbsoluteVertsToMeshDistance(this->smpl_, this->input_);
     problem.AddResidualBlock(cost_function, nullptr, this->pose_, this->translation_);     // this->pose_, , this->shape_ 
 
 #ifdef DEBUG
