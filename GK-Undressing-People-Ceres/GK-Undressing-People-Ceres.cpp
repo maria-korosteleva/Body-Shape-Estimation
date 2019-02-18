@@ -40,8 +40,8 @@
     + simplify function hierarchy 
     + regularization
     + LBS optimization (sparse weight matrix etc)
-    - point-to-surface distance
-        - Idea: try numerical derivative for point-to-surface distance
+    + point-to-surface distance
+        + Idea: try numerical derivative for point-to-surface distance
     + add translation
     + Log input name
 
@@ -118,14 +118,17 @@ void logSMPLParams(double* translation, double* pose, double* shape, std::string
 
 int main()
 {
+    //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin.obj";
+    //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin_custom_smpl.obj";
     //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_fat.obj";
-    const char* input_name = "D:/Data/smpl_outs/smpl_2.obj";
+    //const char* input_name = "D:/Data/smpl_outs/smpl_2.obj";
+    const char* input_name = "D:/Data/smpl_outs/pose_hand_up.obj";
     //const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";
 
-    std::string logFolderName = getNewLogFolder("t_pose_analyt_reg_simple_50");
+    std::string logFolderName = getNewLogFolder("pose_reg_tr_50");
 
     GeneralMesh input(input_name);  // _custom_smpl
-    // For convenience
+    //// For convenience
     igl::writeOBJ(logFolderName + "input.obj", input.getVertices(), input.getFaces());
     std::cout << "Input mesh loaded!\n";
     SMPLWrapper smpl('f', "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
@@ -166,16 +169,16 @@ int main()
     //    if (i < SMPLWrapper::SHAPE_SIZE)
     //        shape_res[i] = 0.;
     //}
-    //pose_res[69] = 1.;
-    //pose_res[51] = 1.;
-    //pose_res[52] =0.5;
-    //pose_res[53] = -1.;
-    //pose_res[58] = 1;
-    //pose_res[5] = 2.;
-    //pose_res[0] = -1.;
-    //shape_res[0] = -0.5;
+    ////pose_res[69] = 1.;
+    //pose_res[50] = 0.5;
+    ////pose_res[52] =0.5;
+    ////pose_res[53] = -1.;
+    ////pose_res[58] = 1;
+    ////pose_res[5] = 2.;
+    ////pose_res[0] = -1.;
+    ////shape_res[0] = -0.5;
 
-    //smpl.saveToObj(&pose_v[0], &shape_v[0], (logFolderName + "pose_50004_knees_270_dyna_thin_custom_smpl.obj"));
+    //smpl.saveToObj(nullptr, pose_res, nullptr, logFolderName + "pose_50004_knees_270_dyna_thin_custom_smpl.obj");
 
 //     Visualize the output
 //     TODO: add the input too. Meekyong knows something about two meshes  
@@ -190,37 +193,6 @@ int main()
     Eigen::MatrixXd closest_points;
     Eigen::VectorXi closest_face_ids;
     igl::point_mesh_squared_distance(verts, input.getVertices(), input.getFaces(), sqrD, closest_face_ids, closest_points);
-
-//    double * dists = new double[SMPLWrapper::VERTICES_NUM];
-//    AbsoluteVertsToMeshDistance distF(&input);
-//    double * smpl_verts = verts.data();
-//    distF.Evaluate(&smpl_verts, dists, NULL);
-//
-//#ifdef DEBUG
-//    std::cout << "MAIN Abs dists evaluate" << std::endl;
-//#endif // DEBUG
-//
-//    //Eigen::Map<const Eigen::Matrix<const double, Eigen::Dynamic, Eigen::Dynamic>> vertices(parameters[0], SMPLWrapper::VERTICES_NUM, SMPLWrapper::SPACE_DIM);
-//    //Eigen::Map<const Eigen::MatrixXd> vertices(parameters[0], SMPLWrapper::VERTICES_NUM, SMPLWrapper::SPACE_DIM);
-//    const Eigen::MatrixXd vertices = Eigen::Map<const Eigen::MatrixXd>(smpl_verts, SMPLWrapper::VERTICES_NUM, SMPLWrapper::SPACE_DIM);
-//
-//    Eigen::VectorXd sqrD;
-//    Eigen::MatrixXd closest_points;
-//    Eigen::VectorXi closest_face_ids;
-//
-//#ifdef DEBUG
-//    std::cout << "Abs dists evaluate: start igl calculation" << std::endl;
-//#endif // DEBUG
-//
-//    igl::point_mesh_squared_distance(vertices, input.getVertices(), input.getFaces(), sqrD, closest_face_ids, closest_points);
-//
-//#ifdef DEBUG
-//    std::cout << "Abs dists evaluate: Fin igl calculation" << std::endl;
-//#endif // DEBUG
-//
-//    delete[] dists;
-
-
 
     igl::opengl::glfw::Viewer viewer;
     igl::opengl::glfw::imgui::ImGuiMenu menu;

@@ -249,6 +249,9 @@ void SMPLWrapper::readHierarchy_()
 
 void SMPLWrapper::shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::MatrixXd* shape_jac) const
 {
+#ifdef DEBUG
+    std::cout << "shape (analytic)" << std::endl;
+#endif // DEBUG
     for (int i = 0; i < this->SHAPE_SIZE; i++)
     {
         verts += shape[i] * this->shape_diffs_[i];
@@ -284,7 +287,9 @@ void SMPLWrapper::poseSMPL_(const double * const pose, E::MatrixXd & verts, E::M
     {
         // pose_jac[i] at this point has the same structure as jointsTransformation
         for (int i = 0; i < SMPLWrapper::POSE_SIZE; ++i)
+        {
             pose_jac[i].applyOnTheLeft(LBSMat);
+        }
     }
 }
 
@@ -300,10 +305,12 @@ E::MatrixXd SMPLWrapper::getJointsTransposedGlobalTransformation_(const double *
 
     static constexpr int HOMO_SIZE = SMPLWrapper::SPACE_DIM + 1;
     E::Matrix<double, HOMO_SIZE, HOMO_SIZE> jointGlobalMats[SMPLWrapper::JOINTS_NUM];
-    E::MatrixXd jointJac[SMPLWrapper::JOINTS_NUM][SMPLWrapper::POSE_SIZE];      // for jacobian calculations, 4x4 or empty
+    // for jacobian calculations, each entry is 4x4 or empty
+    E::MatrixXd jointJacParts[SMPLWrapper::JOINTS_NUM][SMPLWrapper::POSE_SIZE];
     // Stacked (transposed) global transformation matrices for points
     E::MatrixXd pointTransformTotal(HOMO_SIZE * SMPLWrapper::JOINTS_NUM, SMPLWrapper::SPACE_DIM);
 
+    // root 
     if (jacsTotal != nullptr)
     {
         // init the jac
@@ -312,31 +319,33 @@ E::MatrixXd SMPLWrapper::getJointsTransposedGlobalTransformation_(const double *
             jacsTotal[i].setZero(HOMO_SIZE * SMPLWrapper::JOINTS_NUM, SMPLWrapper::SPACE_DIM);
         }
 
-        jointGlobalMats[0] = this->get3DLocalTransformMat_(pose, jointLocations.row(0), jointJac[0]);
+        jointGlobalMats[0] = this->get3DLocalTransformMat_(pose, jointLocations.row(0), jointJacParts[0]);
 
-        // fill derivatives w.r.t. 0 coordinates
+        // fill derivatives w.r.t. coordinates of rotation of the first joint  in the exponential coordinates
         E::MatrixXd tmpPointGlobalJac;
         for (int i = 0; i < SMPLWrapper::SPACE_DIM; ++i)
         {
-            tmpPointGlobalJac = jointJac[0][i] * this->get3DTranslationMat_(-jointLocations.row(0));
+            tmpPointGlobalJac = jointJacParts[0][i] * this->get3DTranslationMat_(-jointLocations.row(0));
             jacsTotal[i].block(0, 0, HOMO_SIZE, SMPLWrapper::SPACE_DIM) = tmpPointGlobalJac.transpose().leftCols(SMPLWrapper::SPACE_DIM);
-
-            std::cout << "Root Jacobian " << std::endl << jointJac[0][i] << std::endl;
-            std::cout << "Root Global Jacobian " << i << std::endl << tmpPointGlobalJac << std::endl;
         }
     }
     else
     {
         jointGlobalMats[0] = this->get3DLocalTransformMat_(pose, jointLocations.row(0));
     }
+
     E::MatrixXd tmpPointGlobalTransform = jointGlobalMats[0] * this->get3DTranslationMat_(-jointLocations.row(0));
     pointTransformTotal.block(0, 0, HOMO_SIZE, SMPLWrapper::SPACE_DIM)
         = tmpPointGlobalTransform.transpose().leftCols(SMPLWrapper::SPACE_DIM);
 
+    // rest of the joints
     for (int i = 1; i < SMPLWrapper::JOINTS_NUM; i++)
     {
         if (jacsTotal != nullptr)
         {
+#ifdef DEBUG
+            std::cout << "Global Transform Jac " << i << std::endl;
+#endif // DEBUG
             E::MatrixXd localTransform;
             E::MatrixXd localTransformJac[SMPLWrapper::SPACE_DIM];
 
@@ -346,40 +355,30 @@ E::MatrixXd SMPLWrapper::getJointsTransposedGlobalTransformation_(const double *
 
             // Forward Kinematics Formula
             jointGlobalMats[i] = jointGlobalMats[this->joints_parents_[i]] * localTransform;
+            E::MatrixXd jointGlobalMatInverse = jointGlobalMats[i].inverse();
             
             E::MatrixXd tmpPointGlobalJac;
             for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)
             {
-                // for simplicity of application to the next generation, multiply by parent transfromation here
-                jointJac[i][i * SMPLWrapper::SPACE_DIM + j] =
-                    jointGlobalMats[this->joints_parents_[i]] * localTransformJac[j];
-                // w.r.t. joint angles of the current joint
-                tmpPointGlobalJac = jointJac[i][i * SMPLWrapper::SPACE_DIM + j] * this->get3DTranslationMat_(-jointLocations.row(i));
-                jacsTotal[i * SMPLWrapper::SPACE_DIM + j].block(i * HOMO_SIZE, 0, HOMO_SIZE, SMPLWrapper::SPACE_DIM) - 
-                    tmpPointGlobalJac.transpose().leftCols(SMPLWrapper::SPACE_DIM);
-            }
-            
-            //jacsTotal[i * SMPLWrapper::SPACE_DIM].block(i * HOMO_SIZE, 0, HOMO_SIZE, SMPLWrapper::SPACE_DIM) 
-            //    = jointJac[i][i * SMPLWrapper::SPACE_DIM].transpose().leftCols(SMPLWrapper::SPACE_DIM);
-            //jacsTotal[i * SMPLWrapper::SPACE_DIM + 1].block(i * HOMO_SIZE, 0, HOMO_SIZE, SMPLWrapper::SPACE_DIM) 
-            //    = jointJac[i][i * SMPLWrapper::SPACE_DIM + 1].transpose().leftCols(SMPLWrapper::SPACE_DIM);
-            //jacsTotal[i * SMPLWrapper::SPACE_DIM + 2].block(i * HOMO_SIZE, 0, HOMO_SIZE, SMPLWrapper::SPACE_DIM)
-            //    = jointJac[i][i * SMPLWrapper::SPACE_DIM + 2].transpose().leftCols(SMPLWrapper::SPACE_DIM);
+                // Collect the transformation derivative to be used on the next iterations
+                jointJacParts[i][i * SMPLWrapper::SPACE_DIM + j] = jointGlobalMats[this->joints_parents_[i]] * localTransformJac[j];
+                // w.r.t. joint rotation of the current joint, in spatial coordinates
+                tmpPointGlobalJac = jointJacParts[i][i * SMPLWrapper::SPACE_DIM + j] * jointGlobalMatInverse;
 
-            // jac w.r.t. parent joints
-            // Using that id of the parent is always smaller that the child's id 
-            //std::cout << "Current local jacobian size " << jointJac[i][i * SMPLWrapper::SPACE_DIM].size();
-            //std::cout << 
-            
+                jacsTotal[i * SMPLWrapper::SPACE_DIM + j].block(i * HOMO_SIZE, 0, HOMO_SIZE, SMPLWrapper::SPACE_DIM) 
+                    = tmpPointGlobalJac.transpose().leftCols(SMPLWrapper::SPACE_DIM);
+            }
+
+            // jac w.r.t. ancessors rotation           
             for (int j = 0; j < (this->joints_parents_[i] + 1) * SMPLWrapper::SPACE_DIM; ++j)
             {
-                if (jointJac[this->joints_parents_[i]][j].size() > 0)
+                if (jointJacParts[this->joints_parents_[i]][j].size() > 0)
                 {
-                    //std::cout << "jac of joint " << i << "w.r.t. parent motion " << j / SMPLWrapper::SPACE_DIM << std::endl;
-                    // TODO Recheck the need for inverse
-                    jointJac[i][j] = jointJac[this->joints_parents_[i]][j] * localTransform; //* ; // 
+                    // for the future use by chilren
+                    jointJacParts[i][j] = jointJacParts[this->joints_parents_[i]][j] * localTransform;
 
-                    tmpPointGlobalJac = jointJac[i][j] * this->get3DTranslationMat_(-jointLocations.row(i));
+                    // in Spatial coordinates
+                    tmpPointGlobalJac = jointJacParts[i][j] * jointGlobalMatInverse;
 
                     jacsTotal[j].block(i * HOMO_SIZE, 0, HOMO_SIZE, SMPLWrapper::SPACE_DIM)
                         = tmpPointGlobalJac.transpose().leftCols(SMPLWrapper::SPACE_DIM);
@@ -405,32 +404,20 @@ E::MatrixXd SMPLWrapper::getJointsTransposedGlobalTransformation_(const double *
 }
 
 
-E::MatrixXd SMPLWrapper::get3DLocalTransformMat_(const double * const jointAxisAngleRotation, const E::MatrixXd & jointLocation, E::MatrixXd* localTransfromJac) const
+E::MatrixXd SMPLWrapper::get3DLocalTransformMat_(const double * const jointAxisAngleRotation, const E::MatrixXd & jointToParentDist, E::MatrixXd* localTransfromJac) const
 {
     E::MatrixXd localTransform;
     localTransform.setIdentity(4, 4);   // in homogenious coordinates
-    localTransform.block(0, 3, 3, 1) = jointLocation.transpose();
+    localTransform.block(0, 3, 3, 1) = jointToParentDist.transpose(); // g(0)
 
     if (localTransfromJac != nullptr)
     {
         for (int i = 0; i < 3; ++i)
         {
             localTransfromJac[i].setZero(4, 4);
-            localTransfromJac[i](3, 3) = 1.;    // homogenious coordinates
-            localTransfromJac[i].block(0, 3, 3, 1) = jointLocation.transpose();   // For the default pose transformation
+            localTransfromJac[i].block(0, 3, 3, 1) = jointToParentDist.transpose();   // For the default pose transformation
         }
     }
-
-#undef USE_CERES
-#ifdef USE_CERES
-
-    double* rotationMat = new double[9];
-    ceres::AngleAxisToRotationMatrix(jointAxisAngleRotation, rotationMat);
-    localTransform.block(0, 0, 3, 3) = Eigen::Map<E::MatrixXd>(rotationMat, 3, 3);
-
-    delete[] rotationMat;
-
-#else // USE_CERES
 
     double norm = sqrt(jointAxisAngleRotation[0] * jointAxisAngleRotation[0]
         + jointAxisAngleRotation[1] * jointAxisAngleRotation[1]
@@ -453,7 +440,7 @@ E::MatrixXd SMPLWrapper::get3DLocalTransformMat_(const double * const jointAxisA
 
         if (localTransfromJac != nullptr)
         {
-            // TODO Make a class member for easier initialization
+            // desided to leave initialization of this matrices here for the readibility purposes
             E::MatrixXd skewDeriv[3];
             skewDeriv[0].resize(3, 3);
             skewDeriv[0] <<
@@ -496,13 +483,9 @@ E::MatrixXd SMPLWrapper::get3DLocalTransformMat_(const double * const jointAxisA
                     + sin(norm) / norm * (skewDeriv[i] - skew * jointAxisAngleRotation[i] / norm)
                     + skew * skew * (sin(norm) * jointAxisAngleRotation[i] / norm)
                     + (skew2Deriv[i] - skew * skew * 2 * jointAxisAngleRotation[i]) * (1. - cos(norm)) / (norm * norm);
-                // + sin(norm) * (- (skew * norm) * jointAxisAngleRotation[i] / (norm * norm * norm) + skewDeriv[i] / norm)
             }  
         }
-
     }
-#endif // USE_CERES
-#define USE_CERES
 
     return localTransform;
 }
@@ -515,6 +498,7 @@ E::MatrixXd SMPLWrapper::get3DTranslationMat_(const E::MatrixXd & translationVec
 
     return translation;
 }
+
 
 E::SparseMatrix<double> SMPLWrapper::getLBSMatrix_(E::MatrixXd & verts) const
 {

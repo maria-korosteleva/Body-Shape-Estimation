@@ -106,15 +106,15 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
         this->translation_[i] = translation_guess(i);
 
     this->pose_ = new double[SMPLWrapper::POSE_SIZE];
-    //this->zeros_(this->pose_, SMPLWrapper::POSE_SIZE);
+    this->zeros_(this->pose_, SMPLWrapper::POSE_SIZE);
     // anything but non-zero guess
-    std::cout << "pose init params: ";
-    for (int i = 0; i < SMPLWrapper::POSE_SIZE; ++i)
-    {
-        this->pose_[i] = 0.01 * (rand() % 10);
-        std::cout << this->pose_[i] << " ";
-    }
-    std::cout << std::endl;
+    //std::cout << "pose init params: ";
+    //for (int i = 0; i < SMPLWrapper::POSE_SIZE; ++i)
+    //{
+    //    this->pose_[i] = 0.01 * (rand() % 10);
+    //    std::cout << this->pose_[i] << " ";
+    //}
+    //std::cout << std::endl;
     //for (int i = SMPLWrapper::SPACE_DIM; i < SMPLWrapper::POSE_SIZE; ++i)
     //{
     //    this->pose_[i] = this->mean_pose_[i];  
@@ -140,8 +140,10 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
 //                                SMPLWrapper::SPACE_DIM>(new DistCost(this->smpl_, this->input_));      //SMPLWrapper::POSE_SIZE, SMPLWrapper::SHAPE_SIZE
 #ifdef DEBUG
     std::cout << "Optimizer: add distance residual" << std::endl;
+    std::cerr << "Num of Residuals " << cost_function->num_residuals() << std::endl;
 #endif // DEBUG
-    problem.AddResidualBlock(cost_function, nullptr, this->translation_, this->pose_);     // this->pose_, , this->shape_
+    
+    problem.AddResidualBlock(cost_function, nullptr, this->pose_, this->translation_);     // this->pose_, , this->shape_ 
 
 #ifdef DEBUG
     std::cout << "Optimizer: Add regularizer" << std::endl;
@@ -158,8 +160,8 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
 
     // Run the solver!
     Solver::Options options;
-    options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
-    // options.linear_solver_type = ceres::DENSE_QR;
+    //options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
+    options.linear_solver_type = ceres::DENSE_QR;
     options.minimizer_progress_to_stdout = true;
     // options.max_num_consecutive_invalid_steps = 20;     // default seems to be less than that
     // options.trust_region_strategy_type = ceres::DOGLEG;
@@ -194,7 +196,7 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
 
     for (int i = 0; i < jac.num_rows; ++i)
     {
-        for (int j = jac.rows[i]+3; j < jac.rows[i + 1]; ++j)   // only pose jacobian
+        for (int j = jac.rows[i]; j < jac.rows[i + 1]; ++j)   // only pose jacobian
         {
             std::cout << jac.values[j] << " ";
         }

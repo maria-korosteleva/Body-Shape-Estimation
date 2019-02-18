@@ -60,9 +60,8 @@ public:
     // non-templated version that can calculate jacobian
     // When initialized pose_jac is expected to have space for POSE_SIZE Matrices, 
     // shape_jac is expected to have space for SHAPE_SIZE Matrices
-    E::MatrixXd calcModel(const double * const, const double * const, E::MatrixXd* pose_jac = nullptr, E::MatrixXd* shape_jac = nullptr) const;
+    E::MatrixXd calcModel(const double * const, const double * const, E::MatrixXd* = nullptr, E::MatrixXd* = nullptr) const;
 
-    // Warning! Function doesn't work properly "sometimes". See issue #364 on Quire
     E::MatrixXd calcJointLocations(const double*);
 
     // Pose/shape parameters can be nullptr: allows to get template/pose without shaping/shaping of the T-pose
