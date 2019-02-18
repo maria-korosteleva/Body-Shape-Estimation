@@ -85,7 +85,7 @@ double * ShapeUnderClothOptimizer::getEstimatesShapeParams()
 }
 
 
-void ShapeUnderClothOptimizer::findOptimalParameters()
+void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd>* iteration_results)
 {
     google::InitGoogleLogging("ShapeUnderClothing");
 
@@ -98,10 +98,8 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
     // Init parameters
     this->translation_ = new double[SMPLWrapper::SPACE_DIM];
     E::VectorXd translation_guess = this->input_->getMeanPoint() - this->smpl_->getTemplateMeanPoint();
-
     assert(translation_guess.size() == SMPLWrapper::SPACE_DIM 
         && "Calculated translation guess should have size equal to the SMPL world dimentionality");
-
     for (int i = 0; i < SMPLWrapper::SPACE_DIM; ++i)
         this->translation_[i] = translation_guess(i);
 
@@ -111,12 +109,6 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
     this->zeros_(this->shape_, SMPLWrapper::SHAPE_SIZE);
 
 #ifdef DEBUG
-    std::cout << "Translation guess" << std::endl;
-    for (int i = 0; i < SMPLWrapper::SPACE_DIM; ++i)
-    {
-        std::cout << this->translation_[i] << " ";
-    }
-    std::cout << std::endl;
     std::cout << "Optimizer: construct a problem" << std::endl;
 #endif // DEBUG
 
@@ -137,12 +129,13 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
     CostFunction* prior = new NormalPrior(this->stiffness_, this->mean_pose_);
     LossFunction* scale_prior = new ScaledLoss(NULL, 0.001, ceres::TAKE_OWNERSHIP);
     problem.AddResidualBlock(prior, scale_prior, this->pose_);
+    
 
 #ifdef DEBUG
     std::cout << "Optimizer: Run Solver" << std::endl;
 #endif // DEBUG
 
-    // Run the solver!
+    // Setup
     Solver::Options options;
     //options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
     options.linear_solver_type = ceres::DENSE_QR;
@@ -151,12 +144,27 @@ void ShapeUnderClothOptimizer::findOptimalParameters()
     // options.trust_region_strategy_type = ceres::DOGLEG;
     // options.max_num_iterations = 100;
     // options.use_nonmonotonic_steps = true;
+    SMPLVertsLoggingCallBack* callback = nullptr;
+    if (iteration_results != nullptr)
+    {
+        callback = new SMPLVertsLoggingCallBack(this->smpl_, this->pose_, this->shape_, this->translation_, iteration_results);
+        options.callbacks.push_back(callback);
+        options.update_state_every_iteration = true;
+    }
 
-    // Print summary
+    // Run the solver!
     Solver::Summary summary;
     Solve(options, &problem, &summary);
+
+    // Print summary
     std::cout << "Summary:" << std::endl;
     std::cout << summary.FullReport() << std::endl;
+
+    // cleanup
+    if (callback != nullptr)
+    {
+        delete callback;
+    }
 
 #ifdef DEBUG
     // Print last Gradient (?) and Jacobian
@@ -310,3 +318,13 @@ void ShapeUnderClothOptimizer::printArray_(double * arr, std::size_t size)
 }
 
 
+ceres::CallbackReturnType ShapeUnderClothOptimizer::SMPLVertsLoggingCallBack::operator()(const ceres::IterationSummary & summary)
+{
+    Eigen::MatrixXd verts = this->smpl_->calcModel(this->pose_, this->shape_);
+    for (int i = 0; i < SMPLWrapper::VERTICES_NUM; ++i)
+        for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)
+            verts(i, j) += this->translation_[j];
+    this->smpl_verts_results_->push_back(verts);
+
+    return ceres::SOLVER_CONTINUE;
+}

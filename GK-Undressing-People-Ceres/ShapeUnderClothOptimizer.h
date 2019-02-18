@@ -25,7 +25,7 @@ using ceres::ScaledLoss;
 class ShapeUnderClothOptimizer
 {
 public:
-    ShapeUnderClothOptimizer(SMPLWrapper*, GeneralMesh*, const char*);
+    ShapeUnderClothOptimizer(SMPLWrapper* smpl, GeneralMesh* input, const char* path_to_prior);
     ~ShapeUnderClothOptimizer();
     
     void setNewSMPLModel(SMPLWrapper*);
@@ -38,7 +38,7 @@ public:
     double * getEstimatesPoseParams();
     double * getEstimatesShapeParams();
 
-    void findOptimalParameters();
+    void findOptimalParameters(std::vector<Eigen::MatrixXd>* iteration_results = nullptr);
 
 private:
     // fixed
@@ -59,5 +59,32 @@ private:
     void readStiffness_(const std::string);
     static void zeros_(double *, std::size_t);
     static void printArray_(double*, std::size_t);
+
+    // inner classes
+    class SMPLVertsLoggingCallBack : public ceres::IterationCallback
+    {
+    public:
+        explicit SMPLVertsLoggingCallBack(SMPLWrapper* smpl,
+            const double const * pose, const double const * shape, const double const * translation, 
+            std::vector<Eigen::MatrixXd>* smpl_verts_iteration_results)
+            : smpl_(smpl), 
+            pose_(pose), 
+            shape_(shape), 
+            translation_(translation), 
+            smpl_verts_results_(smpl_verts_iteration_results) {}
+
+        ~SMPLVertsLoggingCallBack() {}
+
+        ceres::CallbackReturnType operator()(const ceres::IterationSummary& summary);
+    private:
+        SMPLWrapper* smpl_;
+        std::vector<Eigen::MatrixXd>* smpl_verts_results_;
+        // parameter trackers
+        const double const * pose_; 
+        const double const * shape_;
+        const double const * translation_;
+
+    };
 };
+
 

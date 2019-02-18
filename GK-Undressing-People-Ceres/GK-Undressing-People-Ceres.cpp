@@ -44,9 +44,12 @@
         + Idea: try numerical derivative for point-to-surface distance
     + add translation
     + Log input name
+    + optimization process visualization on-the-fly
+    - directional pose estimation -- idea: add it to the main objective as additional resudual 
+    - Acuurate shape and pose estimation (iterative?)
+    - Shape regularization 
 
     - move (important) parameters outside
-    - directional pose estimation -- idea: add it to the main objective as additional resudual 
     - Idea: allow start optimization from the last results
     - libigl as static library
     - SMPL wrapper avalible for everyone
@@ -56,6 +59,13 @@
     + Readme with installation notes
     x learning curve visualization
 */
+
+// global vars are needed for visualization purposes only
+bool progress_visualization = true;
+std::vector<Eigen::MatrixXd> iteration_outputs;
+int counter = 0;
+SMPLWrapper* smpl;
+GeneralMesh* input;
 
 std::string getNewLogFolder(const char * tag = "test")
 {
@@ -116,6 +126,45 @@ void logSMPLParams(double* translation, double* pose, double* shape, std::string
 }
 
 
+bool visulaze_progress_pre_draw(igl::opengl::glfw::Viewer & viewer) {
+    if (viewer.core.is_animating && counter < iteration_outputs.size())
+    {
+        viewer.data().clear();
+        Eigen::MatrixXi faces = smpl->getFaces();
+
+        viewer.data().set_mesh(iteration_outputs[counter], faces);
+        viewer.core.align_camera_center(iteration_outputs[counter], faces);
+
+        Eigen::VectorXd sqrD;
+        Eigen::MatrixXd closest_points;
+        Eigen::VectorXi closest_face_ids;
+        igl::point_mesh_squared_distance(iteration_outputs[counter], input->getVertices(), input->getFaces(), sqrD, closest_face_ids, closest_points);
+
+        //viewer.data().add_points(closest_points, Eigen::RowVector3d(1., 1., 0.));
+        viewer.data().add_edges(iteration_outputs[counter], closest_points, Eigen::RowVector3d(1., 0., 0.));
+
+        counter++;
+    }
+    else if (viewer.core.is_animating && counter >= iteration_outputs.size())
+    {
+        viewer.core.is_animating = false;
+        counter = 0;
+        std::cout << "You can start the animation again by pressing [space]" << std::endl;
+    }
+    return false;
+}
+
+
+bool visulaze_progress_key_down(igl::opengl::glfw::Viewer& viewer, unsigned char key, int modifier)
+{
+    if (key == ' ' )
+    {
+        viewer.core.is_animating = !viewer.core.is_animating;
+    }
+    return false;
+}
+
+
 int main()
 {
     //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin.obj";
@@ -125,17 +174,16 @@ int main()
     const char* input_name = "D:/Data/smpl_outs/pose_hand_up.obj";
     //const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";
 
-    std::string logFolderName = getNewLogFolder("pose_reg_tr_50");
+    std::string logFolderName = getNewLogFolder("pose_reg_tr_visu_50");
 
-    GeneralMesh input(input_name);  // _custom_smpl
+    input = new GeneralMesh(input_name);
     //// For convenience
-    igl::writeOBJ(logFolderName + "input.obj", input.getVertices(), input.getFaces());
+    igl::writeOBJ(logFolderName + "input.obj", input->getVertices(), input->getFaces());
     std::cout << "Input mesh loaded!\n";
-    SMPLWrapper smpl('f', "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
+    smpl = new SMPLWrapper('f', "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
     std::cout << "SMPL model loaded\n";
 
-    // Run optimization
-    ShapeUnderClothOptimizer optimizer(&smpl, &input, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
+    ShapeUnderClothOptimizer optimizer(smpl, input, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
     std::cout << "Optimizer loaded\n";
     
     // Redirect optimizer output to file
@@ -144,8 +192,15 @@ int main()
     std::cout.rdbuf(out.rdbuf());                   //redirect std::cout to file!
     std::cout << "Input file: " << input_name << std::endl;
     std::cout << logFolderName + "optimization.txt" << std::endl;
-
-    optimizer.findOptimalParameters();
+   
+    if (progress_visualization)
+    {
+        // collect the meshes from each iteration
+        iteration_outputs.clear();
+        optimizer.findOptimalParameters(&iteration_outputs);
+    }
+    else
+        optimizer.findOptimalParameters();
 
     std::cout.rdbuf(coutbuf);   //  reset cout to standard output again
     out.close();
@@ -156,10 +211,11 @@ int main()
     double* pose_res = optimizer.getEstimatesPoseParams();
     double* translation_res = optimizer.getEstimatesTranslationParams();
     logSMPLParams(translation_res, pose_res, shape_res, logFolderName);
-    smpl.saveToObj(translation_res, pose_res, shape_res, (logFolderName + "posed_shaped.obj"));
-    smpl.saveToObj(translation_res, nullptr, shape_res, (logFolderName + "unposed_shaped.obj"));
-    smpl.saveToObj(translation_res, pose_res, nullptr, (logFolderName + "posed_unshaped.obj"));
+    smpl->saveToObj(translation_res, pose_res, shape_res, (logFolderName + "posed_shaped.obj"));
+    smpl->saveToObj(translation_res, nullptr, shape_res, (logFolderName + "unposed_shaped.obj"));
+    smpl->saveToObj(translation_res, pose_res, nullptr, (logFolderName + "posed_unshaped.obj"));
 
+    // FOR TESTING 
     //double* pose_res = new double[SMPLWrapper::POSE_SIZE];
     //double* shape_res = new double[SMPLWrapper::SHAPE_SIZE];
     //for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
@@ -179,30 +235,45 @@ int main()
 
     //smpl.saveToObj(nullptr, pose_res, nullptr, logFolderName + "pose_50004_knees_270_dyna_thin_custom_smpl.obj");
 
-//     Visualize the output
-//     TODO: add the input too. Meekyong knows something about two meshes  
-    Eigen::MatrixXd verts = smpl.calcModel(pose_res, shape_res);
-    // translate
-    for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
-        for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
-            verts(i, j) += translation_res[j];
-    Eigen::MatrixXi faces = smpl.getFaces();
-
-    Eigen::VectorXd sqrD;
-    Eigen::MatrixXd closest_points;
-    Eigen::VectorXi closest_face_ids;
-    igl::point_mesh_squared_distance(verts, input.getVertices(), input.getFaces(), sqrD, closest_face_ids, closest_points);
-
+    // Visualize the output
     igl::opengl::glfw::Viewer viewer;
     igl::opengl::glfw::imgui::ImGuiMenu menu;
     viewer.plugins.push_back(&menu);
-    viewer.data().set_mesh(verts, faces);
-    //viewer.data().set_points(Eigen::RowVector3d(1., 1., 0.), Eigen::RowVector3d(1., 1., 0.));
-    viewer.data().add_points(closest_points, Eigen::RowVector3d(1., 1., 0.));
-    viewer.data().add_edges(verts, closest_points, Eigen::RowVector3d(1., 0., 0.));
+
+    if (progress_visualization)
+    {
+        counter = 0;
+        viewer.callback_key_down = &visulaze_progress_key_down;
+        viewer.callback_pre_draw = &visulaze_progress_pre_draw;
+        viewer.core.is_animating = false;
+        viewer.core.animation_max_fps = 24.;
+        std::cout << "Press [space] to toggle animation." << std::endl;
+    }
+    else // visualizing the result only
+    {
+        Eigen::MatrixXd verts = smpl->calcModel(pose_res, shape_res);
+        // translate
+        for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
+            for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
+                verts(i, j) += translation_res[j];
+        Eigen::MatrixXi faces = smpl->getFaces();
+
+        Eigen::VectorXd sqrD;
+        Eigen::MatrixXd closest_points;
+        Eigen::VectorXi closest_face_ids;
+        igl::point_mesh_squared_distance(verts, input->getVertices(), input->getFaces(), sqrD, closest_face_ids, closest_points);
+
+        viewer.data().set_mesh(verts, faces);
+        viewer.data().add_points(closest_points, Eigen::RowVector3d(1., 1., 0.));
+        viewer.data().add_edges(verts, closest_points, Eigen::RowVector3d(1., 0., 0.));
+        //viewer.data().set_points(Eigen::RowVector3d(1., 1., 0.), Eigen::RowVector3d(1., 1., 0.));
+    }
     viewer.launch();
 
     // Cleaning
+    delete input;
+    delete smpl;
     delete[] shape_res;
     delete[] pose_res;
 }
+
