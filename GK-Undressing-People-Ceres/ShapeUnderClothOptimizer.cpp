@@ -142,8 +142,8 @@ void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd
     options.minimizer_progress_to_stdout = true;
     // options.max_num_consecutive_invalid_steps = 20;     // default seems to be less than that
     // options.trust_region_strategy_type = ceres::DOGLEG;
-    // options.max_num_iterations = 100;
-    // options.use_nonmonotonic_steps = true;
+    options.max_num_iterations = 150;
+    //options.use_nonmonotonic_steps = true;
     SMPLVertsLoggingCallBack* callback = nullptr;
     if (iteration_results != nullptr)
     {

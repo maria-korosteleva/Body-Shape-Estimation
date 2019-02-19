@@ -62,6 +62,7 @@
 
 // global vars are needed for visualization purposes only
 bool progress_visualization = true;
+//bool progress_visualization = false;
 std::vector<Eigen::MatrixXd> iteration_outputs;
 int counter = 0;
 SMPLWrapper* smpl;
@@ -135,13 +136,28 @@ bool visulaze_progress_pre_draw(igl::opengl::glfw::Viewer & viewer) {
         viewer.data().set_mesh(iteration_outputs[counter], faces);
         viewer.core.align_camera_center(iteration_outputs[counter], faces);
 
-        Eigen::VectorXd sqrD;
-        Eigen::MatrixXd closest_points;
-        Eigen::VectorXi closest_face_ids;
-        igl::point_mesh_squared_distance(iteration_outputs[counter], input->getVertices(), input->getFaces(), sqrD, closest_face_ids, closest_points);
+        //Eigen::VectorXd sqrD;
+        //Eigen::MatrixXd closest_points;
+        //Eigen::VectorXi closest_face_ids;
+        //igl::point_mesh_squared_distance(iteration_outputs[counter], input->getVertices(), input->getFaces(), sqrD, closest_face_ids, closest_points);
 
         //viewer.data().add_points(closest_points, Eigen::RowVector3d(1., 1., 0.));
-        viewer.data().add_edges(iteration_outputs[counter], closest_points, Eigen::RowVector3d(1., 0., 0.));
+        //viewer.data().add_edges(iteration_outputs[counter], closest_points, Eigen::RowVector3d(1., 0., 0.));
+
+        Eigen::MatrixXd input_key_points(input->getKeyVertices().size(), 3);
+        Eigen::MatrixXd smpl_key_points(input->getKeyVertices().size(), 3);
+
+        Dictionary inputKeyVerts = input->getKeyVertices();
+        Dictionary smplKeyVerts = smpl->getKeyVertices();
+        int res_id = 0;
+        for (auto const& keyIterator : inputKeyVerts)
+        {
+            input_key_points.block(res_id, 0, 1, 3) = input->getVertices().row(keyIterator.second);
+            smpl_key_points.block(res_id, 0, 1, 3) = iteration_outputs[counter].row(smplKeyVerts[keyIterator.first]);
+            res_id++;
+        }
+        viewer.data().add_points(input_key_points, Eigen::RowVector3d(1., 1., 0.));
+        viewer.data().add_edges(smpl_key_points, input_key_points, Eigen::RowVector3d(1., 0., 0.));
 
         counter++;
     }
@@ -169,16 +185,17 @@ int main()
 {
     //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin.obj";
     //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin_custom_smpl.obj";
-    //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_fat.obj";
+    // const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_fat.obj";
     //const char* input_name = "D:/Data/smpl_outs/smpl_2.obj";
     //const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";
+    //const char* input_name = "D:/Data/DYNA/50004_chicken_wings/00091.obj";
     const char* input_name = "D:/Data/smpl_outs/pose_hand_up.obj";
 
     // for SMPL/DYNA inputs
     // expected to contain the subset of the keys defined for the model 
     const char* input_key_vertices_name = "D:/Data/smpl_outs/smpl_key_vertices.txt";
 
-    std::string logFolderName = getNewLogFolder("prtr_key_verts_50");
+    std::string logFolderName = getNewLogFolder("pose_reg_tr_key_verts_5_150");
 
     input = new GeneralMesh(input_name, input_key_vertices_name);
     //// For convenience
@@ -267,9 +284,24 @@ int main()
         Eigen::VectorXi closest_face_ids;
         igl::point_mesh_squared_distance(verts, input->getVertices(), input->getFaces(), sqrD, closest_face_ids, closest_points);
 
+        Eigen::MatrixXd input_key_points (input->getKeyVertices().size(), 3);
+        Eigen::MatrixXd smpl_key_points (input->getKeyVertices().size(), 3);
+
+        Dictionary inputKeyVerts = input->getKeyVertices();
+        Dictionary smplKeyVerts = smpl->getKeyVertices();
+        int res_id = 0;
+        for (auto const& keyIterator : inputKeyVerts)
+        {
+            input_key_points.block(res_id, 0, 1, 3) = input->getVertices().row(keyIterator.second);
+            smpl_key_points.block(res_id, 0, 1, 3) = verts.row(smplKeyVerts[keyIterator.first]);
+            res_id++;
+        }
+
         viewer.data().set_mesh(verts, faces);
-        viewer.data().add_points(closest_points, Eigen::RowVector3d(1., 1., 0.));
-        viewer.data().add_edges(verts, closest_points, Eigen::RowVector3d(1., 0., 0.));
+        viewer.data().add_points(input_key_points, Eigen::RowVector3d(1., 1., 0.));
+        viewer.data().add_edges(smpl_key_points, input_key_points, Eigen::RowVector3d(1., 0., 0.));
+        //viewer.data().add_points(closest_points, Eigen::RowVector3d(1., 1., 0.));
+        //viewer.data().add_edges(verts, closest_points, Eigen::RowVector3d(1., 0., 0.));
         //viewer.data().set_points(Eigen::RowVector3d(1., 1., 0.), Eigen::RowVector3d(1., 1., 0.));
     }
     viewer.launch();
