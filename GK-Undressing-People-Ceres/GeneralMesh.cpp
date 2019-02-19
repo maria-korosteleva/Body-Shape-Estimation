@@ -52,7 +52,8 @@ void GeneralMesh::readKeyVertices_(const char * filename)
     {
         inFile >> key_name;
         inFile >> vertexId;
-        this->key_vertices_.insert(DictEntry(key_name, vertexId));
+
+        this->key_points_.insert(CoordsDictEntry(key_name, this->verts_.row(vertexId)));
     }
 
     inFile.close();

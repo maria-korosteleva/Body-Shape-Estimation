@@ -5,7 +5,7 @@
 AbsoluteVertsToMeshDistance::AbsoluteVertsToMeshDistance(SMPLWrapper* smpl, GeneralMesh * toMesh)
     : toMesh_(toMesh), smpl_(smpl)
 {
-    this->key_verts_num_ = toMesh->getKeyVertices().size();
+    this->key_verts_num_ = toMesh->getKeyPoints().size();
 
     //this->set_num_residuals(this->key_verts_num_);
     this->set_num_residuals(this->key_verts_num_ + SMPLWrapper::VERTICES_NUM);
@@ -54,12 +54,12 @@ bool AbsoluteVertsToMeshDistance::Evaluate(double const * const * parameters, do
 
     // TODO divide into sub-functions
     /// key_vertices
-    Dictionary inputKeyVerts = this->toMesh_->getKeyVertices();
+    CoordsDictionary inputKeyPoints = this->toMesh_->getKeyPoints();
     Dictionary smplKeyVerts = this->smpl_->getKeyVertices();
     int res_id = 0;
-    for (auto const& keyIterator : inputKeyVerts)
+    for (auto const& keyIterator : inputKeyPoints)
     {
-        Eigen::VectorXd in_point = this->toMesh_->getVertices().row(keyIterator.second);
+        Eigen::VectorXd in_point = keyIterator.second;
         int model_v_id = smplKeyVerts[keyIterator.first];
         Eigen::VectorXd model_point = verts.row(model_v_id);
         Eigen::VectorXd diff = model_point - in_point;

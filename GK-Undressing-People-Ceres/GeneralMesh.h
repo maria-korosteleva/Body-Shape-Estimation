@@ -6,8 +6,8 @@
 #include <igl/writeOBJ.h>
 #include <igl/readPLY.h>
 
-using Dictionary = std::map<std::string, int>;
-using DictEntry = std::pair<std::string, int>;
+using CoordsDictionary = std::map<std::string, Eigen::RowVectorXd>;
+using CoordsDictEntry = std::pair<std::string, Eigen::RowVectorXd>;
 
 class GeneralMesh
 {
@@ -19,14 +19,14 @@ public:
     const Eigen::MatrixXd& getVertices() const   { return this->verts_; };
     const Eigen::VectorXd& getMeanPoint() const  { return this->mean_point_; };
     // the user need to check the dictionary for emptiness
-    const Dictionary& getKeyVertices() const     { return this->key_vertices_; }
+    const CoordsDictionary& getKeyPoints() const     { return this->key_points_; }
 
 private:
     Eigen::MatrixXd verts_;
     Eigen::MatrixXi faces_;
     Eigen::VectorXd mean_point_;
 
-    Dictionary key_vertices_;
+    CoordsDictionary key_points_;
 
     void readKeyVertices_(const char * filename);
 };

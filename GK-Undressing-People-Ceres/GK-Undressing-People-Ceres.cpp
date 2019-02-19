@@ -144,15 +144,15 @@ bool visulaze_progress_pre_draw(igl::opengl::glfw::Viewer & viewer) {
         //viewer.data().add_points(closest_points, Eigen::RowVector3d(1., 1., 0.));
         //viewer.data().add_edges(iteration_outputs[counter], closest_points, Eigen::RowVector3d(1., 0., 0.));
 
-        Eigen::MatrixXd input_key_points(input->getKeyVertices().size(), 3);
-        Eigen::MatrixXd smpl_key_points(input->getKeyVertices().size(), 3);
+        Eigen::MatrixXd input_key_points(input->getKeyPoints().size(), 3);
+        Eigen::MatrixXd smpl_key_points(input->getKeyPoints().size(), 3);
 
-        Dictionary inputKeyVerts = input->getKeyVertices();
+        CoordsDictionary inputKeyVerts = input->getKeyPoints();
         Dictionary smplKeyVerts = smpl->getKeyVertices();
         int res_id = 0;
         for (auto const& keyIterator : inputKeyVerts)
         {
-            input_key_points.block(res_id, 0, 1, 3) = input->getVertices().row(keyIterator.second);
+            input_key_points.block(res_id, 0, 1, 3) = keyIterator.second;
             smpl_key_points.block(res_id, 0, 1, 3) = iteration_outputs[counter].row(smplKeyVerts[keyIterator.first]);
             res_id++;
         }
@@ -183,13 +183,13 @@ bool visulaze_progress_key_down(igl::opengl::glfw::Viewer& viewer, unsigned char
 
 int main()
 {
-    //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin.obj";
+    const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin.obj";
     //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin_custom_smpl.obj";
     // const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_fat.obj";
     //const char* input_name = "D:/Data/smpl_outs/smpl_2.obj";
     //const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";
     //const char* input_name = "D:/Data/DYNA/50004_chicken_wings/00091.obj";
-    const char* input_name = "D:/Data/smpl_outs/pose_hand_up.obj";
+    //const char* input_name = "D:/Data/smpl_outs/pose_hand_up.obj";
 
     // for SMPL/DYNA inputs
     // expected to contain the subset of the keys defined for the model 
@@ -284,15 +284,15 @@ int main()
         Eigen::VectorXi closest_face_ids;
         igl::point_mesh_squared_distance(verts, input->getVertices(), input->getFaces(), sqrD, closest_face_ids, closest_points);
 
-        Eigen::MatrixXd input_key_points (input->getKeyVertices().size(), 3);
-        Eigen::MatrixXd smpl_key_points (input->getKeyVertices().size(), 3);
+        Eigen::MatrixXd input_key_points (input->getKeyPoints().size(), 3);
+        Eigen::MatrixXd smpl_key_points (input->getKeyPoints().size(), 3);
 
-        Dictionary inputKeyVerts = input->getKeyVertices();
+        CoordsDictionary inputKeyPoints = input->getKeyPoints();
         Dictionary smplKeyVerts = smpl->getKeyVertices();
         int res_id = 0;
-        for (auto const& keyIterator : inputKeyVerts)
+        for (auto const& keyIterator : inputKeyPoints)
         {
-            input_key_points.block(res_id, 0, 1, 3) = input->getVertices().row(keyIterator.second);
+            input_key_points.block(res_id, 0, 1, 3) = keyIterator.second;
             smpl_key_points.block(res_id, 0, 1, 3) = verts.row(smplKeyVerts[keyIterator.first]);
             res_id++;
         }
