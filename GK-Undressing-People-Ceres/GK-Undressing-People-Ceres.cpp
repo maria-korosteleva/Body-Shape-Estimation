@@ -171,12 +171,16 @@ int main()
     //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin_custom_smpl.obj";
     //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_fat.obj";
     //const char* input_name = "D:/Data/smpl_outs/smpl_2.obj";
-    const char* input_name = "D:/Data/smpl_outs/pose_hand_up.obj";
     //const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";
+    const char* input_name = "D:/Data/smpl_outs/pose_hand_up.obj";
+
+    // for SMPL/DYNA inputs
+    // expected to contain the subset of the keys defined for the model 
+    const char* input_key_vertices_name = "D:/Data/smpl_outs/smpl_key_vertices.txt";
 
     std::string logFolderName = getNewLogFolder("prtr_key_verts_50");
 
-    input = new GeneralMesh(input_name);
+    input = new GeneralMesh(input_name, input_key_vertices_name);
     //// For convenience
     igl::writeOBJ(logFolderName + "input.obj", input->getVertices(), input->getFaces());
     std::cout << "Input mesh loaded!\n";

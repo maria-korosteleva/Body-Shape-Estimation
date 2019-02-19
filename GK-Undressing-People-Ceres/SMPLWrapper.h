@@ -10,7 +10,7 @@ TODO:
 //#define DEBUG
 
 #include <assert.h>
-#include<map>
+#include <map>
 
 #include <Eigen/Dense>
 #include <Eigen/SparseCore>
@@ -52,7 +52,7 @@ public:
     const E::MatrixXi& getFaces() const              { return this->faces_; };
     const E::MatrixXd& getTemplateVertices() const   { return this->verts_template_; };
     const E::VectorXd& getTemplateMeanPoint() const  { return this->template_mean_point_; };
-    const Dictionary& getKeyVertices() const         { return key_vertices_; }
+    const Dictionary& getKeyVertices() const         { return this->key_vertices_; }
 
     // Pose/shape parameters can be nullptr: allows to get template/pose without shaping/shaping of the T-pose
     // When initialized pose_jac is expected to have space for POSE_SIZE Matrices, 
@@ -80,6 +80,7 @@ private:
     E::MatrixXd jointRegressorMat_;
     int joints_parents_[JOINTS_NUM];
     E::SparseMatrix<double> weights_;
+    // vertices on the important parts of the body
     Dictionary key_vertices_;
 
     // private functions
