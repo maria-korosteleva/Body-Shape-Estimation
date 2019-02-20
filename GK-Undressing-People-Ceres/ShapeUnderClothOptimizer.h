@@ -52,9 +52,13 @@ private:
     double * pose_ = nullptr;
     double * shape_ = nullptr;
 
-    void erase_params_();
+    // inidividual optimizers
+    // expect the params to be initialized outside
+    //void direstionalPoseEstimation_(Solver::Options& options);
+    void generalPoseEstimation_(Solver::Options& options);
 
     // utils
+    void erase_params_();
     void readMeanPose_(const std::string);
     void readStiffness_(const std::string);
     static void zeros_(double *, std::size_t);

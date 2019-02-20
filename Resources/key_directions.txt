@@ -1,0 +1,20 @@
+19
+RHandFing RHand
+RHand RElb   
+RElb RShould
+RShould back
+LHandFing LHand
+LHand LElb
+LElb LShould 
+LShould back
+RFootFing RFoot
+RFoot RKnee
+RKnee RHip
+RHip back
+LFootFing LFoot
+LFoot LKnee
+LKnee LHip
+LHip back
+nose head
+head back
+belly back 

@@ -89,61 +89,25 @@ void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd
 {
     google::InitGoogleLogging("ShapeUnderClothing");
 
-    this->erase_params_();
-
-#ifdef DEBUG
-    std::cout << "Optimizer: Init parameters" << std::endl;
-#endif // DEBUG
-
     // Init parameters
+    this->erase_params_();
     this->translation_ = new double[SMPLWrapper::SPACE_DIM];
+    this->pose_ = new double[SMPLWrapper::POSE_SIZE];
+    this->shape_ = new double[SMPLWrapper::SHAPE_SIZE];
+
     E::VectorXd translation_guess = this->input_->getMeanPoint() - this->smpl_->getTemplateMeanPoint();
     assert(translation_guess.size() == SMPLWrapper::SPACE_DIM 
         && "Calculated translation guess should have size equal to the SMPL world dimentionality");
     for (int i = 0; i < SMPLWrapper::SPACE_DIM; ++i)
         this->translation_[i] = translation_guess(i);
-
-    this->pose_ = new double[SMPLWrapper::POSE_SIZE];
     this->zeros_(this->pose_, SMPLWrapper::POSE_SIZE);
-    this->shape_ = new double[SMPLWrapper::SHAPE_SIZE];
     this->zeros_(this->shape_, SMPLWrapper::SHAPE_SIZE);
 
-#ifdef DEBUG
-    std::cout << "Optimizer: construct a problem" << std::endl;
-#endif // DEBUG
-
-    // Construct a problem
-    Problem problem;
-
-#ifdef DEBUG
-    std::cout << "Optimizer: add distance residual" << std::endl;
-#endif // DEBUG
-    CostFunction* cost_function = new AbsoluteVertsToMeshDistance(this->smpl_, this->input_);
-    problem.AddResidualBlock(cost_function, nullptr, this->pose_, this->translation_);     // this->pose_, , this->shape_ 
-
-#ifdef DEBUG
-    std::cout << "Optimizer: Add regularizer" << std::endl;
-#endif // DEBUG
-
-    // Add regularizer
-    CostFunction* prior = new NormalPrior(this->stiffness_, this->mean_pose_);
-    LossFunction* scale_prior = new ScaledLoss(NULL, 0.001, ceres::TAKE_OWNERSHIP);
-    problem.AddResidualBlock(prior, scale_prior, this->pose_);
-    
-
-#ifdef DEBUG
-    std::cout << "Optimizer: Run Solver" << std::endl;
-#endif // DEBUG
-
-    // Setup
+    // Setup solvers options
     Solver::Options options;
-    //options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
-    options.linear_solver_type = ceres::DENSE_QR;
+    options.linear_solver_type = ceres::DENSE_QR;   // analytic jacobian is dense
     options.minimizer_progress_to_stdout = true;
-    // options.max_num_consecutive_invalid_steps = 20;     // default seems to be less than that
-    // options.trust_region_strategy_type = ceres::DOGLEG;
-    options.max_num_iterations = 150;
-    //options.use_nonmonotonic_steps = true;
+    options.max_num_iterations = 150;   // usually converges faster
     SMPLVertsLoggingCallBack* callback = nullptr;
     if (iteration_results != nullptr)
     {
@@ -152,6 +116,30 @@ void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd
         options.update_state_every_iteration = true;
     }
 
+    // parameters estimation
+    this->generalPoseEstimation_(options);
+
+    // cleanup
+    if (callback != nullptr)
+    {
+        delete callback;
+    }
+}
+
+
+void ShapeUnderClothOptimizer::generalPoseEstimation_(Solver::Options& options)
+{
+    Problem problem;
+
+    // Main cost
+    CostFunction* cost_function = new AbsoluteVertsToMeshDistance(this->smpl_, this->input_);
+    problem.AddResidualBlock(cost_function, nullptr, this->pose_, this->translation_);     // this->pose_, , this->shape_ 
+
+    // Regularizer
+    CostFunction* prior = new NormalPrior(this->stiffness_, this->mean_pose_);
+    LossFunction* scale_prior = new ScaledLoss(NULL, 0.001, ceres::TAKE_OWNERSHIP);
+    problem.AddResidualBlock(prior, scale_prior, this->pose_);
+
     // Run the solver!
     Solver::Summary summary;
     Solve(options, &problem, &summary);
@@ -159,12 +147,6 @@ void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd
     // Print summary
     std::cout << "Summary:" << std::endl;
     std::cout << summary.FullReport() << std::endl;
-
-    // cleanup
-    if (callback != nullptr)
-    {
-        delete callback;
-    }
 
 #ifdef DEBUG
     // Print last Gradient (?) and Jacobian
@@ -179,12 +161,6 @@ void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd
     std::cout << std::endl;
 
     std::cout << "Jacobian (sparse)" << std::endl;
-    //std::vector<double> values = jac.values;
-    //for (auto i = values.begin(); i != values.end(); ++i)
-    //{
-    //    std::cout << *i << " ";
-    //}
-    //std::cout << std::endl;
 
     for (int i = 0; i < jac.num_rows; ++i)
     {
@@ -197,7 +173,6 @@ void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd
 
 #endif // DEBUG
 }
-
 
 void ShapeUnderClothOptimizer::erase_params_()
 {
