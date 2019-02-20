@@ -28,6 +28,7 @@ namespace E = Eigen;
 
 using Dictionary = std::map<std::string, int>;
 using DictEntry = std::pair<std::string, int>;
+using DirPair = std::pair < std::string, std::string >;
 
 class SMPLWrapper
 {
@@ -53,6 +54,7 @@ public:
     const E::MatrixXd& getTemplateVertices() const   { return this->verts_template_; };
     const E::VectorXd& getTemplateMeanPoint() const  { return this->template_mean_point_; };
     const Dictionary& getKeyVertices() const         { return this->key_vertices_; }
+    const std::vector <DirPair>& getKeyDirections() const { return this->key_directions_; }
 
     // Pose/shape parameters can be nullptr: allows to get template/pose without shaping/shaping of the T-pose
     // When initialized pose_jac is expected to have space for POSE_SIZE Matrices, 
@@ -82,6 +84,7 @@ private:
     E::SparseMatrix<double> weights_;
     // vertices on the important parts of the body
     Dictionary key_vertices_;
+    std::vector <DirPair> key_directions_;
 
     // private functions
     void readTemplate_();
@@ -90,6 +93,7 @@ private:
     void readWeights_();
     void readHierarchy_();
     void readKeyVertices_();
+    void readKeyDirections_();
 
     // for evaluation uses vertex info from the last parameter and uses last parameter for output
     // if not nullptr, shape_jac is expected to be an array of SHAPE_SIZE of MatrixXd, one matrix for each shape parameter

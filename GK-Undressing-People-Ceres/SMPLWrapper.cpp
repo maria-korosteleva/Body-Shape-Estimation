@@ -33,6 +33,7 @@ SMPLWrapper::SMPLWrapper(char gender, const char* path)
     this->readWeights_();
     this->readHierarchy_();
     this->readKeyVertices_();
+    this->readKeyDirections_();
 
     this->template_mean_point_ = this->verts_template_.colwise().mean();
 
@@ -271,6 +272,36 @@ void SMPLWrapper::readKeyVertices_()
         inFile >> vertexId;
         this->key_vertices_.insert(DictEntry(key_name, vertexId));
     }
+
+    inFile.close();
+}
+
+
+void SMPLWrapper::readKeyDirections_()
+{
+    std::string file_name(this->general_path_);
+    file_name += "key_directions.txt";
+
+    std::fstream inFile;
+    inFile.open(file_name, std::ios_base::in);
+    int dirs_n;
+    inFile >> dirs_n;
+    // Sanity check
+    if (dirs_n <= 0)
+    {
+        throw std::exception("Number of key directions should be a positive number!");
+    }
+
+    std::string key_1;
+    std::string key_2;
+    for (int i = 0; i < dirs_n; i++)
+    {
+        inFile >> key_1;
+        inFile >> key_2;
+        this->key_directions_.push_back(DirPair(key_1, key_2));
+    }
+
+    std::cout << this->key_directions_[4].second << std::endl;
 
     inFile.close();
 }

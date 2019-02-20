@@ -195,7 +195,7 @@ int main()
     // expected to contain the subset of the keys defined for the model 
     const char* input_key_vertices_name = "D:/Data/smpl_outs/smpl_key_vertices.txt";
 
-    std::string logFolderName = getNewLogFolder("pose_reg_tr_key_verts_5_150");
+    std::string logFolderName = getNewLogFolder("key_dirs_150");
 
     input = new GeneralMesh(input_name, input_key_vertices_name);
     //// For convenience
