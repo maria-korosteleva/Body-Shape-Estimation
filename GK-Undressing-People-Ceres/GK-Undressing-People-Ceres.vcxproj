@@ -163,6 +163,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AbsoluteVertsToMeshDistance.h" />
+    <ClInclude Include="DirBasedDistanceForPose.h" />
     <ClInclude Include="GeneralMesh.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="ShapeUnderClothOptimizer.h" />
@@ -170,6 +171,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AbsoluteVertsToMeshDistance.cpp" />
+    <ClCompile Include="DirBasedDistanceForPose.cpp" />
     <ClCompile Include="GeneralMesh.cpp" />
     <ClCompile Include="GK-Undressing-People-Ceres.cpp" />
     <ClCompile Include="pch.cpp">

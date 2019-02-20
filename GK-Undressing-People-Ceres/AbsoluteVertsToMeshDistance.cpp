@@ -63,7 +63,7 @@ bool AbsoluteVertsToMeshDistance::Evaluate(double const * const * parameters, do
         int model_v_id = smplKeyVerts[keyIterator.first];
         Eigen::VectorXd model_point = verts.row(model_v_id);
         Eigen::VectorXd diff = model_point - in_point;
-        residuals[res_id] = this->coef_key_vertices_ * diff.norm() * diff.norm();
+        residuals[res_id] = this->coef_key_vertices_ * diff.dot(diff);
 
         // jacobian
         // w.r.t. pose

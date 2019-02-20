@@ -30,6 +30,9 @@
     <ClInclude Include="AbsoluteVertsToMeshDistance.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DirBasedDistanceForPose.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -48,6 +51,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="AbsoluteVertsToMeshDistance.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirBasedDistanceForPose.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
