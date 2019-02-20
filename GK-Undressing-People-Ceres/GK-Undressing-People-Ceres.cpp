@@ -183,19 +183,22 @@ bool visulaze_progress_key_down(igl::opengl::glfw::Viewer& viewer, unsigned char
 
 int main()
 {
-    const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin.obj";
+    //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin.obj";
     //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin_custom_smpl.obj";
     // const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_fat.obj";
     //const char* input_name = "D:/Data/smpl_outs/smpl_2.obj";
     //const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";
     //const char* input_name = "D:/Data/DYNA/50004_chicken_wings/00091.obj";
     //const char* input_name = "D:/Data/smpl_outs/pose_hand_up.obj";
+    //const char* input_name = "D:/Data/smpl_outs/pose_hand_up_down.obj";
+    //const char* input_name = "D:/Data/smpl_outs/pose_leg_up_up.obj";
+    const char* input_name = "D:/Data/smpl_outs/pose_leg_up_knee_up.obj";
 
     // for SMPL/DYNA inputs
     // expected to contain the subset of the keys defined for the model 
     const char* input_key_vertices_name = "D:/Data/smpl_outs/smpl_key_vertices.txt";
 
-    std::string logFolderName = getNewLogFolder("key_dirs_150");
+    std::string logFolderName = getNewLogFolder("key_dirs_pose_jac_check_grads_150");
 
     input = new GeneralMesh(input_name, input_key_vertices_name);
     //// For convenience
@@ -246,15 +249,18 @@ int main()
     //        shape_res[i] = 0.;
     //}
     ////pose_res[69] = 1.;
-    //pose_res[50] = 0.5;
+    ////pose_res[50] = 0.5;
+    ////pose_res[56] = 1.;
     ////pose_res[52] =0.5;
     ////pose_res[53] = -1.;
     ////pose_res[58] = 1;
     ////pose_res[5] = 2.;
     ////pose_res[0] = -1.;
+    //pose_res[6] = 0.5;
+    //pose_res[15] = 1.;
     ////shape_res[0] = -0.5;
 
-    //smpl.saveToObj(nullptr, pose_res, nullptr, logFolderName + "pose_50004_knees_270_dyna_thin_custom_smpl.obj");
+    //smpl->saveToObj(nullptr, pose_res, nullptr, logFolderName + "pose_leg_up_up.obj");
 
     // Visualize the output
     igl::opengl::glfw::Viewer viewer;

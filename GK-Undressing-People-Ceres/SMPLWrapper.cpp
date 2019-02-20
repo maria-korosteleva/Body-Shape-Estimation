@@ -301,8 +301,6 @@ void SMPLWrapper::readKeyDirections_()
         this->key_directions_.push_back(DirPair(key_1, key_2));
     }
 
-    std::cout << this->key_directions_[4].second << std::endl;
-
     inFile.close();
 }
 

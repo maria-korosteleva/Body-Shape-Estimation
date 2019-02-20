@@ -9,7 +9,9 @@
 
 #include "GeneralMesh.h"
 #include "SMPLWrapper.h"
+// cost functions
 #include "AbsoluteVertsToMeshDistance.h"
+#include "DirBasedDistanceForPose.h"
 
 using ceres::AutoDiffCostFunction;
 using ceres::NumericDiffCostFunction;
@@ -54,7 +56,7 @@ private:
 
     // inidividual optimizers
     // expect the params to be initialized outside
-    //void direstionalPoseEstimation_(Solver::Options& options);
+    void direstionalPoseEstimation_(Solver::Options& options);
     void generalPoseEstimation_(Solver::Options& options);
 
     // utils
