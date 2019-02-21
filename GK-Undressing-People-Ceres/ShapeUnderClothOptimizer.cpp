@@ -107,7 +107,7 @@ void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd
     Solver::Options options;
     options.linear_solver_type = ceres::DENSE_QR;   // analytic jacobian is dense
     options.minimizer_progress_to_stdout = true;
-    options.max_num_iterations = 150;   // usually converges faster
+    options.max_num_iterations = 500;   // usually converges faster
 
     // to debug jacobian
     //options.check_gradients = true;
@@ -121,7 +121,7 @@ void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd
     }
 
     // parameters estimation
-    this->direstionalPoseEstimation_(options);
+    this->directionalPoseEstimation_(options);
 
     //this->generalPoseEstimation_(options);
 
@@ -133,7 +133,7 @@ void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd
 }
 
 
-void ShapeUnderClothOptimizer::direstionalPoseEstimation_(Solver::Options & options)
+void ShapeUnderClothOptimizer::directionalPoseEstimation_(Solver::Options & options)
 {
     Problem problem;
 
@@ -142,9 +142,9 @@ void ShapeUnderClothOptimizer::direstionalPoseEstimation_(Solver::Options & opti
     problem.AddResidualBlock(dir_based_cost_function, nullptr, this->pose_);
 
     // Regularizer
-    //CostFunction* prior = new NormalPrior(this->stiffness_, this->mean_pose_);
-    //LossFunction* scale_prior = new ScaledLoss(NULL, 0.00001, ceres::TAKE_OWNERSHIP);
-    //problem.AddResidualBlock(prior, scale_prior, this->pose_);
+    CostFunction* prior = new NormalPrior(this->stiffness_, this->mean_pose_);
+    LossFunction* scale_prior = new ScaledLoss(NULL, 0.0001, ceres::TAKE_OWNERSHIP);
+    problem.AddResidualBlock(prior, scale_prior, this->pose_);
 
     // Run the solver!
     Solver::Summary summary;

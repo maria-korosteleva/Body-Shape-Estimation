@@ -188,17 +188,17 @@ int main()
     // const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_fat.obj";
     //const char* input_name = "D:/Data/smpl_outs/smpl_2.obj";
     //const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";
-    //const char* input_name = "D:/Data/DYNA/50004_chicken_wings/00091.obj";
+    const char* input_name = "D:/Data/DYNA/50004_chicken_wings/00091.obj";
     //const char* input_name = "D:/Data/smpl_outs/pose_hand_up.obj";
     //const char* input_name = "D:/Data/smpl_outs/pose_hand_up_down.obj";
     //const char* input_name = "D:/Data/smpl_outs/pose_leg_up_up.obj";
-    const char* input_name = "D:/Data/smpl_outs/pose_leg_up_knee_up.obj";
+    //const char* input_name = "D:/Data/smpl_outs/pose_leg_up_knee_up.obj";
 
     // for SMPL/DYNA inputs
     // expected to contain the subset of the keys defined for the model 
     const char* input_key_vertices_name = "D:/Data/smpl_outs/smpl_key_vertices.txt";
 
-    std::string logFolderName = getNewLogFolder("key_dirs_pose_jac_check_grads_150");
+    std::string logFolderName = getNewLogFolder("kd_pose_jac_direct_deriv_reg_chicken_500");
 
     input = new GeneralMesh(input_name, input_key_vertices_name);
     //// For convenience

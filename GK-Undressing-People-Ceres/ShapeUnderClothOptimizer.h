@@ -56,7 +56,7 @@ private:
 
     // inidividual optimizers
     // expect the params to be initialized outside
-    void direstionalPoseEstimation_(Solver::Options& options);
+    void directionalPoseEstimation_(Solver::Options& options);
     void generalPoseEstimation_(Solver::Options& options);
 
     // utils
