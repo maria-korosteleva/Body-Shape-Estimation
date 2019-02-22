@@ -1,9 +1,9 @@
 #include "pch.h"
-#include "AbsoluteVertsToMeshDistance.h"
+#include "AbsoluteDistanceForPose.h"
 
 
-AbsoluteVertsToMeshDistance::AbsoluteVertsToMeshDistance(SMPLWrapper* smpl, GeneralMesh * toMesh)
-    : toMesh_(toMesh), smpl_(smpl)
+AbsoluteDistanceForPose::AbsoluteDistanceForPose(SMPLWrapper* smpl, GeneralMesh * toMesh, double * shape)
+    : toMesh_(toMesh), smpl_(smpl), shape_(shape)
 {
     this->key_verts_num_ = toMesh->getKeyPoints().size();
 
@@ -16,11 +16,11 @@ AbsoluteVertsToMeshDistance::AbsoluteVertsToMeshDistance(SMPLWrapper* smpl, Gene
 }
 
 
-AbsoluteVertsToMeshDistance::~AbsoluteVertsToMeshDistance()
+AbsoluteDistanceForPose::~AbsoluteDistanceForPose()
 {
 }
 
-bool AbsoluteVertsToMeshDistance::Evaluate(double const * const * parameters, double * residuals, double ** jacobians) const
+bool AbsoluteDistanceForPose::Evaluate(double const * const * parameters, double * residuals, double ** jacobians) const
 {
     assert(SMPLWrapper::SPACE_DIM == 3 && "Distance evaluation is only implemented in 3D");
     assert(this->parameter_block_sizes()[0] == SMPLWrapper::POSE_SIZE && "Pose parameter size is set as expected");
@@ -37,11 +37,11 @@ bool AbsoluteVertsToMeshDistance::Evaluate(double const * const * parameters, do
     Eigen::MatrixXd verts;
     if (jacobians != NULL && jacobians[0] != NULL)
     {
-        verts = this->smpl_->calcModel(parameters[0], nullptr, pose_jac, nullptr);
+        verts = this->smpl_->calcModel(parameters[0], this->shape_, pose_jac, nullptr);
     }
     else
     {
-        verts = this->smpl_->calcModel(parameters[0], nullptr);
+        verts = this->smpl_->calcModel(parameters[0], this->shape_);
     }
 
     // translate

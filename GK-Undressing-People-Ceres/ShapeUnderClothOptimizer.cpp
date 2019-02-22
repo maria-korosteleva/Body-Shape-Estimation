@@ -188,7 +188,7 @@ void ShapeUnderClothOptimizer::generalPoseEstimation_(Solver::Options& options)
     Problem problem;
 
     // Main cost
-    CostFunction* cost_function = new AbsoluteVertsToMeshDistance(this->smpl_, this->input_);
+    CostFunction* cost_function = new AbsoluteDistanceForPose(this->smpl_, this->input_);
     problem.AddResidualBlock(cost_function, nullptr, this->pose_, this->translation_);     // this->pose_, , this->shape_ 
 
     // Regularizer
