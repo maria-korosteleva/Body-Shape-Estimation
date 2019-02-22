@@ -98,6 +98,7 @@ void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd
     E::VectorXd translation_guess = this->input_->getMeanPoint() - this->smpl_->getTemplateMeanPoint();
     assert(translation_guess.size() == SMPLWrapper::SPACE_DIM 
         && "Calculated translation guess should have size equal to the SMPL world dimentionality");
+    //this->zeros_(this->translation_, SMPLWrapper::SPACE_DIM);
     for (int i = 0; i < SMPLWrapper::SPACE_DIM; ++i)
         this->translation_[i] = translation_guess(i);
     this->zeros_(this->pose_, SMPLWrapper::POSE_SIZE);
@@ -121,9 +122,9 @@ void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd
     }
 
     // parameters estimation
-    this->directionalPoseEstimation_(options);
+    //this->directionalPoseEstimation_(options);
 
-    //this->generalPoseEstimation_(options);
+    this->generalPoseEstimation_(options);
 
     // cleanup
     if (callback != nullptr)
@@ -142,9 +143,9 @@ void ShapeUnderClothOptimizer::directionalPoseEstimation_(Solver::Options & opti
     problem.AddResidualBlock(dir_based_cost_function, nullptr, this->pose_);
 
     // Regularizer
-    CostFunction* prior = new NormalPrior(this->stiffness_, this->mean_pose_);
-    LossFunction* scale_prior = new ScaledLoss(NULL, 0.0001, ceres::TAKE_OWNERSHIP);
-    problem.AddResidualBlock(prior, scale_prior, this->pose_);
+    //CostFunction* prior = new NormalPrior(this->stiffness_, this->mean_pose_);
+    //LossFunction* scale_prior = new ScaledLoss(NULL, 0.0001, ceres::TAKE_OWNERSHIP);
+    //problem.AddResidualBlock(prior, scale_prior, this->pose_);
 
     // Run the solver!
     Solver::Summary summary;

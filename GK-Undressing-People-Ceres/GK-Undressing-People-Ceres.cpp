@@ -183,139 +183,148 @@ bool visulaze_progress_key_down(igl::opengl::glfw::Viewer& viewer, unsigned char
 
 int main()
 {
-    //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin.obj";
-    //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin_custom_smpl.obj";
-    // const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_fat.obj";
-    //const char* input_name = "D:/Data/smpl_outs/smpl_2.obj";
-    //const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";
-    const char* input_name = "D:/Data/DYNA/50004_chicken_wings/00091.obj";
-    //const char* input_name = "D:/Data/smpl_outs/pose_hand_up.obj";
-    //const char* input_name = "D:/Data/smpl_outs/pose_hand_up_down.obj";
-    //const char* input_name = "D:/Data/smpl_outs/pose_leg_up_up.obj";
-    //const char* input_name = "D:/Data/smpl_outs/pose_leg_up_knee_up.obj";
+    try {
+        //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin.obj";
+        //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin_custom_smpl.obj";
+        // const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_fat.obj";
+        //const char* input_name = "D:/Data/smpl_outs/smpl_2.obj";
+        //const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";
+        //const char* input_name = "D:/Data/DYNA/50004_chicken_wings/00091.obj";
+        //const char* input_name = "D:/Data/smpl_outs/pose_hand_up.obj";
+        //const char* input_name = "D:/Data/smpl_outs/pose_hand_up_down.obj";
+        //const char* input_name = "D:/Data/smpl_outs/pose_leg_up_up.obj";
+        //const char* input_name = "D:/Data/smpl_outs/pose_leg_up_knee_up.obj";
+        const char* input_name = "D:/Data/INRIA/dataset/s4_layered_spin/mesh/0000_modified.obj";
 
-    // for SMPL/DYNA inputs
-    // expected to contain the subset of the keys defined for the model 
-    const char* input_key_vertices_name = "D:/Data/smpl_outs/smpl_key_vertices.txt";
+        // for SMPL/DYNA inputs
+        // expected to contain the subset of the keys defined for the model 
+        const char* input_key_vertices_name = "D:/Data/smpl_outs/smpl_key_vertices.txt";
 
-    std::string logFolderName = getNewLogFolder("kd_pose_jac_direct_deriv_reg_chicken_500");
+        //std::string logFolderName = getNewLogFolder("kd_pose_jac_direct_deriv_chicken_500");
+        std::string logFolderName = getNewLogFolder("g_ptr_pose_jac_direct_deriv_INRIA_500");
 
-    input = new GeneralMesh(input_name, input_key_vertices_name);
-    //// For convenience
-    igl::writeOBJ(logFolderName + "input.obj", input->getVertices(), input->getFaces());
-    std::cout << "Input mesh loaded!\n";
-    smpl = new SMPLWrapper('f', "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
-    std::cout << "SMPL model loaded\n";
+        input = new GeneralMesh(input_name, input_key_vertices_name);
+        //// For convenience
+        igl::writeOBJ(logFolderName + "input.obj", input->getVertices(), input->getFaces());
+        std::cout << "Input mesh loaded!\n";
+        smpl = new SMPLWrapper('f', "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
+        std::cout << "SMPL model loaded\n";
 
-    ShapeUnderClothOptimizer optimizer(smpl, input, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
-    std::cout << "Optimizer loaded\n";
-    
-    // Redirect optimizer output to file
-    std::ofstream out(logFolderName + "optimization.txt");
-    std::streambuf *coutbuf = std::cout.rdbuf();    //save old buf
-    std::cout.rdbuf(out.rdbuf());                   //redirect std::cout to file!
-    std::cout << "Input file: " << input_name << std::endl;
-    std::cout << logFolderName + "optimization.txt" << std::endl;
-   
-    if (progress_visualization)
-    {
-        // collect the meshes from each iteration
-        iteration_outputs.clear();
-        optimizer.findOptimalParameters(&iteration_outputs);
-    }
-    else
-        optimizer.findOptimalParameters();
+        ShapeUnderClothOptimizer optimizer(smpl, input, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
+        std::cout << "Optimizer loaded\n";
 
-    std::cout.rdbuf(coutbuf);   //  reset cout to standard output again
-    out.close();
-    std::cout << "Optimization finished!\n";
+        // Redirect optimizer output to file
+        std::ofstream out(logFolderName + "optimization.txt");
+        std::streambuf *coutbuf = std::cout.rdbuf();    //save old buf
+        std::cout.rdbuf(out.rdbuf());                   //redirect std::cout to file!
+        std::cout << "Input file: " << input_name << std::endl;
+        std::cout << logFolderName + "optimization.txt" << std::endl;
 
-    // Save the results
-    double* shape_res = optimizer.getEstimatesShapeParams();
-    double* pose_res = optimizer.getEstimatesPoseParams();
-    double* translation_res = optimizer.getEstimatesTranslationParams();
-    logSMPLParams(translation_res, pose_res, shape_res, logFolderName);
-    smpl->saveToObj(translation_res, pose_res, shape_res, (logFolderName + "posed_shaped.obj"));
-    smpl->saveToObj(translation_res, nullptr, shape_res, (logFolderName + "unposed_shaped.obj"));
-    smpl->saveToObj(translation_res, pose_res, nullptr, (logFolderName + "posed_unshaped.obj"));
-
-    // FOR TESTING 
-    //double* pose_res = new double[SMPLWrapper::POSE_SIZE];
-    //double* shape_res = new double[SMPLWrapper::SHAPE_SIZE];
-    //for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
-    //{
-    //    pose_res[i] = 0.;
-    //    if (i < SMPLWrapper::SHAPE_SIZE)
-    //        shape_res[i] = 0.;
-    //}
-    ////pose_res[69] = 1.;
-    ////pose_res[50] = 0.5;
-    ////pose_res[56] = 1.;
-    ////pose_res[52] =0.5;
-    ////pose_res[53] = -1.;
-    ////pose_res[58] = 1;
-    ////pose_res[5] = 2.;
-    ////pose_res[0] = -1.;
-    //pose_res[6] = 0.5;
-    //pose_res[15] = 1.;
-    ////shape_res[0] = -0.5;
-
-    //smpl->saveToObj(nullptr, pose_res, nullptr, logFolderName + "pose_leg_up_up.obj");
-
-    // Visualize the output
-    igl::opengl::glfw::Viewer viewer;
-    igl::opengl::glfw::imgui::ImGuiMenu menu;
-    viewer.plugins.push_back(&menu);
-
-    if (progress_visualization)
-    {
-        counter = 0;
-        viewer.callback_key_down = &visulaze_progress_key_down;
-        viewer.callback_pre_draw = &visulaze_progress_pre_draw;
-        viewer.core.is_animating = false;
-        viewer.core.animation_max_fps = 24.;
-        std::cout << "Press [space] to toggle animation." << std::endl;
-    }
-    else // visualizing the result only
-    {
-        Eigen::MatrixXd verts = smpl->calcModel(pose_res, shape_res);
-        // translate
-        for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
-            for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
-                verts(i, j) += translation_res[j];
-        Eigen::MatrixXi faces = smpl->getFaces();
-
-        Eigen::VectorXd sqrD;
-        Eigen::MatrixXd closest_points;
-        Eigen::VectorXi closest_face_ids;
-        igl::point_mesh_squared_distance(verts, input->getVertices(), input->getFaces(), sqrD, closest_face_ids, closest_points);
-
-        Eigen::MatrixXd input_key_points (input->getKeyPoints().size(), 3);
-        Eigen::MatrixXd smpl_key_points (input->getKeyPoints().size(), 3);
-
-        CoordsDictionary inputKeyPoints = input->getKeyPoints();
-        Dictionary smplKeyVerts = smpl->getKeyVertices();
-        int res_id = 0;
-        for (auto const& keyIterator : inputKeyPoints)
+        if (progress_visualization)
         {
-            input_key_points.block(res_id, 0, 1, 3) = keyIterator.second;
-            smpl_key_points.block(res_id, 0, 1, 3) = verts.row(smplKeyVerts[keyIterator.first]);
-            res_id++;
+            // collect the meshes from each iteration
+            iteration_outputs.clear();
+            optimizer.findOptimalParameters(&iteration_outputs);
         }
+        else
+            optimizer.findOptimalParameters();
 
-        viewer.data().set_mesh(verts, faces);
-        viewer.data().add_points(input_key_points, Eigen::RowVector3d(1., 1., 0.));
-        viewer.data().add_edges(smpl_key_points, input_key_points, Eigen::RowVector3d(1., 0., 0.));
-        //viewer.data().add_points(closest_points, Eigen::RowVector3d(1., 1., 0.));
-        //viewer.data().add_edges(verts, closest_points, Eigen::RowVector3d(1., 0., 0.));
-        //viewer.data().set_points(Eigen::RowVector3d(1., 1., 0.), Eigen::RowVector3d(1., 1., 0.));
+        std::cout.rdbuf(coutbuf);   //  reset cout to standard output again
+        out.close();
+        std::cout << "Optimization finished!\n";
+
+        // Save the results
+        double* shape_res = optimizer.getEstimatesShapeParams();
+        double* pose_res = optimizer.getEstimatesPoseParams();
+        double* translation_res = optimizer.getEstimatesTranslationParams();
+        logSMPLParams(translation_res, pose_res, shape_res, logFolderName);
+        smpl->saveToObj(translation_res, pose_res, shape_res, (logFolderName + "posed_shaped.obj"));
+        smpl->saveToObj(translation_res, nullptr, shape_res, (logFolderName + "unposed_shaped.obj"));
+        smpl->saveToObj(translation_res, pose_res, nullptr, (logFolderName + "posed_unshaped.obj"));
+
+        // FOR TESTING 
+        //double* pose_res = new double[SMPLWrapper::POSE_SIZE];
+        //double* shape_res = new double[SMPLWrapper::SHAPE_SIZE];
+        //for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
+        //{
+        //    pose_res[i] = 0.;
+        //    if (i < SMPLWrapper::SHAPE_SIZE)
+        //        shape_res[i] = 0.;
+        //}
+        ////pose_res[69] = 1.;
+        ////pose_res[50] = 0.5;
+        ////pose_res[56] = 1.;
+        ////pose_res[52] =0.5;
+        ////pose_res[53] = -1.;
+        ////pose_res[58] = 1;
+        ////pose_res[5] = 2.;
+        ////pose_res[0] = -1.;
+        //pose_res[6] = 0.5;
+        //pose_res[15] = 1.;
+        ////shape_res[0] = -0.5;
+
+        //smpl->saveToObj(nullptr, pose_res, nullptr, logFolderName + "pose_leg_up_up.obj");
+
+        // Visualize the output
+        igl::opengl::glfw::Viewer viewer;
+        igl::opengl::glfw::imgui::ImGuiMenu menu;
+        viewer.plugins.push_back(&menu);
+
+        if (progress_visualization)
+        {
+            counter = 0;
+            viewer.callback_key_down = &visulaze_progress_key_down;
+            viewer.callback_pre_draw = &visulaze_progress_pre_draw;
+            viewer.core.is_animating = false;
+            viewer.core.animation_max_fps = 24.;
+            std::cout << "Press [space] to toggle animation." << std::endl;
+        }
+        else // visualizing the result only
+        {
+            Eigen::MatrixXd verts = smpl->calcModel(pose_res, shape_res);
+            // translate
+            for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
+                for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
+                    verts(i, j) += translation_res[j];
+            Eigen::MatrixXi faces = smpl->getFaces();
+
+            Eigen::VectorXd sqrD;
+            Eigen::MatrixXd closest_points;
+            Eigen::VectorXi closest_face_ids;
+            igl::point_mesh_squared_distance(verts, input->getVertices(), input->getFaces(), sqrD, closest_face_ids, closest_points);
+
+            Eigen::MatrixXd input_key_points(input->getKeyPoints().size(), 3);
+            Eigen::MatrixXd smpl_key_points(input->getKeyPoints().size(), 3);
+
+            CoordsDictionary inputKeyPoints = input->getKeyPoints();
+            Dictionary smplKeyVerts = smpl->getKeyVertices();
+            int res_id = 0;
+            for (auto const& keyIterator : inputKeyPoints)
+            {
+                input_key_points.block(res_id, 0, 1, 3) = keyIterator.second;
+                smpl_key_points.block(res_id, 0, 1, 3) = verts.row(smplKeyVerts[keyIterator.first]);
+                res_id++;
+            }
+
+            viewer.data().set_mesh(verts, faces);
+            viewer.data().add_points(input_key_points, Eigen::RowVector3d(1., 1., 0.));
+            viewer.data().add_edges(smpl_key_points, input_key_points, Eigen::RowVector3d(1., 0., 0.));
+            //viewer.data().add_points(closest_points, Eigen::RowVector3d(1., 1., 0.));
+            //viewer.data().add_edges(verts, closest_points, Eigen::RowVector3d(1., 0., 0.));
+            //viewer.data().set_points(Eigen::RowVector3d(1., 1., 0.), Eigen::RowVector3d(1., 1., 0.));
+        }
+        viewer.launch();
+
+        // Cleaning
+        delete input;
+        delete smpl;
+        delete[] shape_res;
+        delete[] pose_res;
     }
-    viewer.launch();
-
-    // Cleaning
-    delete input;
-    delete smpl;
-    delete[] shape_res;
-    delete[] pose_res;
+    catch (std::exception& e)
+    {
+        std::cout << "Exception encountered: " << e.what() << std::endl
+            << "Terminating." << std::endl;
+    }
 }
 

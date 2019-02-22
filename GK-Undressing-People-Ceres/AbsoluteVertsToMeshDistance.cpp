@@ -8,7 +8,8 @@ AbsoluteVertsToMeshDistance::AbsoluteVertsToMeshDistance(SMPLWrapper* smpl, Gene
     this->key_verts_num_ = toMesh->getKeyPoints().size();
 
     //this->set_num_residuals(this->key_verts_num_);
-    this->set_num_residuals(this->key_verts_num_ + SMPLWrapper::VERTICES_NUM);
+    //this->set_num_residuals(this->key_verts_num_ + SMPLWrapper::VERTICES_NUM);
+    this->set_num_residuals(SMPLWrapper::VERTICES_NUM);
 
     this->mutable_parameter_block_sizes()->push_back(SMPLWrapper::POSE_SIZE);
     this->mutable_parameter_block_sizes()->push_back(SMPLWrapper::SPACE_DIM);
@@ -54,48 +55,48 @@ bool AbsoluteVertsToMeshDistance::Evaluate(double const * const * parameters, do
 
     // TODO divide into sub-functions
     /// key_vertices
-    CoordsDictionary inputKeyPoints = this->toMesh_->getKeyPoints();
-    Dictionary smplKeyVerts = this->smpl_->getKeyVertices();
-    int res_id = 0;
-    for (auto const& keyIterator : inputKeyPoints)
-    {
-        Eigen::VectorXd in_point = keyIterator.second;
-        int model_v_id = smplKeyVerts[keyIterator.first];
-        Eigen::VectorXd model_point = verts.row(model_v_id);
-        Eigen::VectorXd diff = model_point - in_point;
-        residuals[res_id] = this->coef_key_vertices_ * diff.dot(diff);
+    //CoordsDictionary inputKeyPoints = this->toMesh_->getKeyPoints();
+    //Dictionary smplKeyVerts = this->smpl_->getKeyVertices();
+    //int res_id = 0;
+    //for (auto const& keyIterator : inputKeyPoints)
+    //{
+    //    Eigen::VectorXd in_point = keyIterator.second;
+    //    int model_v_id = smplKeyVerts[keyIterator.first];
+    //    Eigen::VectorXd model_point = verts.row(model_v_id);
+    //    Eigen::VectorXd diff = model_point - in_point;
+    //    residuals[res_id] = this->coef_key_vertices_ * diff.dot(diff);
 
-        // jacobian
-        // w.r.t. pose
-        if (jacobians != NULL && jacobians[0] != NULL)
-        {
-            for (int p_id = 0; p_id < SMPLWrapper::POSE_SIZE; ++p_id)
-            {
-                jacobians[0][res_id * SMPLWrapper::POSE_SIZE + p_id] =
-                    this->coef_key_vertices_ * 2. * diff.dot(pose_jac[p_id].row(model_v_id));
-            }
-        }
-        // w.r.t. translation
-        if (jacobians != NULL && jacobians[1] != NULL)
-        {
-            for (int k = 0; k < SMPLWrapper::SPACE_DIM; ++k)
-            {
-                jacobians[1][res_id * SMPLWrapper::SPACE_DIM + k]
-                    = this->coef_key_vertices_ * 2 * diff(k);
-            }
-        }
+    //    // jacobian
+    //    // w.r.t. pose
+    //    if (jacobians != NULL && jacobians[0] != NULL)
+    //    {
+    //        for (int p_id = 0; p_id < SMPLWrapper::POSE_SIZE; ++p_id)
+    //        {
+    //            jacobians[0][res_id * SMPLWrapper::POSE_SIZE + p_id] =
+    //                this->coef_key_vertices_ * 2. * diff.dot(pose_jac[p_id].row(model_v_id));
+    //        }
+    //    }
+    //    // w.r.t. translation
+    //    if (jacobians != NULL && jacobians[1] != NULL)
+    //    {
+    //        for (int k = 0; k < SMPLWrapper::SPACE_DIM; ++k)
+    //        {
+    //            jacobians[1][res_id * SMPLWrapper::SPACE_DIM + k]
+    //                = this->coef_key_vertices_ * 2 * diff(k);
+    //        }
+    //    }
 
-        // w.r.t. shape
-        //if (jacobians != NULL && jacobians[2] != NULL) {
-            //for (int sh_id = 0; sh_id < SMPLWrapper::SHAPE_SIZE; ++sh_id)
-            //{
-            //    jacobians[2][res_id * SMPLWrapper::SHAPE_SIZE + sh_id] = 
-            //        this->coef_key_vertices_ * 2. * diff.dot(shape_jac[sh_id].row(res_id));
-            //}
-        //}
+    //    // w.r.t. shape
+    //    //if (jacobians != NULL && jacobians[2] != NULL) {
+    //        //for (int sh_id = 0; sh_id < SMPLWrapper::SHAPE_SIZE; ++sh_id)
+    //        //{
+    //        //    jacobians[2][res_id * SMPLWrapper::SHAPE_SIZE + sh_id] = 
+    //        //        this->coef_key_vertices_ * 2. * diff.dot(shape_jac[sh_id].row(res_id));
+    //        //}
+    //    //}
 
-        res_id++;
-    }
+    //    res_id++;
+    //}
 
     // point-to-surface dist component
     Eigen::VectorXd sqrD;
@@ -119,7 +120,7 @@ bool AbsoluteVertsToMeshDistance::Evaluate(double const * const * parameters, do
 
     for (int i = 0; i < SMPLWrapper::VERTICES_NUM; ++i)
     {
-        residuals[this->key_verts_num_ + i] = sqrD(i);
+        residuals[i] = sqrD(i); // this->key_verts_num_ + 
     }
 
     // Jacobians
@@ -134,8 +135,8 @@ bool AbsoluteVertsToMeshDistance::Evaluate(double const * const * parameters, do
         {
             for (int p_id = 0; p_id < SMPLWrapper::POSE_SIZE; ++p_id)
             {
-                jacobians[0][(this->key_verts_num_ + v_id) * SMPLWrapper::POSE_SIZE + p_id] =
-                    2. * (verts.row(v_id) - closest_points.row(v_id)).dot(pose_jac[p_id].row(v_id));
+                jacobians[0][(v_id) * SMPLWrapper::POSE_SIZE + p_id] =
+                    2. * (verts.row(v_id) - closest_points.row(v_id)).dot(pose_jac[p_id].row(v_id)); // this->key_verts_num_ + 
             }
         }
     }
@@ -151,8 +152,8 @@ bool AbsoluteVertsToMeshDistance::Evaluate(double const * const * parameters, do
         {
             for (int k = 0; k < SMPLWrapper::SPACE_DIM; ++k)
             {
-                jacobians[1][(this->key_verts_num_ + v_id) * SMPLWrapper::SPACE_DIM + k]
-                    = 2 * (verts(v_id, k) - closest_points(v_id, k));
+                jacobians[1][(v_id) * SMPLWrapper::SPACE_DIM + k]
+                    = 2 * (verts(v_id, k) - closest_points(v_id, k));   // this->key_verts_num_ + 
             }
         }
     }
@@ -163,8 +164,8 @@ bool AbsoluteVertsToMeshDistance::Evaluate(double const * const * parameters, do
     //    {
     //        for (int sh_id = 0; sh_id < SMPLWrapper::SHAPE_SIZE; ++sh_id)
     //        {
-    //            jacobians[2][(this->key_verts_num_ + v_id) * SMPLWrapper::SHAPE_SIZE + sh_id] = 
-    //                2. * (verts.row(res_id) - closest_points.row(res_id)).dot(shape_jac[sh_id].row(res_id));
+    //            jacobians[2][(v_id) * SMPLWrapper::SHAPE_SIZE + sh_id] = 
+    //                2. * (verts.row(res_id) - closest_points.row(res_id)).dot(shape_jac[sh_id].row(res_id));  // this->key_verts_num_ + 
     //        }
     //    }
     //}

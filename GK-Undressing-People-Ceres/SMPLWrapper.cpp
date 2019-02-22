@@ -4,10 +4,6 @@
 
 SMPLWrapper::SMPLWrapper(char gender, const char* path)
 {
-#ifdef USE_CERES
-    std::cerr << "Warning: Use of Ceres for SMPL posing is enabled." << std::endl;
-#endif // USE_CERES
-
     // set the info
     if (gender != 'f' && gender != 'm') 
     {
@@ -382,7 +378,7 @@ E::MatrixXd SMPLWrapper::getJointsTransposedGlobalTransformation_(const double *
         E::MatrixXd tmpPointGlobalJac;
         for (int i = 0; i < SMPLWrapper::SPACE_DIM; ++i)
         {
-            tmpPointGlobalJac = jointJacParts[0][i] * this->get3DTranslationMat_(-jointLocations.row(0)); // obj
+            tmpPointGlobalJac = jointJacParts[0][i] * this->get3DTranslationMat_(-jointLocations.row(0));
             jacsTotal[i].block(0, 0, HOMO_SIZE, SMPLWrapper::SPACE_DIM) = tmpPointGlobalJac.transpose().leftCols(SMPLWrapper::SPACE_DIM);
         }
     }
@@ -412,7 +408,6 @@ E::MatrixXd SMPLWrapper::getJointsTransposedGlobalTransformation_(const double *
 
             // Forward Kinematics Formula
             jointGlobalMats[i] = jointGlobalMats[this->joints_parents_[i]] * localTransform;
-            E::MatrixXd jointGlobalMatInverse = jointGlobalMats[i].inverse();
             
             E::MatrixXd tmpPointGlobalJac;
             for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)
@@ -420,17 +415,11 @@ E::MatrixXd SMPLWrapper::getJointsTransposedGlobalTransformation_(const double *
                 // Collect the transformation derivative to be used on the next iterations
                 jointJacParts[i][i * SMPLWrapper::SPACE_DIM + j] = jointGlobalMats[this->joints_parents_[i]] * localTransformJac[j];
                 // w.r.t. joint rotation of the current joint, in spatial coordinates
-                tmpPointGlobalJac = jointJacParts[i][i * SMPLWrapper::SPACE_DIM + j] * this->get3DTranslationMat_(-jointLocations.row(i)); // obj
+                tmpPointGlobalJac = jointJacParts[i][i * SMPLWrapper::SPACE_DIM + j] * this->get3DTranslationMat_(-jointLocations.row(i));
 
                 jacsTotal[i * SMPLWrapper::SPACE_DIM + j].block(i * HOMO_SIZE, 0, HOMO_SIZE, SMPLWrapper::SPACE_DIM) 
                     = tmpPointGlobalJac.transpose().leftCols(SMPLWrapper::SPACE_DIM);
             }
-
-            //if (i == 7) // ankle
-            //{
-            //    std::cout << "parent " << this->joints_parents_[i] << std::endl;
-            //    std::cout << "local transform " << localTransform << std::endl;
-            //}
 
             // jac w.r.t. ancessors rotation           
             for (int j = 0; j < (this->joints_parents_[i] + 1) * SMPLWrapper::SPACE_DIM; ++j)
@@ -445,16 +434,6 @@ E::MatrixXd SMPLWrapper::getJointsTransposedGlobalTransformation_(const double *
 
                     jacsTotal[j].block(i * HOMO_SIZE, 0, HOMO_SIZE, SMPLWrapper::SPACE_DIM)
                         = tmpPointGlobalJac.transpose().leftCols(SMPLWrapper::SPACE_DIM);
-
-                    //if (i == 7) // ankle
-                    //{
-                    //    std::cout <<
-                    //        "w.r.t. " << j << std::endl <<
-                    //        jointJacParts[i][j]
-                    //        << std::endl <<
-                    //        "parent's " << jointJacParts[this->joints_parents_[i]][j]
-                    //        << std::endl;
-                    //}
                 }
             }
         }

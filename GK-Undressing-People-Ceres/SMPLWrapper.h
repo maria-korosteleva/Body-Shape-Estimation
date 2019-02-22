@@ -17,12 +17,6 @@ TODO:
 #include <igl/readOBJ.h>
 #include <igl/writeOBJ.h>
 
-#define USE_CERES
-#ifdef USE_CERES
-// !!! Need for the SMPL posing to work with ceres 
-#include <ceres/rotation.h>
-#endif // USE_CERES
-
 
 namespace E = Eigen;
 

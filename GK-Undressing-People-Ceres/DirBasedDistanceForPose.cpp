@@ -64,7 +64,7 @@ bool DirBasedDistanceForPose::Evaluate(double const * const * parameters, double
 
         //std::cout << std::endl << model_dir << std::endl;
 
-        Eigen::VectorXd diff = model_dir / model_dir.norm() - in_dir / in_dir.norm();
+        Eigen::VectorXd diff = (model_dir / model_dir.norm()) - (in_dir / in_dir.norm());
         residuals[res_id] = diff.dot(diff);
 
         //std::cout << "Residual " << residuals[res_id] << std::endl;
@@ -75,7 +75,7 @@ bool DirBasedDistanceForPose::Evaluate(double const * const * parameters, double
             for (int p_id = 0; p_id < SMPLWrapper::POSE_SIZE; ++p_id)
             {
                 jacobians[0][res_id * SMPLWrapper::POSE_SIZE + p_id] =
-                    2. * diff.dot((pose_jac[p_id].row(model_v_1) - pose_jac[p_id].row(model_v_2)) / model_dir.norm());
+                    2. * diff.dot(pose_jac[p_id].row(model_v_1) - pose_jac[p_id].row(model_v_2)) / model_dir.norm();
                 //std::cout << jacobians[0][res_id * SMPLWrapper::POSE_SIZE + p_id] << ", ";
             }
             //std::cout << std::endl;
