@@ -4,6 +4,16 @@
 
 GeneralMesh::GeneralMesh(const char* input_filename_c, const char* key_vertices_filename)
 {   
+    // check for existance
+    if (!this->checkFileExist_(input_filename_c))
+    {
+        throw std::exception("General Mesh: input file doesn't exist");
+    }
+    if (key_vertices_filename != nullptr && !this->checkFileExist_(key_vertices_filename))
+    {
+        throw std::exception("General Mesh: key vertices file doesn't exist");
+    }
+
     // load according to the extention
     std::string input_filename(input_filename_c);
     std::size_t pos = input_filename.find_last_of('.');
@@ -57,4 +67,10 @@ void GeneralMesh::readKeyVertices_(const char * filename)
     }
 
     inFile.close();
+}
+
+bool GeneralMesh::checkFileExist_(const char * filename)
+{
+    std::ifstream infile(filename);
+    return infile.good();
 }

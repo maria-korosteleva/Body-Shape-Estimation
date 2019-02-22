@@ -29,5 +29,6 @@ private:
     CoordsDictionary key_points_;
 
     void readKeyVertices_(const char * filename);
+    bool checkFileExist_(const char * filename);
 };
 
