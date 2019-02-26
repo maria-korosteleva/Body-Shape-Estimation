@@ -163,6 +163,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AbsoluteDistanceForPose.h" />
+    <ClInclude Include="AbsoluteDistanceForShape.h" />
     <ClInclude Include="DirBasedDistanceForPose.h" />
     <ClInclude Include="GeneralMesh.h" />
     <ClInclude Include="pch.h" />
@@ -171,6 +172,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AbsoluteDistanceForPose.cpp" />
+    <ClCompile Include="AbsoluteDistanceForShape.cpp" />
     <ClCompile Include="DirBasedDistanceForPose.cpp" />
     <ClCompile Include="GeneralMesh.cpp" />
     <ClCompile Include="GK-Undressing-People-Ceres.cpp" />

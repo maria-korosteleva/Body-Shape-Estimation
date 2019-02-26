@@ -430,7 +430,7 @@ E::MatrixXd SMPLWrapper::getJointsTransposedGlobalTransformation_(const double *
                     jointJacParts[i][j] = jointJacParts[this->joints_parents_[i]][j] * localTransform;
 
                     // in Spatial coordinates
-                    tmpPointGlobalJac = jointJacParts[i][j] * this->get3DTranslationMat_(-jointLocations.row(i)); // *;
+                    tmpPointGlobalJac = jointJacParts[i][j] * this->get3DTranslationMat_(-jointLocations.row(i)); 
 
                     jacsTotal[j].block(i * HOMO_SIZE, 0, HOMO_SIZE, SMPLWrapper::SPACE_DIM)
                         = tmpPointGlobalJac.transpose().leftCols(SMPLWrapper::SPACE_DIM);

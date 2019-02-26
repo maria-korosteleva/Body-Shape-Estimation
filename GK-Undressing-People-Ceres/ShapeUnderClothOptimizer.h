@@ -12,6 +12,7 @@
 // cost functions
 #include "AbsoluteDistanceForPose.h"
 #include "DirBasedDistanceForPose.h"
+#include "AbsoluteDistanceForShape.h"
 
 using ceres::AutoDiffCostFunction;
 using ceres::NumericDiffCostFunction;
@@ -58,7 +59,7 @@ private:
     // expect the params to be initialized outside
     void directionalPoseEstimation_(Solver::Options& options);
     void generalPoseEstimation_(Solver::Options& options);
-    //void shapeEstimation_(Solver::Options& options);
+    void shapeEstimation_(Solver::Options& options);
 
     // utils
     void erase_params_();

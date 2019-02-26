@@ -108,7 +108,7 @@ void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd
     Solver::Options options;
     options.linear_solver_type = ceres::DENSE_QR;   // analytic jacobian is dense
     options.minimizer_progress_to_stdout = true;
-    options.max_num_iterations = 500;   // usually converges faster
+    options.max_num_iterations = 100;   // usually converges faster
 
     // to debug jacobian
     //options.check_gradients = true;
@@ -124,7 +124,27 @@ void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd
     // parameters estimation
     //this->directionalPoseEstimation_(options);
 
-    this->generalPoseEstimation_(options);
+    auto start_time = std::chrono::system_clock::now();
+    // just some number of cycles
+    for (int i = 0; i < 3; ++i)
+    {
+        std::cout << "***********************" << std::endl
+            << "    Cycle #" << i << std::endl
+            << "***********************" << std::endl;
+
+        this->generalPoseEstimation_(options);
+
+        this->shapeEstimation_(options);
+    }
+
+    auto end_time = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end_time - start_time;
+    std::time_t end_time_t = std::chrono::system_clock::to_time_t(end_time);
+
+    std::cout << "***********************" << std::endl
+        << "Finished at " << std::ctime(&end_time_t) << std::endl
+        << "Total time " << elapsed_seconds.count() << "s" << std::endl
+        << "***********************" << std::endl;
 
     // cleanup
     if (callback != nullptr)
@@ -152,7 +172,7 @@ void ShapeUnderClothOptimizer::directionalPoseEstimation_(Solver::Options & opti
     Solve(options, &problem, &summary);
 
     // Print summary
-    std::cout << "Summary:" << std::endl;
+    std::cout << "Directional pose estimation summary:" << std::endl;
     std::cout << summary.FullReport() << std::endl;
 
 #ifdef DEBUG
@@ -185,10 +205,14 @@ void ShapeUnderClothOptimizer::directionalPoseEstimation_(Solver::Options & opti
 
 void ShapeUnderClothOptimizer::generalPoseEstimation_(Solver::Options& options)
 {
+    std::cout << "-----------------------" << std::endl
+              << "          Pose" << std::endl
+              << "-----------------------" << std::endl;
+
     Problem problem;
 
     // Main cost
-    CostFunction* cost_function = new AbsoluteDistanceForPose(this->smpl_, this->input_);
+    CostFunction* cost_function = new AbsoluteDistanceForPose(this->smpl_, this->input_, this->shape_);
     problem.AddResidualBlock(cost_function, nullptr, this->pose_, this->translation_);     // this->pose_, , this->shape_ 
 
     // Regularizer
@@ -201,7 +225,7 @@ void ShapeUnderClothOptimizer::generalPoseEstimation_(Solver::Options& options)
     Solve(options, &problem, &summary);
 
     // Print summary
-    std::cout << "Summary:" << std::endl;
+    std::cout << "Pose estimation summary:" << std::endl;
     std::cout << summary.FullReport() << std::endl;
 
 #ifdef DEBUG
@@ -229,6 +253,55 @@ void ShapeUnderClothOptimizer::generalPoseEstimation_(Solver::Options& options)
 
 #endif // DEBUG
 }
+
+
+void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options)
+{
+    std::cout << "-----------------------" << std::endl
+        << "          Shape" << std::endl
+        << "-----------------------" << std::endl;
+
+    Problem problem;
+
+    CostFunction* cost_function = new AbsoluteDistanceForShape(this->smpl_, this->input_, this->pose_); 
+    problem.AddResidualBlock(cost_function, nullptr, this->shape_, this->translation_);  
+
+    // TODO add light regularization
+
+    // Run the solver!
+    Solver::Summary summary;
+    Solve(options, &problem, &summary);
+
+    // Print summary
+    std::cout << "Shape estimation summary:" << std::endl;
+    std::cout << summary.FullReport() << std::endl;
+
+#ifdef DEBUG
+    // Print last Gradient (?) and Jacobian
+    std::vector<double> gradient;
+    ceres::CRSMatrix jac;
+    problem.Evaluate(Problem::EvaluateOptions(), NULL, NULL, &gradient, &jac);
+    std::cout << "Gradient" << std::endl;
+    for (auto i = gradient.begin(); i != gradient.end(); ++i)
+    {
+        std::cout << *i << " ";
+    }
+    std::cout << std::endl;
+
+    std::cout << "Jacobian (sparse)" << std::endl;
+
+    for (int i = 0; i < jac.num_rows; ++i)
+    {
+        for (int j = jac.rows[i]; j < jac.rows[i + 1]; ++j)   // only pose jacobian
+        {
+            std::cout << jac.values[j] << " ";
+        }
+        std::cout << std::endl;
+    }
+
+#endif // DEBUG
+}
+
 
 void ShapeUnderClothOptimizer::erase_params_()
 {
