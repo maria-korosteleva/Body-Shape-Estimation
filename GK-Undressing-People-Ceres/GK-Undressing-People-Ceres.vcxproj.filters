@@ -27,9 +27,6 @@
     <ClInclude Include="GeneralMesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DirBasedDistanceForPose.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="AbsoluteDistanceForPose.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -51,9 +48,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="GeneralMesh.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DirBasedDistanceForPose.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="AbsoluteDistanceForPose.cpp">

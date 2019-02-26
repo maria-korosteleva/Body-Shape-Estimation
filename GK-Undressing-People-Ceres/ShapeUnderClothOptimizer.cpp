@@ -154,55 +154,6 @@ void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd
 }
 
 
-void ShapeUnderClothOptimizer::directionalPoseEstimation_(Solver::Options & options)
-{
-    Problem problem;
-
-    // Main cost
-    CostFunction* dir_based_cost_function = new DirBasedDistanceForPose(this->smpl_, this->input_);
-    problem.AddResidualBlock(dir_based_cost_function, nullptr, this->pose_);
-
-    // Regularizer
-    //CostFunction* prior = new NormalPrior(this->stiffness_, this->mean_pose_);
-    //LossFunction* scale_prior = new ScaledLoss(NULL, 0.0001, ceres::TAKE_OWNERSHIP);
-    //problem.AddResidualBlock(prior, scale_prior, this->pose_);
-
-    // Run the solver!
-    Solver::Summary summary;
-    Solve(options, &problem, &summary);
-
-    // Print summary
-    std::cout << "Directional pose estimation summary:" << std::endl;
-    std::cout << summary.FullReport() << std::endl;
-
-#ifdef DEBUG
-    // Print last Gradient (?) and Jacobian
-    std::vector<double> gradient;
-    ceres::CRSMatrix jac;
-    problem.Evaluate(Problem::EvaluateOptions(), NULL, NULL, &gradient, &jac);
-    std::cout << "Gradient" << std::endl;
-    for (auto i = gradient.begin(); i != gradient.end(); ++i)
-    {
-        std::cout << *i << " ";
-    }
-    std::cout << std::endl;
-
-    std::cout << "Jacobian (sparse)" << std::endl;
-
-    for (int i = 0; i < jac.num_rows; ++i)
-    {
-        for (int j = jac.rows[i]; j < jac.rows[i + 1]; ++j)   // only pose jacobian
-        {
-            std::cout << jac.values[j] << " ";
-        }
-        std::cout << std::endl;
-    }
-
-#endif // DEBUG
-
-}
-
-
 void ShapeUnderClothOptimizer::generalPoseEstimation_(Solver::Options& options)
 {
     std::cout << "-----------------------" << std::endl

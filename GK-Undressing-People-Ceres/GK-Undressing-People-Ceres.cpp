@@ -175,22 +175,22 @@ int main()
         //const char* input_name = "D:/Data/smpl_outs/smpl_2.obj";
         //const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";  // A-pose
         //const char* input_name = "D:/Data/DYNA/50004_chicken_wings/00091.obj";
-        //const char* input_name = "D:/Data/smpl_outs/pose_hand_up.obj";
+        const char* input_name = "D:/Data/smpl_outs/pose_hand_up.obj";
         //const char* input_name = "D:/Data/smpl_outs/pose_hand_up_down.obj";
         //const char* input_name = "D:/Data/smpl_outs/pose_leg_up_up.obj";
         //const char* input_name = "D:/Data/smpl_outs/pose_leg_up_knee_up.obj";
         //const char* input_name = "D:/Data/INRIA/dataset/s4_layered_spin/mesh/0000_modified.obj";
         //Males
-        gender = 'm';
+        //gender = 'm';
         //const char* input_name = "D:/Data/KETI/mesh_model/OBJ/mesh_600_depth07_trim_normalized.obj";
-        const char* input_name = "D:/Data/SketchFab/Web.obj";
+        //const char* input_name = "D:/Data/SketchFab/Web.obj";
         //const char* input_name = "D:/Data/buff_dataset/00005/shortlong_shoulders_mill/shortlong_shoulders_mill.000054.ply_normalized.obj";
 
         // for SMPL/DYNA inputs
         // expected to contain the subset of the keys defined for the model 
         //const char* input_key_vertices_name = "D:/Data/smpl_outs/smpl_key_vertices.txt";
 
-        std::string logFolderName = getNewLogFolder("g_ptr_separated_shape_Web_3cyc_100");
+        std::string logFolderName = getNewLogFolder("g_ptr_separated_shape_Up_3cyc_100");
 
         input = new GeneralMesh(input_name); //, input_key_vertices_name);
         //// For convenience
