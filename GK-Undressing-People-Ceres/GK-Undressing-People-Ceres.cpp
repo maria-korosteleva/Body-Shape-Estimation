@@ -66,7 +66,7 @@ int counter = 0;
 SMPLWrapper* smpl;
 GeneralMesh* input;
 
-std::string getNewLogFolder(const char * tag = "test")
+std::string getNewLogFolder(const std::string tag = "test")
 {
     std::string logName("C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Outputs/");
     logName += tag;
@@ -171,7 +171,7 @@ int main()
         char gender = 'f';
         //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin.obj";
         //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin_custom_smpl.obj";
-        // const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_fat.obj";
+        //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_fat.obj";
         //const char* input_name = "D:/Data/smpl_outs/smpl_2.obj";
         //const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";  // A-pose
         //const char* input_name = "D:/Data/DYNA/50004_chicken_wings/00091.obj";
@@ -190,12 +190,13 @@ int main()
         // expected to contain the subset of the keys defined for the model 
         //const char* input_key_vertices_name = "D:/Data/smpl_outs/smpl_key_vertices.txt";
 
-        std::string logFolderName = getNewLogFolder("g_ptr_separated_shape_Up_3cyc_100");
-
         input = new GeneralMesh(input_name); //, input_key_vertices_name);
-        //// For convenience
-        igl::writeOBJ(logFolderName + "input.obj", input->getVertices(), input->getFaces());
         std::cout << "Input mesh loaded!\n";
+
+        // Logging For convenience
+        std::string logFolderName = getNewLogFolder("g_ptr_sep_shape_3cyc_100_" + input->getName());
+        igl::writeOBJ(logFolderName + input->getName() +  ".obj", input->getVertices(), input->getFaces());
+
         smpl = new SMPLWrapper(gender, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
         std::cout << "SMPL model loaded\n";
 
