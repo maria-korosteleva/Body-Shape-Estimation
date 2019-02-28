@@ -134,13 +134,25 @@ bool visulaze_progress_pre_draw(igl::opengl::glfw::Viewer & viewer) {
         viewer.data().set_mesh(iteration_outputs[counter], faces);
         viewer.core.align_camera_center(iteration_outputs[counter], faces);
 
-        //Eigen::VectorXd sqrD;
-        //Eigen::MatrixXd closest_points;
-        //Eigen::VectorXi closest_face_ids;
-        //igl::point_mesh_squared_distance(iteration_outputs[counter], input->getVertices(), input->getFaces(), sqrD, closest_face_ids, closest_points);
+        // calculating point-to-surface closest points is too slow
+        // add key points for the reference
+        if (input->getKeyPoints().size() > 0)
+        {
+            Eigen::MatrixXd input_key_points(input->getKeyPoints().size(), 3);
+            Eigen::MatrixXd smpl_key_points(input->getKeyPoints().size(), 3);
 
-        ////viewer.data().add_points(closest_points, Eigen::RowVector3d(1., 1., 0.));
-        //viewer.data().add_edges(iteration_outputs[counter], closest_points, Eigen::RowVector3d(1., 0., 0.));
+            CoordsDictionary inputKeyPoints = input->getKeyPoints();
+            Dictionary smplKeyVerts = smpl->getKeyVertices();
+            int res_id = 0;
+            for (auto const& keyIterator : inputKeyPoints)
+            {
+                input_key_points.block(res_id, 0, 1, 3) = keyIterator.second;
+                smpl_key_points.block(res_id, 0, 1, 3) = iteration_outputs[counter].row(smplKeyVerts[keyIterator.first]);
+                res_id++;
+            }
+            viewer.data().add_points(input_key_points, Eigen::RowVector3d(1., 1., 0.));
+            viewer.data().add_edges(smpl_key_points, input_key_points, Eigen::RowVector3d(1., 0., 0.));
+        }
 
         counter++;
     }
@@ -188,9 +200,9 @@ int main()
 
         // for SMPL/DYNA inputs
         // expected to contain the subset of the keys defined for the model 
-        //const char* input_key_vertices_name = "D:/Data/smpl_outs/smpl_key_vertices.txt";
+        const char* input_key_vertices_name = "D:/Data/smpl_outs/smpl_key_vertices.txt";
 
-        input = new GeneralMesh(input_name); //, input_key_vertices_name);
+        input = new GeneralMesh(input_name, input_key_vertices_name);
         std::cout << "Input mesh loaded!\n";
 
         // Logging For convenience
@@ -283,25 +295,9 @@ int main()
             Eigen::VectorXi closest_face_ids;
             igl::point_mesh_squared_distance(verts, input->getVertices(), input->getFaces(), sqrD, closest_face_ids, closest_points);
 
-            /*Eigen::MatrixXd input_key_points(input->getKeyPoints().size(), 3);
-            Eigen::MatrixXd smpl_key_points(input->getKeyPoints().size(), 3);
-
-            CoordsDictionary inputKeyPoints = input->getKeyPoints();
-            Dictionary smplKeyVerts = smpl->getKeyVertices();
-            int res_id = 0;
-            for (auto const& keyIterator : inputKeyPoints)
-            {
-                input_key_points.block(res_id, 0, 1, 3) = keyIterator.second;
-                smpl_key_points.block(res_id, 0, 1, 3) = verts.row(smplKeyVerts[keyIterator.first]);
-                res_id++;
-            }*/
-
             viewer.data().set_mesh(verts, faces);
-            /*viewer.data().add_points(input_key_points, Eigen::RowVector3d(1., 1., 0.));
-            viewer.data().add_edges(smpl_key_points, input_key_points, Eigen::RowVector3d(1., 0., 0.));*/
             //viewer.data().add_points(closest_points, Eigen::RowVector3d(1., 1., 0.));
             viewer.data().add_edges(verts, closest_points, Eigen::RowVector3d(1., 0., 0.));
-            //viewer.data().set_points(Eigen::RowVector3d(1., 1., 0.), Eigen::RowVector3d(1., 1., 0.));
         }
         viewer.launch();
 
