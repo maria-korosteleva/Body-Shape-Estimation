@@ -42,20 +42,18 @@ bool AbsoluteDistanceForShape::Evaluate(double const * const * parameters, doubl
         }
     }
 
-    //Eigen::VectorXd sqrD;
-    //Eigen::MatrixXd closest_points;
-    //Eigen::VectorXi closest_face_ids;
+    Eigen::VectorXd sqrD;
+    Eigen::MatrixXd closest_points;
+    Eigen::VectorXi closest_face_ids;
 
-    //igl::point_mesh_squared_distance(verts, this->toMesh_->getVertices(), this->toMesh_->getFaces(), sqrD, closest_face_ids, closest_points);
+    igl::point_mesh_squared_distance(verts, this->toMesh_->getVertices(), this->toMesh_->getFaces(), sqrD, closest_face_ids, closest_points);
 
-    //assert(sqrD.size() == SMPLWrapper::VERTICES_NUM && "Size of the set of distances should equal main parameters");
-    //assert(closest_points.rows() == SMPLWrapper::VERTICES_NUM && "Size of the set of distances should equal main parameters");
+    assert(sqrD.size() == SMPLWrapper::VERTICES_NUM && "Size of the set of distances should equal main parameters");
+    assert(closest_points.rows() == SMPLWrapper::VERTICES_NUM && "Size of the set of distances should equal main parameters");
 
     for (int i = 0; i < SMPLWrapper::VERTICES_NUM; ++i)
     {
-        Eigen::VectorXd diff = verts.row(i) - this->toMesh_->getVertices().row(i);
-        residuals[i] = diff.dot(diff);
-        //residuals[i] = sqrD(i);
+        residuals[i] = sqrD(i);
     }
 
     // Jacobians
@@ -65,9 +63,8 @@ bool AbsoluteDistanceForShape::Evaluate(double const * const * parameters, doubl
         {
             for (int sh_id = 0; sh_id < SMPLWrapper::SHAPE_SIZE; ++sh_id)
             {
-                jacobians[0][v_id * SMPLWrapper::SHAPE_SIZE + sh_id] = 
-                    2. * (verts.row(v_id) - this->toMesh_->getVertices().row(v_id)).dot(shape_jac[sh_id].row(v_id));
-                    //2. * (verts.row(v_id) - closest_points.row(v_id)).dot(shape_jac[sh_id].row(v_id)); 
+                jacobians[0][v_id * SMPLWrapper::SHAPE_SIZE + sh_id] 
+                   = 2. * (verts.row(v_id) - closest_points.row(v_id)).dot(shape_jac[sh_id].row(v_id)); 
             }
         }
     }
@@ -79,9 +76,8 @@ bool AbsoluteDistanceForShape::Evaluate(double const * const * parameters, doubl
         {
             for (int k = 0; k < SMPLWrapper::SPACE_DIM; ++k)
             {
-                jacobians[1][v_id* SMPLWrapper::SPACE_DIM + k] = 
-                    2 * (verts(v_id, k) - this->toMesh_->getVertices()(v_id, k));
-                    //= 2 * (verts(v_id, k) - closest_points(v_id, k));  
+                jacobians[1][v_id* SMPLWrapper::SPACE_DIM + k]
+                    = 2 * (verts(v_id, k) - closest_points(v_id, k));  
             }
         }
     }

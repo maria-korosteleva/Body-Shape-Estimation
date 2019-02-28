@@ -102,13 +102,29 @@ void logSMPLParams(double* translation, double* pose, double* shape, std::string
 
     out << "]" << std::endl;
 
-    out << "Pose params \n[ ";
+    out << "Pose params [ \n";
     if (pose != nullptr)
-        for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
-            out << pose[i] << " , ";
+    {
+        for (int i = 0; i < SMPLWrapper::JOINTS_NUM; i++)
+        {
+            for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
+            {
+                out << pose[i * SMPLWrapper::SPACE_DIM + j] << " , ";
+            }
+            out << std::endl;
+        }
+    }
     else
-        for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
-            out << "0." << " , ";
+    {
+        for (int i = 0; i < SMPLWrapper::JOINTS_NUM; i++)
+        {
+            for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
+            {
+                out << "0." << " , ";
+            }
+            out << std::endl;
+        }
+    }
 
     out << "]" << std::endl;
 
@@ -187,9 +203,9 @@ int main()
         //const char* input_name = "D:/Data/smpl_outs/smpl_2.obj";
         //const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";  // A-pose
         //const char* input_name = "D:/Data/DYNA/50004_chicken_wings/00091.obj";
-        //const char* input_name = "D:/Data/smpl_outs/pose_hand_up.obj";
+        const char* input_name = "D:/Data/smpl_outs/pose_hand_up.obj";
         //const char* input_name = "D:/Data/smpl_outs/pose_hand_up_down.obj";
-        const char* input_name = "D:/Data/smpl_outs/pose_leg_up_up.obj";
+        //const char* input_name = "D:/Data/smpl_outs/pose_leg_up_up.obj";
         //const char* input_name = "D:/Data/smpl_outs/pose_leg_up_knee_up.obj";
         //const char* input_name = "D:/Data/INRIA/dataset/s4_layered_spin/mesh/0000_modified.obj";
         //Males
@@ -199,14 +215,13 @@ int main()
         //const char* input_name = "D:/Data/buff_dataset/00005/shortlong_shoulders_mill/shortlong_shoulders_mill.000054.ply_normalized.obj";
 
         // for SMPL/DYNA inputs
-        // expected to contain the subset of the keys defined for the model 
         const char* input_key_vertices_name = "D:/Data/smpl_outs/smpl_key_vertices.txt";
 
         input = new GeneralMesh(input_name, input_key_vertices_name);
         std::cout << "Input mesh loaded!\n";
 
         // Logging For convenience
-        std::string logFolderName = getNewLogFolder("3cyc_ptrs_smpl_jac_dbg_500_" + input->getName());
+        std::string logFolderName = getNewLogFolder("3cyc_ptrs_reg_values_500_" + input->getName());
         igl::writeOBJ(logFolderName + input->getName() +  ".obj", input->getVertices(), input->getFaces());
 
         smpl = new SMPLWrapper(gender, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");

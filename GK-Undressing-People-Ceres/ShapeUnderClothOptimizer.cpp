@@ -168,7 +168,7 @@ void ShapeUnderClothOptimizer::generalPoseEstimation_(Solver::Options& options)
 
     // Regularizer
     CostFunction* prior = new NormalPrior(this->stiffness_, this->mean_pose_);
-    LossFunction* scale_prior = new ScaledLoss(NULL, 0.001, ceres::TAKE_OWNERSHIP);
+    LossFunction* scale_prior = new ScaledLoss(NULL, 0.0002, ceres::TAKE_OWNERSHIP);
     problem.AddResidualBlock(prior, scale_prior, this->pose_);
 
     // Run the solver!
