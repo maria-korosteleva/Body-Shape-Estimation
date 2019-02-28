@@ -221,7 +221,7 @@ int main()
         std::cout << "Input mesh loaded!\n";
 
         // Logging For convenience
-        std::string logFolderName = getNewLogFolder("3cyc_ptrs_reg_values_500_" + input->getName());
+        std::string logFolderName = getNewLogFolder("3cyc_ptrs_p_s_outside_500_" + input->getName());
         igl::writeOBJ(logFolderName + input->getName() +  ".obj", input->getVertices(), input->getFaces());
 
         smpl = new SMPLWrapper(gender, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");

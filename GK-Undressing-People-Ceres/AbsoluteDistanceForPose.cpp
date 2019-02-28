@@ -46,18 +46,24 @@ bool AbsoluteDistanceForPose::Evaluate(double const * const * parameters, double
         }
     }
 
-    Eigen::VectorXd sqrD;
-    Eigen::MatrixXd closest_points;
+    Eigen::VectorXd signedDists;
     Eigen::VectorXi closest_face_ids;
+    Eigen::MatrixXd closest_points;
+    Eigen::MatrixXd normals;
 
-    igl::point_mesh_squared_distance(verts, this->toMesh_->getVertices(), this->toMesh_->getFaces(), sqrD, closest_face_ids, closest_points);
+    //igl::point_mesh_squared_distance(verts, this->toMesh_->getVertices(), this->toMesh_->getFaces(), sqrD, closest_face_ids, closest_points);
+    // requires the toMesh_ to be watertight
+    igl::SignedDistanceType type = igl::SIGNED_DISTANCE_TYPE_PSEUDONORMAL;
+    igl::signed_distance(verts, this->toMesh_->getVertices(), this->toMesh_->getFaces(), type, signedDists, closest_face_ids, closest_points, normals);
 
-    assert(sqrD.size() == SMPLWrapper::VERTICES_NUM && "Size of the set of distances should equal main parameters");
+    assert(signedDists.size() == SMPLWrapper::VERTICES_NUM && "Size of the set of distances should equal main parameters");
     assert(closest_points.rows() == SMPLWrapper::VERTICES_NUM && "Size of the set of distances should equal main parameters");
 
     for (int i = 0; i < SMPLWrapper::VERTICES_NUM; ++i)
     {
-        residuals[i] = sqrD(i); 
+        //residuals[i] = sqrD(i); 
+        // only ouside term
+        residuals[i] = signedDists(i) > 0 ? signedDists(i) * signedDists(i) : 0;    
     }
 
     // Jacobians
@@ -68,8 +74,10 @@ bool AbsoluteDistanceForPose::Evaluate(double const * const * parameters, double
         {
             for (int p_id = 0; p_id < SMPLWrapper::POSE_SIZE; ++p_id)
             {
-                jacobians[0][(v_id) * SMPLWrapper::POSE_SIZE + p_id]
-                    = 2. * (verts.row(v_id) - closest_points.row(v_id)).dot(pose_jac[p_id].row(v_id)); 
+                jacobians[0][(v_id)* SMPLWrapper::POSE_SIZE + p_id]
+                    = signedDists(v_id) > 0 
+                    ? 2. * (verts.row(v_id) - closest_points.row(v_id)).dot(pose_jac[p_id].row(v_id))
+                    : 0.;
             }
         }
     }
@@ -82,7 +90,9 @@ bool AbsoluteDistanceForPose::Evaluate(double const * const * parameters, double
             for (int k = 0; k < SMPLWrapper::SPACE_DIM; ++k)
             {
                 jacobians[1][(v_id) * SMPLWrapper::SPACE_DIM + k]
-                    = 2 * (verts(v_id, k) - closest_points(v_id, k));  
+                    = signedDists(v_id) > 0
+                    ? 2 * (verts(v_id, k) - closest_points(v_id, k))
+                    : 0.;
             }
         }
     }

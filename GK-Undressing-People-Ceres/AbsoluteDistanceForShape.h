@@ -4,6 +4,7 @@
 #include "GeneralMesh.h"
 #include "SMPLWrapper.h"
 #include "igl/point_mesh_squared_distance.h"
+#include "igl/signed_distance.h"
 
 class AbsoluteDistanceForShape : public ceres::CostFunction
 {
