@@ -458,6 +458,7 @@ E::MatrixXd SMPLWrapper::getJointsTransposedGlobalTransformation_(const double *
 
 E::MatrixXd SMPLWrapper::get3DLocalTransformMat_(const double * const jointAxisAngleRotation, const E::MatrixXd & jointToParentDist, E::MatrixXd* localTransformJac) const
 {
+    // init
     E::MatrixXd localTransform;
     localTransform.setIdentity(4, 4);   // in homogenious coordinates
     localTransform.block(0, 3, 3, 1) = jointToParentDist.transpose(); // g(0)
@@ -471,87 +472,58 @@ E::MatrixXd SMPLWrapper::get3DLocalTransformMat_(const double * const jointAxisA
         }
     }
 
-    double norm = sqrt(jointAxisAngleRotation[0] * jointAxisAngleRotation[0]
-        + jointAxisAngleRotation[1] * jointAxisAngleRotation[1]
-        + jointAxisAngleRotation[2] * jointAxisAngleRotation[2]);
-    E::MatrixXd skew(3, 3);
-    skew <<
-        0, -jointAxisAngleRotation[2], jointAxisAngleRotation[1],
-        jointAxisAngleRotation[2], 0, -jointAxisAngleRotation[0],
-        -jointAxisAngleRotation[1], jointAxisAngleRotation[0], 0;
+    // prepare the info
+    E::Vector3d w = E::Map<const E::Vector3d>(jointAxisAngleRotation);
+    double norm = w.norm();
+    E::Matrix3d w_skew;
+    w_skew <<
+        0, -w[2], w[1],
+        w[2], 0, -w[0],
+        -w[1], w[0], 0;
+    w_skew /= norm;
+    E::Matrix3d exponent = E::Matrix3d::Identity();
 
-    skew /= norm;
+    // calculate
     if (norm > 0.0001)  // don't waste computations on zero joint movement
     {
         // apply Rodrigues formula
-        
-
-        E::MatrixXd exponent;
-        exponent.setIdentity(3, 3);
-        exponent += skew * sin(norm) + skew * skew * (1. - cos(norm));
+        exponent += w_skew * sin(norm) + w_skew * w_skew * (1. - cos(norm));
         localTransform.block(0, 0, 3, 3) = exponent;
     }
     
     // jacobian
     if (localTransformJac != nullptr)
     {
-        E::MatrixXd skewDeriv[3];
-        E::MatrixXd skew2Deriv[3];
-
-        // desided to leave initialization of this matrices here for the readibility purposes
-        {
-            skewDeriv[0].resize(3, 3);
-            skewDeriv[0] <<
-                0, 0, 0,
-                0, 0, -1,
-                0, 1, 0;
-            skewDeriv[1].resize(3, 3);
-            skewDeriv[1] <<
-                0, 0, 1,
-                0, 0, 0,
-                -1, 0, 0;
-            skewDeriv[2].resize(3, 3);
-            skewDeriv[2] <<
-                0, -1, 0,
-                1, 0, 0,
-                0, 0, 0;
-
-            skew2Deriv[0].resize(3, 3);
-            skew2Deriv[0] <<
-                0, jointAxisAngleRotation[1], jointAxisAngleRotation[2],
-                jointAxisAngleRotation[1], -2 * jointAxisAngleRotation[0], 0,
-                jointAxisAngleRotation[2], 0, -2 * jointAxisAngleRotation[0];
-            skew2Deriv[1].resize(3, 3);
-            skew2Deriv[1] <<
-                -2 * jointAxisAngleRotation[1], jointAxisAngleRotation[0], 0,
-                jointAxisAngleRotation[0], 0, jointAxisAngleRotation[2],
-                0, jointAxisAngleRotation[2], -2 * jointAxisAngleRotation[1];
-            skew2Deriv[2].resize(3, 3);
-            skew2Deriv[2] <<
-                -2 * jointAxisAngleRotation[2], 0, jointAxisAngleRotation[0],
-                0, -2 * jointAxisAngleRotation[2], jointAxisAngleRotation[1],
-                jointAxisAngleRotation[0], jointAxisAngleRotation[1], 0;
-        }
-
-        // Derivation is in the notebook, double check with https://math.stackexchange.com/questions/2276003/derivative-of-rotation-matrix
-        // and with https://arxiv.org/pdf/1312.0788.pdf
         if (norm > 0.0001)
         {
             for (int i = 0; i < 3; ++i)
             {
-                localTransformJac[i].block(0, 0, 3, 3) =
-                    skew * (cos(norm) * jointAxisAngleRotation[i] / norm)
-                    + sin(norm) / norm * (skewDeriv[i] - skew * jointAxisAngleRotation[i] / norm)
-                    + skew * skew * (sin(norm) * jointAxisAngleRotation[i] / norm)
-                    + (skew2Deriv[i] - skew * skew * 2 * jointAxisAngleRotation[i]) * (1. - cos(norm)) / (norm * norm);
+                // compact formula from https://arxiv.org/pdf/1312.0788.pdf
+                E::Vector3d cross = w.cross((E::Matrix3d::Identity() - exponent).col(i)) / (norm * norm);
+                E::Matrix3d cross_skew;
+                cross_skew <<
+                    0, -cross[2], cross[1],
+                    cross[2], 0, -cross[0],
+                    -cross[1], cross[0], 0;
+
+                localTransformJac[i].block(0, 0, 3, 3) = 
+                    (w_skew * w[i] / norm + cross_skew) * exponent;
             }
         }
-        else
+        else // zero case 
         {
-            for (int i = 0; i < 3; ++i)
-            {
-                localTransformJac[i].block(0, 0, 3, 3) = skewDeriv[i];
-            }
+            localTransformJac[0].block(0, 0, 3, 3) <<
+                0, 0, 0,
+                0, 0, -1,
+                0, 1, 0;
+            localTransformJac[1].block(0, 0, 3, 3) <<
+                0, 0, 1,
+                0, 0, 0,
+                -1, 0, 0;
+            localTransformJac[2].block(0, 0, 3, 3) <<
+                0, -1, 0,
+                1, 0, 0,
+                0, 0, 0;
         }
     }
 

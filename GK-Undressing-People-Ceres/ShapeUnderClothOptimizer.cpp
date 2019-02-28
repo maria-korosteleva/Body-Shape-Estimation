@@ -108,7 +108,7 @@ void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd
     Solver::Options options;
     options.linear_solver_type = ceres::DENSE_QR;   // analytic jacobian is dense
     options.minimizer_progress_to_stdout = true;
-    options.max_num_iterations = 100;   // usually converges faster
+    options.max_num_iterations = 500;   // usually converges faster
 
     // to debug jacobian
     //options.check_gradients = true;

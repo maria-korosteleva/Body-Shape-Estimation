@@ -175,9 +175,9 @@ int main()
         //const char* input_name = "D:/Data/smpl_outs/smpl_2.obj";
         //const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";  // A-pose
         //const char* input_name = "D:/Data/DYNA/50004_chicken_wings/00091.obj";
-        const char* input_name = "D:/Data/smpl_outs/pose_hand_up.obj";
+        //const char* input_name = "D:/Data/smpl_outs/pose_hand_up.obj";
         //const char* input_name = "D:/Data/smpl_outs/pose_hand_up_down.obj";
-        //const char* input_name = "D:/Data/smpl_outs/pose_leg_up_up.obj";
+        const char* input_name = "D:/Data/smpl_outs/pose_leg_up_up.obj";
         //const char* input_name = "D:/Data/smpl_outs/pose_leg_up_knee_up.obj";
         //const char* input_name = "D:/Data/INRIA/dataset/s4_layered_spin/mesh/0000_modified.obj";
         //Males
@@ -194,7 +194,7 @@ int main()
         std::cout << "Input mesh loaded!\n";
 
         // Logging For convenience
-        std::string logFolderName = getNewLogFolder("g_ptr_sep_shape_3cyc_100_" + input->getName());
+        std::string logFolderName = getNewLogFolder("3cyc_ptrs_smpl_jac_dbg_500_" + input->getName());
         igl::writeOBJ(logFolderName + input->getName() +  ".obj", input->getVertices(), input->getFaces());
 
         smpl = new SMPLWrapper(gender, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
