@@ -12,7 +12,7 @@ ShapeUnderClothOptimizer::ShapeUnderClothOptimizer(SMPLWrapper* smpl, GeneralMes
     // read prior info
     std::string path(path_to_prior);
     path += '/';
-    this->readMeanPose_(path);
+    this->readAttractivePose_(path);
     this->readStiffness_(path);
 }
 
@@ -38,7 +38,7 @@ void ShapeUnderClothOptimizer::setNewInput(GeneralMesh * input)
 void ShapeUnderClothOptimizer::setNewPriorPath(const char * prior_path)
 {
     std::string path(prior_path);
-    this->readMeanPose_(path);
+    this->readAttractivePose_(path);
     this->readStiffness_(path);
 }
 
@@ -164,11 +164,11 @@ void ShapeUnderClothOptimizer::generalPoseEstimation_(Solver::Options& options)
 
     // Main cost
     CostFunction* cost_function = new AbsoluteDistanceForPose(this->smpl_, this->input_, this->shape_);
-    problem.AddResidualBlock(cost_function, nullptr, this->pose_, this->translation_);     // this->pose_, , this->shape_ 
+    problem.AddResidualBlock(cost_function, nullptr, this->pose_, this->translation_);
 
     // Regularizer
-    CostFunction* prior = new NormalPrior(this->stiffness_, this->mean_pose_);
-    LossFunction* scale_prior = new ScaledLoss(NULL, 0.0002, ceres::TAKE_OWNERSHIP);
+    CostFunction* prior = new NormalPrior(this->stiffness_, this->attractive_pose_);
+    LossFunction* scale_prior = new ScaledLoss(NULL, 0.0007, ceres::TAKE_OWNERSHIP);
     problem.AddResidualBlock(prior, scale_prior, this->pose_);
 
     // Run the solver!
@@ -276,25 +276,26 @@ void ShapeUnderClothOptimizer::erase_params_()
 }
 
 
-void ShapeUnderClothOptimizer::readMeanPose_(const std::string path)
+void ShapeUnderClothOptimizer::readAttractivePose_(const std::string path)
 {
-    std::string mean_filename = path + "mean_pose.txt";
+    //std::string filename = path + "mean_pose.txt";
+    std::string filename = path + "A_pose.txt";
 
     std::fstream inFile;
-    inFile.open(mean_filename, std::ios_base::in);
+    inFile.open(filename, std::ios_base::in);
     int size;
     inFile >> size;
     // Sanity check
     if (size != SMPLWrapper::POSE_SIZE - SMPLWrapper::SPACE_DIM)
         throw std::exception("Striffness matrix size doesn't match the number of non-root pose parameters");
     
-    this->mean_pose_.resize(SMPLWrapper::POSE_SIZE);
+    this->attractive_pose_.resize(SMPLWrapper::POSE_SIZE);
     // For convinient use of the mean pose with full pose vectors, root rotation is set to zero
     for (int i = 0; i < SMPLWrapper::SPACE_DIM; i++)
-        this->mean_pose_(i) = 0.;
+        this->attractive_pose_(i) = 0.;
     // Now read from file
     for (int i = SMPLWrapper::SPACE_DIM; i < SMPLWrapper::POSE_SIZE; i++)
-        inFile >> this->mean_pose_(i);
+        inFile >> this->attractive_pose_(i);
 
     inFile.close();
 

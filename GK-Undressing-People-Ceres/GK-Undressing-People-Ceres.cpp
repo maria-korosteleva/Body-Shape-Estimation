@@ -221,7 +221,7 @@ int main()
         std::cout << "Input mesh loaded!\n";
 
         // Logging For convenience
-        std::string logFolderName = getNewLogFolder("3cyc_ptrs_p_s_outside_500_" + input->getName());
+        std::string logFolderName = getNewLogFolder("3cyc_ptrs_out_Apose_reg_500_" + input->getName());
         igl::writeOBJ(logFolderName + input->getName() +  ".obj", input->getVertices(), input->getFaces());
 
         smpl = new SMPLWrapper(gender, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
@@ -262,25 +262,19 @@ int main()
         // FOR TESTING 
         //double* pose_res = new double[SMPLWrapper::POSE_SIZE];
         //double* shape_res = new double[SMPLWrapper::SHAPE_SIZE];
+        //double translation_res[3] = { 0, 0, 0 };
         //for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
         //{
         //    pose_res[i] = 0.;
         //    if (i < SMPLWrapper::SHAPE_SIZE)
         //        shape_res[i] = 0.;
         //}
-        ////pose_res[69] = 1.;
-        ////pose_res[50] = 0.5;
-        ////pose_res[56] = 1.;
-        ////pose_res[52] =0.5;
-        ////pose_res[53] = -1.;
-        ////pose_res[58] = 1;
-        ////pose_res[5] = 2.;
-        ////pose_res[0] = -1.;
-        //pose_res[6] = 0.5;
-        //pose_res[15] = 1.;
+        //pose_res[50] = -0.7854; // pi/4
+        //pose_res[53] = 0.7854;
         ////shape_res[0] = -0.5;
 
-        //smpl->saveToObj(nullptr, pose_res, nullptr, logFolderName + "pose_leg_up_up.obj");
+        //smpl->saveToObj(nullptr, pose_res, nullptr, logFolderName + "pose_A.obj");
+        //logSMPLParams(translation_res, pose_res, shape_res, logFolderName);
 
         // Visualize the output
         igl::opengl::glfw::Viewer viewer;

@@ -1,6 +1,6 @@
 #pragma once
 #define GLOG_NO_ABBREVIATED_SEVERITIES
-#define DEBUG
+//#define DEBUG
 
 #include <Eigen/Dense>
 #include "ceres/ceres.h"
@@ -47,7 +47,7 @@ private:
     SMPLWrapper * smpl_ = nullptr;
     GeneralMesh * input_ = nullptr;
     ceres::Matrix stiffness_;
-    ceres::Vector mean_pose_;
+    ceres::Vector attractive_pose_;
 
     // last params
     double * translation_ = nullptr;
@@ -61,7 +61,7 @@ private:
 
     // utils
     void erase_params_();
-    void readMeanPose_(const std::string);
+    void readAttractivePose_(const std::string);
     void readStiffness_(const std::string);
     static void zeros_(double *, std::size_t);
     static void printArray_(double*, std::size_t);
