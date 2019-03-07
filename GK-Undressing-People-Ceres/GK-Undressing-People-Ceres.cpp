@@ -59,8 +59,6 @@
 */
 
 // global vars are needed for visualization purposes only
-bool progress_visualization = true;
-//bool progress_visualization = false;
 std::vector<Eigen::MatrixXd> iteration_outputs;
 int counter = 0;
 SMPLWrapper* smpl;
@@ -188,6 +186,26 @@ bool visulaze_progress_key_down(igl::opengl::glfw::Viewer& viewer, unsigned char
     {
         viewer.core.is_animating = !viewer.core.is_animating;
     }
+    else if (key == 'F')
+    {
+        std::cout << "[Shift+F] pressed: Showing the final result. Press [space] to go back to animation mode." << std::endl;
+
+        viewer.core.is_animating = false;
+        
+        // visualizing the final result only
+        viewer.data().clear();
+        Eigen::MatrixXi faces = smpl->getFaces();
+        Eigen::MatrixXd verts = iteration_outputs[iteration_outputs.size()-1];
+
+        Eigen::VectorXd sqrD;
+        Eigen::MatrixXd closest_points;
+        Eigen::VectorXi closest_face_ids;
+        igl::point_mesh_squared_distance(verts, input->getVertices(), input->getFaces(), sqrD, closest_face_ids, closest_points);
+
+        viewer.data().set_mesh(verts, faces);
+        //viewer.data().add_points(closest_points, Eigen::RowVector3d(1., 1., 0.));
+        viewer.data().add_edges(verts, closest_points, Eigen::RowVector3d(1., 0., 0.));
+    }
     return false;
 }
 
@@ -203,11 +221,12 @@ int main()
         //const char* input_name = "D:/Data/smpl_outs/smpl_2.obj";
         //const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";  // A-pose
         //const char* input_name = "D:/Data/DYNA/50004_chicken_wings/00091.obj";
-        const char* input_name = "D:/Data/smpl_outs/pose_hand_up.obj";
+        //const char* input_name = "D:/Data/smpl_outs/pose_hand_up.obj";
         //const char* input_name = "D:/Data/smpl_outs/pose_hand_up_down.obj";
         //const char* input_name = "D:/Data/smpl_outs/pose_leg_up_up.obj";
         //const char* input_name = "D:/Data/smpl_outs/pose_leg_up_knee_up.obj";
         //const char* input_name = "D:/Data/INRIA/dataset/s4_layered_spin/mesh/0000_modified.obj";
+        const char* input_name = "D:/Data/Clo/clo_model.obj";
         //Males
         //gender = 'm';
         //const char* input_name = "D:/Data/KETI/mesh_model/OBJ/mesh_600_depth07_trim_normalized.obj";
@@ -221,7 +240,7 @@ int main()
         std::cout << "Input mesh loaded!\n";
 
         // Logging For convenience
-        std::string logFolderName = getNewLogFolder("3cyc_ptrs_out_Apose_reg_500_" + input->getName());
+        std::string logFolderName = getNewLogFolder("3cyc_ptrsA_A_start_500_" + input->getName());
         igl::writeOBJ(logFolderName + input->getName() +  ".obj", input->getVertices(), input->getFaces());
 
         smpl = new SMPLWrapper(gender, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
@@ -237,14 +256,9 @@ int main()
         std::cout << "Input file: " << input_name << std::endl;
         std::cout << logFolderName + "optimization.txt" << std::endl;
 
-        if (progress_visualization)
-        {
-            // collect the meshes from each iteration
-            iteration_outputs.clear();
-            optimizer.findOptimalParameters(&iteration_outputs);
-        }
-        else
-            optimizer.findOptimalParameters();
+        // collect the meshes from each iteration
+        iteration_outputs.clear();
+        optimizer.findOptimalParameters(&iteration_outputs);
 
         std::cout.rdbuf(coutbuf);   //  reset cout to standard output again
         out.close();
@@ -281,33 +295,12 @@ int main()
         igl::opengl::glfw::imgui::ImGuiMenu menu;
         viewer.plugins.push_back(&menu);
 
-        if (progress_visualization)
-        {
-            counter = 0;
-            viewer.callback_key_down = &visulaze_progress_key_down;
-            viewer.callback_pre_draw = &visulaze_progress_pre_draw;
-            viewer.core.is_animating = false;
-            viewer.core.animation_max_fps = 24.;
-            std::cout << "Press [space] to toggle animation." << std::endl;
-        }
-        else // visualizing the result only
-        {
-            Eigen::MatrixXd verts = smpl->calcModel(pose_res, shape_res);
-            // translate
-            for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
-                for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
-                    verts(i, j) += translation_res[j];
-            Eigen::MatrixXi faces = smpl->getFaces();
-
-            Eigen::VectorXd sqrD;
-            Eigen::MatrixXd closest_points;
-            Eigen::VectorXi closest_face_ids;
-            igl::point_mesh_squared_distance(verts, input->getVertices(), input->getFaces(), sqrD, closest_face_ids, closest_points);
-
-            viewer.data().set_mesh(verts, faces);
-            //viewer.data().add_points(closest_points, Eigen::RowVector3d(1., 1., 0.));
-            viewer.data().add_edges(verts, closest_points, Eigen::RowVector3d(1., 0., 0.));
-        }
+        counter = 0;
+        viewer.callback_key_down = &visulaze_progress_key_down;
+        viewer.callback_pre_draw = &visulaze_progress_pre_draw;
+        viewer.core.is_animating = false;
+        viewer.core.animation_max_fps = 24.;
+        std::cout << "Press [space] to toggle animation or [Shift+F] to see the final result." << std::endl;
         viewer.launch();
 
         // Cleaning
