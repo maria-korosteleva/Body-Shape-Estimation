@@ -89,12 +89,13 @@ void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd
 {
     google::InitGoogleLogging("ShapeUnderClothing");
 
-    // Init parameters
+    // Get some space
     this->erase_params_();
     this->translation_ = new double[SMPLWrapper::SPACE_DIM];
     this->pose_ = new double[SMPLWrapper::POSE_SIZE];
     this->shape_ = new double[SMPLWrapper::SHAPE_SIZE];
 
+    // Init parameters
     E::VectorXd translation_guess = this->input_->getMeanPoint() - this->smpl_->getTemplateMeanPoint();
     assert(translation_guess.size() == SMPLWrapper::SPACE_DIM 
         && "Calculated translation guess should have size equal to the SMPL world dimentionality");

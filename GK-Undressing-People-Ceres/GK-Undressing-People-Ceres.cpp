@@ -86,7 +86,7 @@ std::string getNewLogFolder(const std::string tag = "test")
 }
 
 
-void logSMPLParams(double* translation, double* pose, double* shape, std::string logFolderName)
+void logSMPLParams(double* translation, double* pose, double* shape, Eigen::MatrixXd& jointsLoc, std::string logFolderName)
 {
     std::ofstream out(logFolderName + "smpl_params.txt");
 
@@ -126,15 +126,23 @@ void logSMPLParams(double* translation, double* pose, double* shape, std::string
 
     out << "]" << std::endl;
 
-    out << "Shape (betas) params \n[ ";
+    out << "Shape (betas) params [ \n";
     if (shape != nullptr)
         for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; i++)
             out << shape[i] << " , ";
     else
         for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; i++)
             out << "0." << " , ";
-    out << "]" << std::endl;
+    out << std::endl << "]" << std::endl;
 
+    out << "Joints locations for posed and shaped model [\n";
+
+    if (jointsLoc.size() > 0)
+    {
+        out << jointsLoc << std::endl;
+    }
+
+    out << "]" << std::endl;
     out.close();
 }
 
@@ -234,13 +242,14 @@ int main()
         //const char* input_name = "D:/Data/buff_dataset/00005/shortlong_shoulders_mill/shortlong_shoulders_mill.000054.ply_normalized.obj";
 
         // for SMPL/DYNA inputs
-        const char* input_key_vertices_name = "D:/Data/smpl_outs/smpl_key_vertices.txt";
+        //const char* input_key_vertices_name = "D:/Data/smpl_outs/smpl_key_vertices.txt";
+        //input = new GeneralMesh(input_name, input_key_vertices_name);
 
-        input = new GeneralMesh(input_name, input_key_vertices_name);
+        input = new GeneralMesh(input_name);
         std::cout << "Input mesh loaded!\n";
 
         // Logging For convenience
-        std::string logFolderName = getNewLogFolder("3cyc_ptrsA_A_start_500_" + input->getName());
+        std::string logFolderName = getNewLogFolder("3cyc_ptrsA_joints_loc_500_" + input->getName());
         igl::writeOBJ(logFolderName + input->getName() +  ".obj", input->getVertices(), input->getFaces());
 
         smpl = new SMPLWrapper(gender, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
@@ -268,7 +277,9 @@ int main()
         double* shape_res = optimizer.getEstimatesShapeParams();
         double* pose_res = optimizer.getEstimatesPoseParams();
         double* translation_res = optimizer.getEstimatesTranslationParams();
-        logSMPLParams(translation_res, pose_res, shape_res, logFolderName);
+        Eigen::MatrixXd finJointLocations = smpl->calcJointLocations(shape_res, pose_res);
+
+        logSMPLParams(translation_res, pose_res, shape_res, finJointLocations, logFolderName);
         smpl->saveToObj(translation_res, pose_res, shape_res, (logFolderName + "posed_shaped.obj"));
         smpl->saveToObj(translation_res, nullptr, shape_res, (logFolderName + "unposed_shaped.obj"));
         smpl->saveToObj(translation_res, pose_res, nullptr, (logFolderName + "posed_unshaped.obj"));

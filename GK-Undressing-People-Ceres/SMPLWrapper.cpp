@@ -92,11 +92,30 @@ E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * con
 }
 
 
-E::MatrixXd SMPLWrapper::calcJointLocations(const double * shape)
+E::MatrixXd SMPLWrapper::calcJointLocations(const double * shape, const double * pose = nullptr)
 {
     E::MatrixXd verts = this->calcModel(nullptr, shape);
-    
-    return this->jointRegressorMat_ * verts;
+
+    E::MatrixXd baseJointLocations = this->jointRegressorMat_ * verts;
+
+    if (pose == nullptr)
+    {
+        return baseJointLocations;
+    }
+
+    E::MatrixXd jointsTransformation = this->getJointsTransposedGlobalTransformation_(pose, baseJointLocations);
+
+    E::MatrixXd posedJointLocations(SMPLWrapper::JOINTS_NUM, SMPLWrapper::SPACE_DIM);
+
+    for (int i = 0; i < jointsTransformation.rows(); ++i)
+    {
+        if (i % (SMPLWrapper::SPACE_DIM + 1) == 0)
+        {
+            posedJointLocations.row(i / (SMPLWrapper::SPACE_DIM + 1)) = jointsTransformation.row(i);
+        }
+    }
+
+    return posedJointLocations;
 }
 
 
