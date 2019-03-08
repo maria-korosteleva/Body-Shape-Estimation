@@ -85,7 +85,7 @@ double * ShapeUnderClothOptimizer::getEstimatesShapeParams()
 }
 
 
-void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd>* iteration_results)
+void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd>* iteration_results, const double parameter)
 {
     google::InitGoogleLogging("ShapeUnderClothing");
 
@@ -133,9 +133,9 @@ void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd
             << "    Cycle #" << i << std::endl
             << "***********************" << std::endl;
 
-        this->generalPoseEstimation_(options);
+        this->generalPoseEstimation_(options, parameter);
 
-        this->shapeEstimation_(options);
+        this->shapeEstimation_(options, parameter);
     }
 
     auto end_time = std::chrono::system_clock::now();
@@ -155,7 +155,7 @@ void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd
 }
 
 
-void ShapeUnderClothOptimizer::generalPoseEstimation_(Solver::Options& options)
+void ShapeUnderClothOptimizer::generalPoseEstimation_(Solver::Options& options, const double parameter)
 {
     std::cout << "-----------------------" << std::endl
               << "          Pose" << std::endl
@@ -164,12 +164,12 @@ void ShapeUnderClothOptimizer::generalPoseEstimation_(Solver::Options& options)
     Problem problem;
 
     // Main cost
-    CostFunction* cost_function = new AbsoluteDistanceForPose(this->smpl_, this->input_, this->shape_);
+    CostFunction* cost_function = new AbsoluteDistanceForPose(this->smpl_, this->input_, parameter, this->shape_);
     problem.AddResidualBlock(cost_function, nullptr, this->pose_, this->translation_);
 
     // Regularizer
     CostFunction* prior = new NormalPrior(this->stiffness_, this->attractive_pose_);
-    LossFunction* scale_prior = new ScaledLoss(NULL, 0.0007, ceres::TAKE_OWNERSHIP);
+    LossFunction* scale_prior = new ScaledLoss(NULL, 0.007, ceres::TAKE_OWNERSHIP);    // 0.0007
     problem.AddResidualBlock(prior, scale_prior, this->pose_);
 
     // Run the solver!
@@ -207,7 +207,7 @@ void ShapeUnderClothOptimizer::generalPoseEstimation_(Solver::Options& options)
 }
 
 
-void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options)
+void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const double parameter)
 {
     std::cout << "-----------------------" << std::endl
         << "          Shape" << std::endl
@@ -215,7 +215,7 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options)
 
     Problem problem;
 
-    CostFunction* cost_function = new AbsoluteDistanceForShape(this->smpl_, this->input_, this->pose_); 
+    CostFunction* cost_function = new AbsoluteDistanceForShape(this->smpl_, this->input_, parameter, this->pose_); 
     problem.AddResidualBlock(cost_function, nullptr, this->shape_, this->translation_);  
 
     // TODO add light regularization

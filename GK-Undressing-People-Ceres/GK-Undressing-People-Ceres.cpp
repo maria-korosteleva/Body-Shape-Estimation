@@ -63,6 +63,9 @@ std::vector<Eigen::MatrixXd> iteration_outputs;
 int counter = 0;
 SMPLWrapper* smpl;
 GeneralMesh* input;
+double* shape_res;
+double* pose_res;
+double* translation_res;
 
 std::string getNewLogFolder(const std::string tag = "test")
 {
@@ -136,10 +139,18 @@ void logSMPLParams(double* translation, double* pose, double* shape, Eigen::Matr
     out << std::endl << "]" << std::endl;
 
     out << "Joints locations for posed and shaped model [\n";
-
-    if (jointsLoc.size() > 0)
+    // translate
+    Eigen::MatrixXd translatedJointLoc(jointsLoc);
+    for (int i = 0; i < translatedJointLoc.rows(); ++i)
     {
-        out << jointsLoc << std::endl;
+        for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)
+        {
+            translatedJointLoc(i, j) += translation[j];
+        }
+    }
+    if (translatedJointLoc.size() > 0)
+    {
+        out << translatedJointLoc << std::endl;
     }
 
     out << "]" << std::endl;
@@ -211,8 +222,18 @@ bool visulaze_progress_key_down(igl::opengl::glfw::Viewer& viewer, unsigned char
         igl::point_mesh_squared_distance(verts, input->getVertices(), input->getFaces(), sqrD, closest_face_ids, closest_points);
 
         viewer.data().set_mesh(verts, faces);
-        //viewer.data().add_points(closest_points, Eigen::RowVector3d(1., 1., 0.));
         viewer.data().add_edges(verts, closest_points, Eigen::RowVector3d(1., 0., 0.));
+
+        // visualize joint locations
+        Eigen::MatrixXd finJointLocations = smpl->calcJointLocations(shape_res, pose_res);
+        for (int i = 0; i < finJointLocations.rows(); ++i)
+        {
+            for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)
+            {
+                finJointLocations(i, j) += translation_res[j];
+            }
+        }
+        viewer.data().add_points(finJointLocations, Eigen::RowVector3d(1., 1., 0.));
     }
     return false;
 }
@@ -224,16 +245,10 @@ int main()
         // Females
         char gender = 'f';
         //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin.obj";
-        //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin_custom_smpl.obj";
-        //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_fat.obj";
-        //const char* input_name = "D:/Data/smpl_outs/smpl_2.obj";
         //const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";  // A-pose
-        //const char* input_name = "D:/Data/DYNA/50004_chicken_wings/00091.obj";
         //const char* input_name = "D:/Data/smpl_outs/pose_hand_up.obj";
-        //const char* input_name = "D:/Data/smpl_outs/pose_hand_up_down.obj";
+        //const char* input_name = "D:/Data/smpl_outs/smpl_2.obj";
         //const char* input_name = "D:/Data/smpl_outs/pose_leg_up_up.obj";
-        //const char* input_name = "D:/Data/smpl_outs/pose_leg_up_knee_up.obj";
-        //const char* input_name = "D:/Data/INRIA/dataset/s4_layered_spin/mesh/0000_modified.obj";
         const char* input_name = "D:/Data/Clo/clo_model.obj";
         //Males
         //gender = 'm';
@@ -248,8 +263,11 @@ int main()
         input = new GeneralMesh(input_name);
         std::cout << "Input mesh loaded!\n";
 
+        // for experiments
+        double inside_sclaing_param = 1.;
+
         // Logging For convenience
-        std::string logFolderName = getNewLogFolder("3cyc_ptrsA_joints_loc_500_" + input->getName());
+        std::string logFolderName = getNewLogFolder("3cyc_ptrsA_in_scale_" + std::to_string(inside_sclaing_param) + input->getName());
         igl::writeOBJ(logFolderName + input->getName() +  ".obj", input->getVertices(), input->getFaces());
 
         smpl = new SMPLWrapper(gender, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
@@ -267,16 +285,16 @@ int main()
 
         // collect the meshes from each iteration
         iteration_outputs.clear();
-        optimizer.findOptimalParameters(&iteration_outputs);
+        optimizer.findOptimalParameters(&iteration_outputs, inside_sclaing_param);
 
         std::cout.rdbuf(coutbuf);   //  reset cout to standard output again
         out.close();
         std::cout << "Optimization finished!\n";
 
         // Save the results
-        double* shape_res = optimizer.getEstimatesShapeParams();
-        double* pose_res = optimizer.getEstimatesPoseParams();
-        double* translation_res = optimizer.getEstimatesTranslationParams();
+        shape_res = optimizer.getEstimatesShapeParams();
+        pose_res = optimizer.getEstimatesPoseParams();
+        translation_res = optimizer.getEstimatesTranslationParams();
         Eigen::MatrixXd finJointLocations = smpl->calcJointLocations(shape_res, pose_res);
 
         logSMPLParams(translation_res, pose_res, shape_res, finJointLocations, logFolderName);

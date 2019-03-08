@@ -9,7 +9,7 @@
 class AbsoluteDistanceForShape : public ceres::CostFunction
 {
 public:
-    AbsoluteDistanceForShape(SMPLWrapper*, GeneralMesh *, double * pose = nullptr);
+    AbsoluteDistanceForShape(SMPLWrapper*, GeneralMesh *, const double inside_coef, double * pose = nullptr);
     ~AbsoluteDistanceForShape();
 
     // parameters[0] <-> shape, parameters[1] <-> translation
@@ -22,6 +22,9 @@ public:
 private:
     GeneralMesh * toMesh_;
     SMPLWrapper * smpl_;
-    double * pose_;
+
+    // optional
+    double inside_coef_ = 1.;
+    double * pose_ = nullptr;
 };
 

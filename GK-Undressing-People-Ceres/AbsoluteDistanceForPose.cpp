@@ -2,13 +2,9 @@
 #include "AbsoluteDistanceForPose.h"
 
 
-AbsoluteDistanceForPose::AbsoluteDistanceForPose(SMPLWrapper* smpl, GeneralMesh * toMesh, double * shape)
-    : toMesh_(toMesh), smpl_(smpl), shape_(shape)
+AbsoluteDistanceForPose::AbsoluteDistanceForPose(SMPLWrapper* smpl, GeneralMesh * toMesh, const double inside_coef = 1., double * shape)
+    : toMesh_(toMesh), smpl_(smpl), shape_(shape), inside_coef_(inside_coef)
 {
-    this->key_verts_num_ = toMesh->getKeyPoints().size();
-
-    //this->set_num_residuals(this->key_verts_num_);
-    //this->set_num_residuals(this->key_verts_num_ + SMPLWrapper::VERTICES_NUM);
     this->set_num_residuals(SMPLWrapper::VERTICES_NUM);
 
     this->mutable_parameter_block_sizes()->push_back(SMPLWrapper::POSE_SIZE);
@@ -63,7 +59,7 @@ bool AbsoluteDistanceForPose::Evaluate(double const * const * parameters, double
     {
         //residuals[i] = sqrD(i); 
         // only ouside term
-        residuals[i] = signedDists(i) > 0 ? signedDists(i) * signedDists(i) : 0;    
+        residuals[i] = signedDists(i) > 0 ? signedDists(i) * signedDists(i) : this->inside_coef_ * signedDists(i) * signedDists(i);
     }
 
     // Jacobians
@@ -77,7 +73,7 @@ bool AbsoluteDistanceForPose::Evaluate(double const * const * parameters, double
                 jacobians[0][(v_id)* SMPLWrapper::POSE_SIZE + p_id]
                     = signedDists(v_id) > 0 
                     ? 2. * (verts.row(v_id) - closest_points.row(v_id)).dot(pose_jac[p_id].row(v_id))
-                    : 0.;
+                    : this->inside_coef_ * 2. * (verts.row(v_id) - closest_points.row(v_id)).dot(pose_jac[p_id].row(v_id));
             }
         }
     }
@@ -92,7 +88,7 @@ bool AbsoluteDistanceForPose::Evaluate(double const * const * parameters, double
                 jacobians[1][(v_id) * SMPLWrapper::SPACE_DIM + k]
                     = signedDists(v_id) > 0
                     ? 2 * (verts(v_id, k) - closest_points(v_id, k))
-                    : 0.;
+                    : this->inside_coef_ * 2 * (verts(v_id, k) - closest_points(v_id, k));
             }
         }
     }

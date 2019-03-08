@@ -2,8 +2,8 @@
 #include "AbsoluteDistanceForShape.h"
 
 
-AbsoluteDistanceForShape::AbsoluteDistanceForShape(SMPLWrapper* smpl, GeneralMesh * toMesh, double * pose)
-    : toMesh_(toMesh), smpl_(smpl), pose_(pose)
+AbsoluteDistanceForShape::AbsoluteDistanceForShape(SMPLWrapper* smpl, GeneralMesh * toMesh, const double inside_coef = 1., double * pose)
+    : toMesh_(toMesh), smpl_(smpl), pose_(pose), inside_coef_(inside_coef)
 {
     this->set_num_residuals(SMPLWrapper::VERTICES_NUM);
 
@@ -59,7 +59,7 @@ bool AbsoluteDistanceForShape::Evaluate(double const * const * parameters, doubl
     {
         //residuals[i] = sqrD(i);
         // only ouside term
-        residuals[i] = signedDists(i) > 0 ? signedDists(i) * signedDists(i) : 0;
+        residuals[i] = signedDists(i) > 0 ? signedDists(i) * signedDists(i) : this->inside_coef_ * signedDists(i) * signedDists(i);
     }
 
     // Jacobians
@@ -72,7 +72,7 @@ bool AbsoluteDistanceForShape::Evaluate(double const * const * parameters, doubl
                 jacobians[0][v_id * SMPLWrapper::SHAPE_SIZE + sh_id] 
                    = signedDists(v_id) > 0
                     ? 2. * (verts.row(v_id) - closest_points.row(v_id)).dot(shape_jac[sh_id].row(v_id))
-                    : 0.;
+                    : this->inside_coef_ * 2. * (verts.row(v_id) - closest_points.row(v_id)).dot(shape_jac[sh_id].row(v_id));
             }
         }
     }
@@ -87,7 +87,7 @@ bool AbsoluteDistanceForShape::Evaluate(double const * const * parameters, doubl
                 jacobians[1][v_id* SMPLWrapper::SPACE_DIM + k]
                     = signedDists(v_id) > 0
                     ? 2 * (verts(v_id, k) - closest_points(v_id, k))
-                    : 0.;
+                    : this->inside_coef_ * 2. * (verts(v_id, k) - closest_points(v_id, k));
             }
         }
     }

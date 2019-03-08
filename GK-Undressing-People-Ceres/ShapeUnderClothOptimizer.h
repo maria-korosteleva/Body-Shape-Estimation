@@ -40,7 +40,8 @@ public:
     double * getEstimatesPoseParams();
     double * getEstimatesShapeParams();
 
-    void findOptimalParameters(std::vector<Eigen::MatrixXd>* iteration_results = nullptr);
+    // parameter is some parameter of the underlying procedures; used for experiments; the semantics should be controlled by the programmer
+    void findOptimalParameters(std::vector<Eigen::MatrixXd>* iteration_results = nullptr, const double parameter = 1.);
 
 private:
     // fixed
@@ -56,8 +57,8 @@ private:
 
     // inidividual optimizers
     // expect the params to be initialized outside
-    void generalPoseEstimation_(Solver::Options& options);
-    void shapeEstimation_(Solver::Options& options);
+    void generalPoseEstimation_(Solver::Options& options, const double parameter = 1.);
+    void shapeEstimation_(Solver::Options& options, const double parameter = 1.);
 
     // utils
     void erase_params_();
