@@ -101,7 +101,11 @@ private:
     // Returns matrix of dimentions (SPACE_DIM + 1) * JOINTS_NUM  x  SPACE_DIM 
     // of stacked transposed global transformation matrices of each joint, with the row of homogenious coordinates removed
     // can calculate analytic jacobian
-    E::MatrixXd getJointsTransposedGlobalTransformation_(const double * const pose, E::MatrixXd & jointLocations, E::MatrixXd * jacsTotal = nullptr) const;
+    E::MatrixXd getJointsTransposedGlobalTransformation_(
+        const double * const pose, 
+        E::MatrixXd & jointLocations, 
+        E::MatrixXd * jacsTotal = nullptr, 
+        E::MatrixXd * finJointLocations = nullptr) const;
     
     // Assumes that SPACE_DIM == 3
     // fills the dependence of the Transformation matric on all three coordinates for the input rotation. 
