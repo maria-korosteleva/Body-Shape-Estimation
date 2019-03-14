@@ -14,6 +14,8 @@ ShapeUnderClothOptimizer::ShapeUnderClothOptimizer(SMPLWrapper* smpl, GeneralMes
     path += '/';
     this->readAttractivePose_(path);
     this->readStiffness_(path);
+
+    google::InitGoogleLogging("ShapeUnderClothing");
 }
 
 
@@ -87,8 +89,6 @@ double * ShapeUnderClothOptimizer::getEstimatesShapeParams()
 
 void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd>* iteration_results, const double parameter)
 {
-    google::InitGoogleLogging("ShapeUnderClothing");
-
     // Get some space
     this->erase_params_();
     this->translation_ = new double[SMPLWrapper::SPACE_DIM];
@@ -133,7 +133,7 @@ void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd
             << "    Cycle #" << i << std::endl
             << "***********************" << std::endl;
 
-        this->generalPoseEstimation_(options, parameter);
+        this->generalPoseEstimation_(options, 1.);
 
         this->shapeEstimation_(options, parameter);
     }

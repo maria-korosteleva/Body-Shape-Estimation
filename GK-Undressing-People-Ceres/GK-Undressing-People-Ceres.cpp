@@ -244,17 +244,13 @@ int main()
     try {
         // Females
         char gender = 'f';
-        //const char* input_name = "D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin.obj";
         //const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";  // A-pose
         //const char* input_name = "D:/Data/smpl_outs/pose_hand_up.obj";
         //const char* input_name = "D:/Data/smpl_outs/smpl_2.obj";
-        //const char* input_name = "D:/Data/smpl_outs/pose_leg_up_up.obj";
-        const char* input_name = "D:/Data/Clo/clo_model.obj";
+        //const char* input_name = "D:/Data/Clo/clo_model.obj";
         //Males
-        //gender = 'm';
-        //const char* input_name = "D:/Data/KETI/mesh_model/OBJ/mesh_600_depth07_trim_normalized.obj";
-        //const char* input_name = "D:/Data/SketchFab/Web.obj";
-        //const char* input_name = "D:/Data/buff_dataset/00005/shortlong_shoulders_mill/shortlong_shoulders_mill.000054.ply_normalized.obj";
+        gender = 'm';
+        const char* input_name = "D:/Data/SketchFab/Web.obj";
 
         // for SMPL/DYNA inputs
         //const char* input_key_vertices_name = "D:/Data/smpl_outs/smpl_key_vertices.txt";
@@ -262,45 +258,52 @@ int main()
 
         input = new GeneralMesh(input_name);
         std::cout << "Input mesh loaded!\n";
-
-        // for experiments
-        double inside_sclaing_param = 1.;
-
-        // Logging For convenience
-        std::string logFolderName = getNewLogFolder("3cyc_ptrsA_in_scale_" + std::to_string(inside_sclaing_param) + input->getName());
-        igl::writeOBJ(logFolderName + input->getName() +  ".obj", input->getVertices(), input->getFaces());
-
         smpl = new SMPLWrapper(gender, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
         std::cout << "SMPL model loaded\n";
-
         ShapeUnderClothOptimizer optimizer(smpl, input, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
         std::cout << "Optimizer loaded\n";
 
-        // Redirect optimizer output to file
-        std::ofstream out(logFolderName + "optimization.txt");
-        std::streambuf *coutbuf = std::cout.rdbuf();    //save old buf
-        std::cout.rdbuf(out.rdbuf());                   //redirect std::cout to file!
-        std::cout << "Input file: " << input_name << std::endl;
-        std::cout << logFolderName + "optimization.txt" << std::endl;
+        // for experiments
+        int outside_shape_params[] = { 1, 2, 5 };
 
-        // collect the meshes from each iteration
-        iteration_outputs.clear();
-        optimizer.findOptimalParameters(&iteration_outputs, inside_sclaing_param);
+        for (int i = 0; i < 5; i++)
+        {
+            // Logging For convenience
+        //std::string logFolderName = getNewLogFolder("3cyc_ptrsA_in_scale_" + std::to_string(inside_sclaing_param) + input->getName());
+            std::string logFolderName = getNewLogFolder("in_shape_gem_mc_out_scaled_" + std::to_string(outside_shape_params[i]) + input->getName());
+            igl::writeOBJ(logFolderName + input->getName() + ".obj", input->getVertices(), input->getFaces());
 
-        std::cout.rdbuf(coutbuf);   //  reset cout to standard output again
-        out.close();
-        std::cout << "Optimization finished!\n";
+            // Redirect optimizer output to file
+            std::ofstream out(logFolderName + "optimization.txt");
+            std::streambuf *coutbuf = std::cout.rdbuf();    //save old buf
+            std::cout.rdbuf(out.rdbuf());                   //redirect std::cout to file!
+            std::cout << "Input file: " << input_name << std::endl;
+            std::cout << logFolderName + "optimization.txt" << std::endl;
 
-        // Save the results
-        shape_res = optimizer.getEstimatesShapeParams();
-        pose_res = optimizer.getEstimatesPoseParams();
-        translation_res = optimizer.getEstimatesTranslationParams();
-        Eigen::MatrixXd finJointLocations = smpl->calcJointLocations(shape_res, pose_res);
+            // collect the meshes from each iteration
+            iteration_outputs.clear();
+            //optimizer.findOptimalParameters(&iteration_outputs, outside_shape_param);
+            optimizer.findOptimalParameters(nullptr, outside_shape_params[i]);
 
-        logSMPLParams(translation_res, pose_res, shape_res, finJointLocations, logFolderName);
-        smpl->saveToObj(translation_res, pose_res, shape_res, (logFolderName + "posed_shaped.obj"));
-        smpl->saveToObj(translation_res, nullptr, shape_res, (logFolderName + "unposed_shaped.obj"));
-        smpl->saveToObj(translation_res, pose_res, nullptr, (logFolderName + "posed_unshaped.obj"));
+            std::cout.rdbuf(coutbuf);   //  reset cout to standard output again
+            out.close();
+            std::cout << "Optimization finished!\n";
+
+            // Save the results
+            shape_res = optimizer.getEstimatesShapeParams();
+            pose_res = optimizer.getEstimatesPoseParams();
+            translation_res = optimizer.getEstimatesTranslationParams();
+            Eigen::MatrixXd finJointLocations = smpl->calcJointLocations(shape_res, pose_res);
+
+            logSMPLParams(translation_res, pose_res, shape_res, finJointLocations, logFolderName);
+            smpl->saveToObj(translation_res, pose_res, shape_res, (logFolderName + "posed_shaped.obj"));
+            smpl->saveToObj(translation_res, nullptr, shape_res, (logFolderName + "unposed_shaped.obj"));
+            smpl->saveToObj(translation_res, pose_res, nullptr, (logFolderName + "posed_unshaped.obj"));
+
+            delete[] shape_res;
+            delete[] pose_res;
+        }
+        
 
         // FOR TESTING 
         //double* pose_res = new double[SMPLWrapper::POSE_SIZE];
@@ -320,23 +323,28 @@ int main()
         //logSMPLParams(translation_res, pose_res, shape_res, logFolderName);
 
         // Visualize the output
-        igl::opengl::glfw::Viewer viewer;
-        igl::opengl::glfw::imgui::ImGuiMenu menu;
-        viewer.plugins.push_back(&menu);
+        if (iteration_outputs.size() > 0)
+        {
+            igl::opengl::glfw::Viewer viewer;
+            igl::opengl::glfw::imgui::ImGuiMenu menu;
+            viewer.plugins.push_back(&menu);
 
-        counter = 0;
-        viewer.callback_key_down = &visulaze_progress_key_down;
-        viewer.callback_pre_draw = &visulaze_progress_pre_draw;
-        viewer.core.is_animating = false;
-        viewer.core.animation_max_fps = 24.;
-        std::cout << "Press [space] to toggle animation or [Shift+F] to see the final result." << std::endl;
-        viewer.launch();
+            counter = 0;
+            viewer.callback_key_down = &visulaze_progress_key_down;
+            viewer.callback_pre_draw = &visulaze_progress_pre_draw;
+            viewer.core.is_animating = false;
+            viewer.core.animation_max_fps = 24.;
+            std::cout << "Press [space] to toggle animation or [Shift+F] to see the final result." << std::endl;
+            viewer.launch();
+        }
+        else
+        {
+            std::cout << "I skipped visualization since iteration results were not collected." << std::endl;
+        }
 
         // Cleaning
         delete input;
         delete smpl;
-        delete[] shape_res;
-        delete[] pose_res;
     }
     catch (std::exception& e)
     {
