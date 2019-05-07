@@ -19,6 +19,7 @@
 #include "GeneralMesh.h"
 #include "SMPLWrapper.h"
 #include "ShapeUnderClothOptimizer.h"
+#include "OpenPoseWrapper.h"
 
 /*
     TODO
@@ -43,10 +44,12 @@
     + add translation
     + Log input name
     + optimization process visualization on-the-fly
-    - directional pose estimation -- idea: add it to the main objective as additional resudual 
-    - Acuurate shape and pose estimation (iterative?)
-    - Shape regularization 
+    + Acuurate shape and pose estimation (iterative?)
 
+    - initial pose estimation with openpose
+    
+    - Shape regularization 
+    x directional pose estimation -- idea: add it to the main objective as additional resudual
     - move (important) parameters outside
     - Idea: allow start optimization from the last results
     - libigl as static library
@@ -263,46 +266,51 @@ int main()
         ShapeUnderClothOptimizer optimizer(smpl, input, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
         std::cout << "Optimizer loaded\n";
 
+        //////// NEW CODE: OpenPose
+
+
+        ////////
+
         // for experiments
-        int gm_params[] = { 0, 10, 50 };
+        //int gm_params[] = { 0, 10, 50 };
 
-        for (int i = 0; i < 5; i++)
-        {
-            // Logging For convenience
-            //std::string logFolderName = getNewLogFolder("3cyc_ptrsA_in_scale_" + std::to_string(inside_sclaing_param) + input->getName());
-            std::string logFolderName = getNewLogFolder("in_shape_gem_mc_" + std::to_string(gm_params[i]) + input->getName());
-            igl::writeOBJ(logFolderName + input->getName() + ".obj", input->getVertices(), input->getFaces());
+        //for (int i = 0; i < 5; i++)
+        //{
+        //    // Logging For convenience
+        //    //std::string logFolderName = getNewLogFolder("3cyc_ptrsA_in_scale_" + std::to_string(inside_sclaing_param) + input->getName());
+        //    std::string logFolderName = getNewLogFolder("in_shape_gem_mc_" + std::to_string(gm_params[i]) + input->getName());
+        //    igl::writeOBJ(logFolderName + input->getName() + ".obj", input->getVertices(), input->getFaces());
 
-            // Redirect optimizer output to file
-            std::ofstream out(logFolderName + "optimization.txt");
-            std::streambuf *coutbuf = std::cout.rdbuf();    //save old buf
-            std::cout.rdbuf(out.rdbuf());                   //redirect std::cout to file!
-            std::cout << "Input file: " << input_name << std::endl;
-            std::cout << logFolderName + "optimization.txt" << std::endl;
+        //    // Redirect optimizer output to file
+        //    std::ofstream out(logFolderName + "optimization.txt");
+        //    std::streambuf *coutbuf = std::cout.rdbuf();    //save old buf
+        //    std::cout.rdbuf(out.rdbuf());                   //redirect std::cout to file!
+        //    std::cout << "Input file: " << input_name << std::endl;
+        //    std::cout << logFolderName + "optimization.txt" << std::endl;
 
-            // collect the meshes from each iteration
-            iteration_outputs.clear();
-            //optimizer.findOptimalParameters(&iteration_outputs, outside_shape_param);
-            optimizer.findOptimalParameters(nullptr, gm_params[i]);
+        //    // collect the meshes from each iteration
+        //    iteration_outputs.clear();
+        //    //optimizer.findOptimalParameters(&iteration_outputs, outside_shape_param);
+        //    optimizer.findOptimalParameters(nullptr, gm_params[i]);
 
-            std::cout.rdbuf(coutbuf);   //  reset cout to standard output again
-            out.close();
-            std::cout << "Optimization finished!\n";
+        //    std::cout.rdbuf(coutbuf);   //  reset cout to standard output again
+        //    out.close();
+        //    std::cout << "Optimization finished!\n";
 
-            // Save the results
-            shape_res = optimizer.getEstimatesShapeParams();
-            pose_res = optimizer.getEstimatesPoseParams();
-            translation_res = optimizer.getEstimatesTranslationParams();
-            Eigen::MatrixXd finJointLocations = smpl->calcJointLocations(shape_res, pose_res);
+        //    // Save the results
+        //    shape_res = optimizer.getEstimatesShapeParams();
+        //    pose_res = optimizer.getEstimatesPoseParams();
+        //    translation_res = optimizer.getEstimatesTranslationParams();
+        //    Eigen::MatrixXd finJointLocations = smpl->calcJointLocations(shape_res, pose_res);
 
-            logSMPLParams(translation_res, pose_res, shape_res, finJointLocations, logFolderName);
-            smpl->saveToObj(translation_res, pose_res, shape_res, (logFolderName + "posed_shaped.obj"));
-            smpl->saveToObj(translation_res, nullptr, shape_res, (logFolderName + "unposed_shaped.obj"));
-            smpl->saveToObj(translation_res, pose_res, nullptr, (logFolderName + "posed_unshaped.obj"));
+        //    logSMPLParams(translation_res, pose_res, shape_res, finJointLocations, logFolderName);
+        //    smpl->saveToObj(translation_res, pose_res, shape_res, (logFolderName + "posed_shaped.obj"));
+        //    smpl->saveToObj(translation_res, nullptr, shape_res, (logFolderName + "unposed_shaped.obj"));
+        //    smpl->saveToObj(translation_res, pose_res, nullptr, (logFolderName + "posed_unshaped.obj"));
 
-            delete[] shape_res;
-            delete[] pose_res;
-        }
+        //    delete[] shape_res;
+        //    delete[] pose_res;
+        //}
         
 
         // FOR TESTING 
