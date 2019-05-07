@@ -3,14 +3,14 @@
 
 
 AbsoluteDistanceForShape::AbsoluteDistanceForShape(SMPLWrapper* smpl, GeneralMesh * toMesh, const double param = 1., double * pose)
-    : toMesh_(toMesh), smpl_(smpl), pose_(pose), outside_coef_(param)
+    : toMesh_(toMesh), smpl_(smpl), pose_(pose), inside_coef_(param)
 {
     this->set_num_residuals(SMPLWrapper::VERTICES_NUM);
 
     this->mutable_parameter_block_sizes()->push_back(SMPLWrapper::SHAPE_SIZE);
     this->mutable_parameter_block_sizes()->push_back(SMPLWrapper::SPACE_DIM);
 
-    this->inside_coef_ = 100.;
+    //this->inside_coef_ = 100.;
 }
 
 

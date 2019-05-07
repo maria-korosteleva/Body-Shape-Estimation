@@ -264,13 +264,13 @@ int main()
         std::cout << "Optimizer loaded\n";
 
         // for experiments
-        int outside_shape_params[] = { 1, 2, 5 };
+        int gm_params[] = { 0, 10, 50 };
 
         for (int i = 0; i < 5; i++)
         {
             // Logging For convenience
-        //std::string logFolderName = getNewLogFolder("3cyc_ptrsA_in_scale_" + std::to_string(inside_sclaing_param) + input->getName());
-            std::string logFolderName = getNewLogFolder("in_shape_gem_mc_out_scaled_" + std::to_string(outside_shape_params[i]) + input->getName());
+            //std::string logFolderName = getNewLogFolder("3cyc_ptrsA_in_scale_" + std::to_string(inside_sclaing_param) + input->getName());
+            std::string logFolderName = getNewLogFolder("in_shape_gem_mc_" + std::to_string(gm_params[i]) + input->getName());
             igl::writeOBJ(logFolderName + input->getName() + ".obj", input->getVertices(), input->getFaces());
 
             // Redirect optimizer output to file
@@ -283,7 +283,7 @@ int main()
             // collect the meshes from each iteration
             iteration_outputs.clear();
             //optimizer.findOptimalParameters(&iteration_outputs, outside_shape_param);
-            optimizer.findOptimalParameters(nullptr, outside_shape_params[i]);
+            optimizer.findOptimalParameters(nullptr, gm_params[i]);
 
             std::cout.rdbuf(coutbuf);   //  reset cout to standard output again
             out.close();
