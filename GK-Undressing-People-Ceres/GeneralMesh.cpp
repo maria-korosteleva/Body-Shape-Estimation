@@ -16,13 +16,15 @@ GeneralMesh::GeneralMesh(const char* input_filename_c, const char* key_vertices_
 
     std::string input_filename(input_filename_c);
     this->readFile_(input_filename);
+    this->normalizeVertices_();
+
     this->cutName_(input_filename);
+
     if (key_vertices_filename != nullptr)
     {
         this->readKeyVertices_(key_vertices_filename);
     }    
 
-    this->mean_point_ = this->verts_.colwise().mean();
 }
 
 
@@ -47,6 +49,22 @@ void GeneralMesh::readFile_(const std::string & filename)
     {
         throw std::exception("Unsupported type of input mesh. Supported types: .obj, .ply");
     }
+}
+
+void GeneralMesh::normalizeVertices_()
+{
+    this->mean_point_ = this->verts_.colwise().mean();
+
+    this->verts_normalized_ = this->verts_.rowwise() - this->mean_point_.transpose();
+
+    // convert to meters
+
+    std::cout << "Mean point after normalizaton: "
+        << this->verts_.rows() << " " << this->verts_.cols() << std::endl
+        << this->verts_normalized_.rows() << " " << this->verts_normalized_.cols()
+        << std::endl
+        << this->verts_normalized_.colwise().mean()
+        << std::endl;
 }
 
 

@@ -247,13 +247,13 @@ int main()
     try {
         // Females
         char gender = 'f';
-        //const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";  // A-pose
+        const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";  // A-pose
         //const char* input_name = "D:/Data/smpl_outs/pose_hand_up.obj";
         //const char* input_name = "D:/Data/smpl_outs/smpl_2.obj";
         //const char* input_name = "D:/Data/Clo/clo_model.obj";
         //Males
-        gender = 'm';
-        const char* input_name = "D:/Data/SketchFab/Web.obj";
+        //gender = 'm';
+        //const char* input_name = "D:/Data/SketchFab/Web.obj";
 
         // for SMPL/DYNA inputs
         //const char* input_key_vertices_name = "D:/Data/smpl_outs/smpl_key_vertices.txt";

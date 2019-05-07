@@ -165,6 +165,7 @@
     <ClInclude Include="AbsoluteDistanceForPose.h" />
     <ClInclude Include="AbsoluteDistanceForShape.h" />
     <ClInclude Include="GeneralMesh.h" />
+    <ClInclude Include="OpenPoseWrapper.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="ShapeUnderClothOptimizer.h" />
     <ClInclude Include="SMPLWrapper.h" />
@@ -174,6 +175,7 @@
     <ClCompile Include="AbsoluteDistanceForShape.cpp" />
     <ClCompile Include="GeneralMesh.cpp" />
     <ClCompile Include="GK-Undressing-People-Ceres.cpp" />
+    <ClCompile Include="OpenPoseWrapper.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
