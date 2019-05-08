@@ -57,14 +57,19 @@ void GeneralMesh::normalizeVertices_()
 
     this->verts_normalized_ = this->verts_.rowwise() - this->mean_point_.transpose();
 
-    // convert to meters
-
-    std::cout << "Mean point after normalizaton: "
-        << this->verts_.rows() << " " << this->verts_.cols() << std::endl
-        << this->verts_normalized_.rows() << " " << this->verts_normalized_.cols()
-        << std::endl
-        << this->verts_normalized_.colwise().mean()
-        << std::endl;
+    // convert to meters heuristically
+    // check for sm througth height (Y axis)
+    if (this->verts_normalized_.col(1).maxCoeff() - this->verts_normalized_.col(1).minCoeff() > 100)
+    {
+        this->verts_normalized_ *= 0.01;
+        std::cout << "Warning: Mesh is found to use sm/mm units. Scaled down by 0.01" << std::endl;
+    }
+    // check for mm/dm
+    if (this->verts_normalized_.col(1).maxCoeff() - this->verts_normalized_.col(1).minCoeff() > 10)
+    {
+        this->verts_normalized_ *= 0.1;
+        std::cout << "Warning: Mesh is found to use mm/dm units. Scaled down by 0.1" << std::endl;
+    }
 }
 
 

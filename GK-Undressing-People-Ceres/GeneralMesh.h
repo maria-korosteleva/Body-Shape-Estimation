@@ -33,7 +33,7 @@ private:
     CoordsDictionary key_points_;
 
     void readFile_(const std::string& filename);
-    void setNormalizedVertices_();
+    void normalizeVertices_();
     void cutName_(const std::string& filename);
     void readKeyVertices_(const char * filename);
     bool checkFileExist_(const char * filename);
