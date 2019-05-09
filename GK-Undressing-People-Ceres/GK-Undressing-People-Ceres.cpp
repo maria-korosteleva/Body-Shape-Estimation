@@ -47,7 +47,9 @@
     + Acuurate shape and pose estimation (iterative?)
 
     - initial pose estimation with openpose
-    
+
+    - use normalized General Mesh vertices for optimization 
+
     - Shape regularization 
     x directional pose estimation -- idea: add it to the main objective as additional resudual
     - move (important) parameters outside
@@ -267,7 +269,9 @@ int main()
         std::cout << "Optimizer loaded\n";
 
         //////// NEW CODE: OpenPose
-
+        std::string logFolderName = getNewLogFolder("OP_images_" + input->getName());
+        OpenPoseWrapper openpose(input, logFolderName);
+        openpose.runPoseEstimation();
 
         ////////
 

@@ -5,6 +5,8 @@ Runs the OpenPose 3D pose estimation for 3D input scan
 TODO:
 
 */
+#include <igl/opengl/glfw/Viewer.h>
+#include <igl/png/writePNG.h>
 
 #include "GeneralMesh.h"
 #include "SMPLWrapper.h"
@@ -13,6 +15,7 @@ class OpenPoseWrapper
 {
 public:
     OpenPoseWrapper(GeneralMesh* input, const char* outpath = "./tmp/");
+    OpenPoseWrapper(GeneralMesh* input, const std::string outpath = "./tmp/");
     ~OpenPoseWrapper();
 
     // setters-getters
