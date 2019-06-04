@@ -8,6 +8,7 @@
 #include <igl/readOBJ.h>
 #include <igl/writeOBJ.h>
 #include <igl/readPLY.h>
+#include <igl/per_vertex_normals.h>
 
 #include <map>
 #include <vector>
@@ -38,7 +39,7 @@ public:
 
     const Eigen::MatrixXd& getVertices() const   { return verts_; };
     const Eigen::MatrixXd& getNormalizedVertices() const   { return verts_normalized_; };
-    const std::vector<GLMVertex>& getGLMVertices() const   { return gl_vertices_; };
+    const std::vector<GLMVertex>& getGLNormalizedVertices() const   { return gl_vertices_normalized_; };
 
     const Eigen::VectorXd& getMeanPoint() const  { return mean_point_; };
     // the user need to check the dictionary for emptiness
@@ -47,6 +48,7 @@ public:
 private:
     void readFile_(const std::string& filename);
     void normalizeVertices_();
+    void glFriendlyMesh_();
     void cutName_(const std::string& filename);
     void readKeyVertices_(const char * filename);
     bool checkFileExist_(const char * filename);
@@ -55,7 +57,8 @@ private:
 
     Eigen::MatrixXd verts_;
     Eigen::MatrixXd verts_normalized_;
-    std::vector<GLMVertex> gl_vertices_;
+    Eigen::MatrixXd verts_normals_;
+    std::vector<GLMVertex> gl_vertices_normalized_;
 
     Eigen::MatrixXi faces_;
     std::vector<unsigned int> gl_faces_;

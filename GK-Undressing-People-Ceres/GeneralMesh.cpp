@@ -16,6 +16,7 @@ GeneralMesh::GeneralMesh(const char* input_filename_c, const char* key_vertices_
     std::string input_filename(input_filename_c);
     readFile_(input_filename);
     normalizeVertices_();
+    glFriendlyMesh_();
 
     cutName_(input_filename);
 
@@ -48,6 +49,8 @@ void GeneralMesh::readFile_(const std::string & filename)
     {
         throw std::exception("Unsupported type of input mesh. Supported types: .obj, .ply");
     }
+
+    igl::per_vertex_normals(verts_, faces_, verts_normals_);
 }
 
 void GeneralMesh::normalizeVertices_()
@@ -71,6 +74,28 @@ void GeneralMesh::normalizeVertices_()
     }
 }
 
+void GeneralMesh::glFriendlyMesh_()
+{
+    // vertices
+    for (int i = 0; i < verts_normalized_.rows(); ++i)
+    {
+        GLMVertex gl_vert;
+        gl_vert.position = glm::vec3(verts_normalized_(i, 0), verts_normalized_(i, 1), verts_normalized_(i, 2));
+        gl_vert.normal = glm::vec3(verts_normals_(i, 0), verts_normals_(i, 1), verts_normals_(i, 2));
+
+        gl_vertices_normalized_.push_back(gl_vert);
+    }
+
+    // faces
+    for (int i = 0; i < faces_.rows(); ++i)
+    {
+        for (int j = 0; j < faces_.cols(); ++j)
+        {
+            // shift indices to start from zero
+            gl_faces_.push_back(faces_(i, j) - 1);
+        }
+    }
+}
 
 void GeneralMesh::cutName_(const std::string & filename)
 {
@@ -82,7 +107,6 @@ void GeneralMesh::cutName_(const std::string & filename)
 
     this->name_ = data_group + "-" + object_name;
 }
-
 
 void GeneralMesh::readKeyVertices_(const char * filename)
 {
