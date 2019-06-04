@@ -9,6 +9,12 @@ The project is developed under Windows 10, using Visual Studio 2017 x64, and hav
 ## Dependecies
 1. Eigen (http://eigen.tuxfamily.org/index.php?title=Main_Page)
 1. libigl (https://libigl.github.io/)
+*NOTE*: if compilation produces POSIX erroes, add the following before including igl headersflags
+'''
+#ifdef _MSC_VER
+#pragma warning(disable:4996)
+#endif
+'''
 1. Ceres (http://ceres-solver.org/index.html) compiled to be used on x64 platform (same goes for the Ceres dependencies).
 
 VS property sheets to work with the latter two libraries are provided for your reference.

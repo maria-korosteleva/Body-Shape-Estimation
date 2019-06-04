@@ -1,28 +1,27 @@
-#include "pch.h"
 #include "GeneralMesh.h"
 
 
 GeneralMesh::GeneralMesh(const char* input_filename_c, const char* key_vertices_filename)
 {   
     // check for existance
-    if (!this->checkFileExist_(input_filename_c))
+    if (!checkFileExist_(input_filename_c))
     {
         throw std::exception("General Mesh: input file doesn't exist");
     }
-    if (key_vertices_filename != nullptr && !this->checkFileExist_(key_vertices_filename))
+    if (key_vertices_filename != nullptr && !checkFileExist_(key_vertices_filename))
     {
         throw std::exception("General Mesh: key vertices file doesn't exist");
     }
 
     std::string input_filename(input_filename_c);
-    this->readFile_(input_filename);
-    this->normalizeVertices_();
+    readFile_(input_filename);
+    normalizeVertices_();
 
-    this->cutName_(input_filename);
+    cutName_(input_filename);
 
     if (key_vertices_filename != nullptr)
     {
-        this->readKeyVertices_(key_vertices_filename);
+        readKeyVertices_(key_vertices_filename);
     }    
 
 }
@@ -39,11 +38,11 @@ void GeneralMesh::readFile_(const std::string & filename)
     std::string extention = filename.substr(point_pos + 1);
     if (extention == "obj")
     {
-        igl::readOBJ(filename, this->verts_, this->faces_);
+        igl::readOBJ(filename, verts_, faces_);
     }
     else if (extention == "ply")
     {
-        igl::readPLY(filename, this->verts_, this->faces_);
+        igl::readPLY(filename, verts_, faces_);
     }
     else
     {
@@ -53,21 +52,21 @@ void GeneralMesh::readFile_(const std::string & filename)
 
 void GeneralMesh::normalizeVertices_()
 {
-    this->mean_point_ = this->verts_.colwise().mean();
+    mean_point_ = verts_.colwise().mean();
 
-    this->verts_normalized_ = this->verts_.rowwise() - this->mean_point_.transpose();
+    verts_normalized_ = verts_.rowwise() - mean_point_.transpose();
 
     // convert to meters heuristically
     // check for sm througth height (Y axis)
-    if (this->verts_normalized_.col(1).maxCoeff() - this->verts_normalized_.col(1).minCoeff() > 100)
+    if (verts_normalized_.col(1).maxCoeff() - verts_normalized_.col(1).minCoeff() > 100)
     {
-        this->verts_normalized_ *= 0.01;
+        verts_normalized_ *= 0.01;
         std::cout << "Warning: Mesh is found to use sm/mm units. Scaled down by 0.01" << std::endl;
     }
     // check for mm/dm
-    if (this->verts_normalized_.col(1).maxCoeff() - this->verts_normalized_.col(1).minCoeff() > 10)
+    if (verts_normalized_.col(1).maxCoeff() - verts_normalized_.col(1).minCoeff() > 10)
     {
-        this->verts_normalized_ *= 0.1;
+        verts_normalized_ *= 0.1;
         std::cout << "Warning: Mesh is found to use mm/dm units. Scaled down by 0.1" << std::endl;
     }
 }
@@ -104,7 +103,7 @@ void GeneralMesh::readKeyVertices_(const char * filename)
         inFile >> key_name;
         inFile >> vertexId;
 
-        this->key_points_.insert(CoordsDictEntry(key_name, this->verts_.row(vertexId)));
+        key_points_.insert(CoordsDictEntry(key_name, verts_.row(vertexId)));
     }
 
     inFile.close();
