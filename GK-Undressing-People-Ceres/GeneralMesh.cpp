@@ -92,7 +92,7 @@ void GeneralMesh::glFriendlyMesh_()
         for (int j = 0; j < faces_.cols(); ++j)
         {
             // shift indices to start from zero
-            gl_faces_.push_back(faces_(i, j) - 1);
+            gl_faces_.push_back(faces_(i, j));
         }
     }
 }
