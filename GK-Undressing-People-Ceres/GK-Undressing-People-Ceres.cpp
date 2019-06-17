@@ -20,6 +20,7 @@
 #include <igl/point_mesh_squared_distance.h>
 
 #include <GeneralMesh/GeneralMesh.h>
+#include <Photographer/Photographer.h>
 #include "SMPLWrapper.h"
 #include "ShapeUnderClothOptimizer.h"
 #include "OpenPoseWrapper.h"
@@ -271,8 +272,22 @@ int main()
         ShapeUnderClothOptimizer optimizer(smpl, input, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
         std::cout << "Optimizer loaded\n";
 
-        //////// NEW CODE: OpenPose
+        //////// NEW CODE: 
         std::string logFolderName = getNewLogFolder("OP_images_" + input->getName());
+        ////// Photographer
+        Photographer photographer(input);
+
+        photographer.addCameraToPosition(0.0f, 1.0f, 3.0f, 4.0f);
+        photographer.addCameraToPosition(1.0f, -0.5f, 2.0f, 4.0f);
+        photographer.addCameraToPosition(-1.0f, 0.0f, 1.0f, 4.0f);
+
+        CreateDirectory((logFolderName + "/images/").c_str(), NULL);
+        photographer.renderToImages(logFolderName + "/images/");
+        photographer.saveImageCamerasParamsCV(logFolderName + "/images/");
+
+        photographer.viewScene();
+
+        /////// OpenPose
         OpenPoseWrapper openpose(input, logFolderName);
         openpose.runPoseEstimation();
 
