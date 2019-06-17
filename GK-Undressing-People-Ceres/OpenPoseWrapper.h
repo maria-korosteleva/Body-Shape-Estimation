@@ -6,9 +6,8 @@ TODO:
 
 */
 #include <igl/opengl/glfw/Viewer.h>
-#include <igl/png/writePNG.h>
 
-#include "GeneralMesh.h"
+#include <GeneralMesh/GeneralMesh.h>
 #include "SMPLWrapper.h"
 
 class OpenPoseWrapper

@@ -48,27 +48,27 @@ double * OpenPoseWrapper::mapToSmpl(SMPLWrapper * smpl)
 void OpenPoseWrapper::photoshoot_()
 {
     // load normalized mesh into the scene
-    igl::opengl::glfw::Viewer viewer;
-    viewer.data().set_mesh(this->input_->getNormalizedVertices(), this->input_->getFaces());
+    //igl::opengl::glfw::Viewer viewer;
+    //viewer.data().set_mesh(this->input_->getNormalizedVertices(), this->input_->getFaces());
 
-    // set camera
-    // set lights
-    // render
-    // save as image
+    //// set camera
+    //// set lights
+    //// render
+    //// save as image
 
-    // From https://github.com/libigl/libigl/blob/master/tutorial/607_ScreenCapture/main.cpp#L12
-    // Allocate temporary buffers
-    Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> R(1280, 800);
-    Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> G(1280, 800);
-    Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> B(1280, 800);
-    Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> A(1280, 800);
+    //// From https://github.com/libigl/libigl/blob/master/tutorial/607_ScreenCapture/main.cpp#L12
+    //// Allocate temporary buffers
+    //Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> R(1280, 800);
+    //Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> G(1280, 800);
+    //Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> B(1280, 800);
+    //Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> A(1280, 800);
 
-    // Draw the scene in the buffers
-    viewer.core.draw_buffer(
-        viewer.data(), false, R, G, B, A);
+    //// Draw the scene in the buffers
+    //viewer.core.draw_buffer(
+    //    viewer.data(), false, R, G, B, A);
 
     // Save it to a PNG
-    igl::png::writePNG(R, G, B, A, this->out_path_ + this->IMG_FOLDER + "1.png");
+    //igl::png::writePNG(R, G, B, A, this->out_path_ + this->IMG_FOLDER + "1.png");
 }
 
 void OpenPoseWrapper::openPoseSetup_()

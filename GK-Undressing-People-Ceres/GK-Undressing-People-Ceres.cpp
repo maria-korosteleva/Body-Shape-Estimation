@@ -5,7 +5,10 @@
 //#define DEBUG
 //#define EIGEN_STACK_ALLOCATION_LIMIT 0
 // WARNING! Uses win-specific features to create log directory 
+#define NOMINMAX
 #include <Windows.h>
+#undef THIS
+
 #include "pch.h"
 #include <iostream>
 #include <ctime>
@@ -16,7 +19,7 @@
 #include <igl/opengl/glfw/imgui/ImGuiMenu.h>
 #include <igl/point_mesh_squared_distance.h>
 
-#include "GeneralMesh.h"
+#include <GeneralMesh/GeneralMesh.h>
 #include "SMPLWrapper.h"
 #include "ShapeUnderClothOptimizer.h"
 #include "OpenPoseWrapper.h"

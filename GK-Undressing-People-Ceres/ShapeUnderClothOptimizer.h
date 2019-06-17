@@ -7,7 +7,7 @@
 #include "ceres/normal_prior.h"
 #include "glog/logging.h"
 
-#include "GeneralMesh.h"
+#include <GeneralMesh/GeneralMesh.h>
 #include "SMPLWrapper.h"
 // cost functions
 #include "AbsoluteDistanceForPose.h"

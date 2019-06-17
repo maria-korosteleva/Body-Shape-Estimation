@@ -1,10 +1,10 @@
 #pragma once
-
 #include "ceres/ceres.h"
-#include "GeneralMesh.h"
-#include "SMPLWrapper.h"
 #include "igl/point_mesh_squared_distance.h"
 #include "igl/signed_distance.h"
+
+#include <GeneralMesh/GeneralMesh.h>
+#include "SMPLWrapper.h"
 
 //#define DEBUG
 
