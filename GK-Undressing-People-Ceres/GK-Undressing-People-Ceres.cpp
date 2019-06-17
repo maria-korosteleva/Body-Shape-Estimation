@@ -9,7 +9,6 @@
 #include <Windows.h>
 #undef THIS
 
-#include "pch.h"
 #include <iostream>
 #include <ctime>
 
