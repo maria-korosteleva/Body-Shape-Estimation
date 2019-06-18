@@ -153,6 +153,30 @@ bool visulaze_progress_key_down(igl::opengl::glfw::Viewer& viewer, unsigned char
     return false;
 }
 
+void generateSMPLoutput()
+{
+    double* pose_res = new double[SMPLWrapper::POSE_SIZE];
+    double* shape_res = new double[SMPLWrapper::SHAPE_SIZE];
+    double translation_res[3] = { 0, 0, 0 };
+    for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
+    {
+        pose_res[i] = 0.;
+        if (i < SMPLWrapper::SHAPE_SIZE)
+            shape_res[i] = 0.;
+    }
+    pose_res[50] = -0.7854; // pi/4
+    pose_res[53] = 0.7854;
+    //shape_res[0] = -0.5;
+
+    CustomLogger logger(output_path, "smpl_output");
+
+    smpl->saveToObj(nullptr, pose_res, nullptr, logger.getLogFolderPath() + "pose_A.obj");
+    logger.logSMPLParams(shape_res, pose_res, translation_res);
+
+    delete[] shape_res;
+    delete[] pose_res;
+}
+
 int main()
 {
     try {
@@ -197,47 +221,33 @@ int main()
         ////////
 
         // for experiments
-        int gm_params[] = { 0, 10, 50 };
+        //int gm_params[] = { 0, 10, 50 };
 
-        for (int i = 0; i < 5; i++)
-        {
-            CustomLogger gm_logger(output_path, "in_shape_gem_mc_" + std::to_string(gm_params[i]) + input->getName());
-            // save input for convenience
-            igl::writeOBJ(gm_logger.getLogFolderPath() + input->getName() + ".obj", input->getVertices(), input->getFaces());
+        //for (int i = 0; i < 5; i++)
+        //{
+        //    CustomLogger gm_logger(output_path, "in_shape_gem_mc_" + std::to_string(gm_params[i]) + input->getName());
+        //    // save input for convenience
+        //    igl::writeOBJ(gm_logger.getLogFolderPath() + input->getName() + ".obj", input->getVertices(), input->getFaces());
 
-            gm_logger.startRedirectCoutToFile("optimization.txt");
-            std::cout << "Input file: " << input_name << std::endl;
+        //    gm_logger.startRedirectCoutToFile("optimization.txt");
+        //    std::cout << "Input file: " << input_name << std::endl;
 
-            // collect the meshes from each iteration
-            iteration_outputs.clear();
-            //optimizer.findOptimalParameters(&iteration_outputs, outside_shape_param);
-            optimizer->findOptimalParameters(nullptr, gm_params[i]);
+        //    // collect the meshes from each iteration
+        //    iteration_outputs.clear();
+        //    //optimizer.findOptimalParameters(&iteration_outputs, outside_shape_param);
+        //    optimizer->findOptimalParameters(nullptr, gm_params[i]);
 
-            gm_logger.endRedirectCoutToFile();
-            std::cout << "Optimization finished!\n";
+        //    gm_logger.endRedirectCoutToFile();
+        //    std::cout << "Optimization finished!\n";
 
-            // Save the results
-            gm_logger.logSMPLParams(*smpl, *optimizer);
-            gm_logger.saveFinalSMPLObject(*smpl, *optimizer);
-        }
+        //    // Save the results
+        //    gm_logger.logSMPLParams(*smpl, *optimizer);
+        //    gm_logger.saveFinalSMPLObject(*smpl, *optimizer);
+        //}
         
 
-        // FOR TESTING 
-        //double* pose_res = new double[SMPLWrapper::POSE_SIZE];
-        //double* shape_res = new double[SMPLWrapper::SHAPE_SIZE];
-        //double translation_res[3] = { 0, 0, 0 };
-        //for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
-        //{
-        //    pose_res[i] = 0.;
-        //    if (i < SMPLWrapper::SHAPE_SIZE)
-        //        shape_res[i] = 0.;
-        //}
-        //pose_res[50] = -0.7854; // pi/4
-        //pose_res[53] = 0.7854;
-        ////shape_res[0] = -0.5;
-
-        //smpl->saveToObj(nullptr, pose_res, nullptr, logFolderName + "pose_A.obj");
-        //logSMPLParams(translation_res, pose_res, shape_res, logFolderName);
+        // 
+        generateSMPLoutput();
 
         // Visualize the output
         if (iteration_outputs.size() > 0)

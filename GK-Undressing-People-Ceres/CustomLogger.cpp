@@ -19,7 +19,14 @@ void CustomLogger::logSMPLParams(const SMPLWrapper & smpl, const ShapeUnderCloth
     pose_res = optimizer.getEstimatesPoseParams();
     translation_res = optimizer.getEstimatesTranslationParams();
     Eigen::MatrixXd finJointLocations = smpl.calcJointLocations(shape_res, pose_res);
+    
+    logSMPLParams(shape_res, pose_res, translation_res, &finJointLocations);
+}
 
+void CustomLogger::logSMPLParams(
+    const double * shape_res, const double * pose_res, const double * translation_res, 
+    const Eigen::MatrixXd *jointPositions) const
+{
     std::ofstream out(log_folder_name_ + smpl_param_filename_);
 
     out << "Translation \n[ ";
@@ -29,7 +36,6 @@ void CustomLogger::logSMPLParams(const SMPLWrapper & smpl, const ShapeUnderCloth
     else
         for (int i = 0; i < SMPLWrapper::SPACE_DIM; i++)
             out << "0." << " , ";
-
     out << "]" << std::endl;
 
     out << std::endl << "Pose params [ \n";
@@ -55,7 +61,6 @@ void CustomLogger::logSMPLParams(const SMPLWrapper & smpl, const ShapeUnderCloth
             out << std::endl;
         }
     }
-
     out << "]" << std::endl;
 
     out << std::endl << "Shape (betas) params [ \n";
@@ -68,21 +73,29 @@ void CustomLogger::logSMPLParams(const SMPLWrapper & smpl, const ShapeUnderCloth
     out << std::endl << "]" << std::endl;
 
     out << std::endl << "Joints locations for posed and shaped model [\n";
-    // translate
-    Eigen::MatrixXd translatedJointLoc(finJointLocations);
-    for (int i = 0; i < translatedJointLoc.rows(); ++i)
+    if (jointPositions != nullptr)
     {
-        for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)
+        Eigen::MatrixXd translatedJointLoc(*jointPositions);
+        // translate
+        if (translation_res != nullptr)
         {
-            translatedJointLoc(i, j) += translation_res[j];
+            for (int i = 0; i < translatedJointLoc.rows(); ++i)
+            {
+                for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)
+                {
+                    translatedJointLoc(i, j) += translation_res[j];
+                }
+            }
         }
-    }
-    if (translatedJointLoc.size() > 0)
-    {
+
         out << translatedJointLoc << std::endl;
     }
-
+    else
+    {
+        out << "\tNo joint locations supplied" << std::endl;
+    }
     out << "]" << std::endl;
+
     out.close();
 }
 
