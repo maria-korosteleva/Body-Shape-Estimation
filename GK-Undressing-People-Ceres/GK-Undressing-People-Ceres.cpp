@@ -180,11 +180,8 @@ void generateSMPLoutput()
 int main()
 {
     try {
-        // Females
         char gender = 'f';
         const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";  // A-pose
-
-        //Males
         //gender = 'm';
         //const char* input_name = "D:/Data/SketchFab/Web.obj";
 
@@ -192,19 +189,21 @@ int main()
         //const char* input_key_vertices_name = "D:/Data/smpl_outs/smpl_key_vertices.txt";
         //input = new GeneralMesh(input_name, input_key_vertices_name);
 
+        ///// 1. Load and Initialize stuff /////
         input = new GeneralMesh(input_name);
-        std::cout << "Input mesh loaded!\n";
+        std::cout << "Input mesh loaded!" << std::endl;
         smpl = new SMPLWrapper(gender, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
-        std::cout << "SMPL model loaded\n";
+        std::cout << "SMPL model loaded" << std::endl;
         optimizer = new ShapeUnderClothOptimizer(smpl, input, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
-        std::cout << "Optimizer loaded\n";
+        std::cout << "Optimizer loaded" << std::endl;
+        Photographer photographer(input);
+        std::cout << "Photographer loaded" << std::endl;
 
-        //////// NEW CODE: 
         CustomLogger logger("C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Outputs/", "OP_images_" + input->getName());
 
-        ////// Photographer
-        Photographer photographer(input);
+        ///// 2. Initial pose estimation /////
 
+        ////// 2.1 Prepare pictures for OpenPose: Photographer /////
         photographer.addCameraToPosition(0.0f, 1.0f, 3.0f, 4.0f);
         photographer.addCameraToPosition(1.0f, -0.5f, 2.0f, 4.0f);
         photographer.addCameraToPosition(-1.0f, 0.0f, 1.0f, 4.0f);
@@ -212,13 +211,13 @@ int main()
         photographer.renderToImages(logger.getPhotosFolderPath());
         photographer.saveImageCamerasParamsCV(logger.getPhotosFolderPath());
 
-        //photographer.viewScene();
-
-        /////// OpenPose
+        ////// TODO 2.2 Run OpenPose /////
         OpenPoseWrapper openpose(input, logger.getLogFolderPath());
         openpose.runPoseEstimation();
 
-        ////////
+        ////// TODO 2.3 Map OpenPose pose to SMPL /////
+
+        ///// 3. Run shape&pose optimization ////
 
         // for experiments
         //int gm_params[] = { 0, 10, 50 };
@@ -246,10 +245,7 @@ int main()
         //}
         
 
-        // 
-        generateSMPLoutput();
-
-        // Visualize the output
+        ///// 4. Visualize the optimization progress ////
         if (iteration_outputs.size() > 0)
         {
             igl::opengl::glfw::Viewer viewer;
