@@ -284,7 +284,7 @@ int main()
         photographer.renderToImages(logFolderName + "/images/");
         photographer.saveImageCamerasParamsCV(logFolderName + "/images/");
 
-        photographer.viewScene();
+        //photographer.viewScene();
 
         /////// OpenPose
         OpenPoseWrapper openpose(input, logFolderName);
