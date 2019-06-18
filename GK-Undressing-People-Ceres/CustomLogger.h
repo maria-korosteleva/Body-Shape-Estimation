@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <ctime>
+#include <igl/writeOBJ.h>
 
 #include "SMPLWrapper.h"
 #include "ShapeUnderClothOptimizer.h"
@@ -25,6 +26,7 @@ public:
         const double* shape_res, const double* pose_res, const double* translation_res, 
         const Eigen::MatrixXd *jointPositions = nullptr) const;
     void saveFinalSMPLObject(const SMPLWrapper& smpl, const ShapeUnderClothOptimizer& optimizer) const;
+    void saveIterationsSMPLObjects(const SMPLWrapper& smpl, const std::vector<Eigen::MatrixXd>& vertices_vector) const;
 
     void startRedirectCoutToFile(const std::string filename = "cout.txt");
     void endRedirectCoutToFile();

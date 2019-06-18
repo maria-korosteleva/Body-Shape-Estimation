@@ -101,6 +101,8 @@ void CustomLogger::logSMPLParams(
 
 void CustomLogger::saveFinalSMPLObject(const SMPLWrapper & smpl, const ShapeUnderClothOptimizer & optimizer) const
 {
+    CreateDirectory((log_folder_name_ + final_3D_subfolder_).c_str(), NULL);
+
     double *shape_res, *pose_res, *translation_res;
 
     shape_res = optimizer.getEstimatesShapeParams();
@@ -110,6 +112,18 @@ void CustomLogger::saveFinalSMPLObject(const SMPLWrapper & smpl, const ShapeUnde
     smpl.saveToObj(translation_res, pose_res,   shape_res,  (log_folder_name_ + final_3D_subfolder_ + "posed_shaped.obj"));
     smpl.saveToObj(translation_res, nullptr,    shape_res,  (log_folder_name_ + final_3D_subfolder_ + "unposed_shaped.obj"));
     smpl.saveToObj(translation_res, pose_res,   nullptr,    (log_folder_name_ + final_3D_subfolder_ + "posed_unshaped.obj"));
+}
+
+void CustomLogger::saveIterationsSMPLObjects(const SMPLWrapper & smpl, const std::vector<Eigen::MatrixXd>& vertices_vector) const
+{
+    CreateDirectory((log_folder_name_ + iterations_3D_subfolder_).c_str(), NULL);
+
+    std::string subfilename = log_folder_name_ + iterations_3D_subfolder_ + "/it_";
+    for (int i = 0; i < vertices_vector.size(); ++i)
+    {
+        igl::writeOBJ(subfilename + std::to_string(i), vertices_vector[i], smpl.getFaces());
+    }
+
 }
 
 void CustomLogger::startRedirectCoutToFile(const std::string filename)
@@ -156,6 +170,5 @@ void CustomLogger::createNewLogFolder_()
 
     CreateDirectory(log_folder_name_.c_str(), NULL);
     CreateDirectory((log_folder_name_ + photo_subfolder_).c_str(), NULL);
-    CreateDirectory((log_folder_name_ + final_3D_subfolder_).c_str(), NULL);
-
+    
 }
