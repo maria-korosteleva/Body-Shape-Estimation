@@ -43,49 +43,6 @@ void ShapeUnderClothOptimizer::setNewPriorPath(const char * prior_path)
     this->readStiffness_(path);
 }
 
-
-double * ShapeUnderClothOptimizer::getEstimatesTranslationParams() const
-{
-    if (this->translation_ != nullptr)
-    {
-        double * last_translation = new double[SMPLWrapper::SPACE_DIM];
-        for (int i = 0; i < SMPLWrapper::SPACE_DIM; i++)
-            last_translation[i] = this->translation_[i];
-        return last_translation;
-    }
-    else
-        return nullptr;
-}
-
-
-double * ShapeUnderClothOptimizer::getEstimatesPoseParams() const
-{
-    if (this->pose_ != nullptr)
-    {
-        double * last_pose = new double[SMPLWrapper::POSE_SIZE];
-        for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
-            last_pose[i] = this->pose_[i];
-        return last_pose;
-    }
-    else
-        return nullptr;
-}
-
-
-double * ShapeUnderClothOptimizer::getEstimatesShapeParams() const
-{
-    if (this->shape_ != nullptr)
-    {
-        double * last_shape = new double[SMPLWrapper::SHAPE_SIZE];
-        for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; i++)
-            last_shape[i] = this->shape_[i];
-        return last_shape;
-    }
-    else 
-        return nullptr;
-}
-
-
 void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd>* iteration_results, const double parameter)
 {
     // Get some space

@@ -32,15 +32,17 @@ private:
     static constexpr char final_3D_subfolder_[] = "/final_objects/";
     static constexpr char smpl_param_filename_[] = "smpl_params.txt";
 
-    void createNewLogFolder();
+    void createNewLogFolder_();
 
+    // file management state
     std::string base_path_;
     std::string experiment_name_;
     std::string log_folder_name_;
 
+    // for redirection of cout to file -- easy logging feature
     bool redirection_started_ = false;
     std::string redirecting_filename_;
-    std::ofstream file_stream_;
+    std::ofstream redirecting_file_stream_;
     std::streambuf *coutbuf_;
 };
 

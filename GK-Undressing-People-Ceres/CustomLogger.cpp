@@ -4,7 +4,7 @@
 CustomLogger::CustomLogger(std::string base_path, std::string experiment_name)
     : base_path_(base_path), experiment_name_(experiment_name)
 {
-    createNewLogFolder();
+    createNewLogFolder_();
 }
 
 CustomLogger::~CustomLogger()
@@ -84,11 +84,6 @@ void CustomLogger::logSMPLParams(const SMPLWrapper & smpl, const ShapeUnderCloth
 
     out << "]" << std::endl;
     out.close();
-
-    // clean
-    delete[] shape_res;
-    delete[] pose_res;
-    delete[] translation_res;
 }
 
 void CustomLogger::saveFinalSMPLObject(const SMPLWrapper & smpl, const ShapeUnderClothOptimizer & optimizer) const
@@ -102,17 +97,13 @@ void CustomLogger::saveFinalSMPLObject(const SMPLWrapper & smpl, const ShapeUnde
     smpl.saveToObj(translation_res, pose_res,   shape_res,  (log_folder_name_ + final_3D_subfolder_ + "posed_shaped.obj"));
     smpl.saveToObj(translation_res, nullptr,    shape_res,  (log_folder_name_ + final_3D_subfolder_ + "unposed_shaped.obj"));
     smpl.saveToObj(translation_res, pose_res,   nullptr,    (log_folder_name_ + final_3D_subfolder_ + "posed_unshaped.obj"));
-
-    delete[] shape_res;
-    delete[] pose_res;
-    delete[] translation_res;
 }
 
 void CustomLogger::startRedirectCoutToFile(const std::string filename)
 {
-    file_stream_ = std::ofstream(log_folder_name_ + filename);
+    redirecting_file_stream_ = std::ofstream(log_folder_name_ + filename);
     coutbuf_ = std::cout.rdbuf();   //save old buf
-    std::cout.rdbuf(file_stream_.rdbuf());  //redirect std::cout to file!
+    std::cout.rdbuf(redirecting_file_stream_.rdbuf());  //redirect std::cout to file!
 
     std::cout << log_folder_name_ + filename << std::endl;
 
@@ -131,12 +122,12 @@ void CustomLogger::endRedirectCoutToFile()
     }
 
     std::cout.rdbuf(coutbuf_);   //  reset cout to standard output again
-    file_stream_.close();
+    redirecting_file_stream_.close();
 
     redirection_started_ = false;
 }
 
-void CustomLogger::createNewLogFolder()
+void CustomLogger::createNewLogFolder_()
 {
     log_folder_name_ = base_path_ + "/" + experiment_name_ + "_";
 
