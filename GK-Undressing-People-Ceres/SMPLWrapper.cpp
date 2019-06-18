@@ -91,7 +91,7 @@ E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * con
 }
 
 
-E::MatrixXd SMPLWrapper::calcJointLocations(const double * shape, const double * pose = nullptr)
+E::MatrixXd SMPLWrapper::calcJointLocations(const double * shape, const double * pose = nullptr)  const
 {
     E::MatrixXd verts = this->calcModel(nullptr, shape);
 

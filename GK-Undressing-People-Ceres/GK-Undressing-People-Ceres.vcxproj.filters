@@ -13,21 +13,33 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\Optimization">
+      <UniqueIdentifier>{18286cd0-5d7a-448e-b847-59214005faa8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="External source code">
+      <UniqueIdentifier>{5fb560f8-318e-41a2-bf6b-0b97db720c44}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Optimization">
+      <UniqueIdentifier>{cad44e33-e448-418b-9dfe-df6697fe941f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SMPLWrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ShapeUnderClothOptimizer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="AbsoluteDistanceForPose.h">
+    <ClInclude Include="OpenPoseWrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="AbsoluteDistanceForShape.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Optimization</Filter>
     </ClInclude>
-    <ClInclude Include="OpenPoseWrapper.h">
+    <ClInclude Include="AbsoluteDistanceForPose.h">
+      <Filter>Header Files\Optimization</Filter>
+    </ClInclude>
+    <ClInclude Include="ShapeUnderClothOptimizer.h">
+      <Filter>Header Files\Optimization</Filter>
+    </ClInclude>
+    <ClInclude Include="CustomLogger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -38,22 +50,25 @@
     <ClCompile Include="SMPLWrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ShapeUnderClothOptimizer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="AbsoluteDistanceForPose.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="AbsoluteDistanceForShape.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="OpenPoseWrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\my_modules\GeneralMesh\GeneralMesh.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="ShapeUnderClothOptimizer.cpp">
+      <Filter>Source Files\Optimization</Filter>
+    </ClCompile>
+    <ClCompile Include="AbsoluteDistanceForPose.cpp">
+      <Filter>Source Files\Optimization</Filter>
+    </ClCompile>
+    <ClCompile Include="AbsoluteDistanceForShape.cpp">
+      <Filter>Source Files\Optimization</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\libs\Installed_libs\src\imgui_impl_glfw_gl3.cpp">
+      <Filter>External source code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\my_modules\GeneralMesh\GeneralMesh.cpp">
+      <Filter>External source code</Filter>
+    </ClCompile>
+    <ClCompile Include="CustomLogger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

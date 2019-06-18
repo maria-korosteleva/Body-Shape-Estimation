@@ -4,13 +4,11 @@
 
 //#define DEBUG
 //#define EIGEN_STACK_ALLOCATION_LIMIT 0
-// WARNING! Uses win-specific features to create log directory 
-#define NOMINMAX
-#include <Windows.h>
-#undef THIS
+
+// need to include first, because it uses Windows.h
+#include "CustomLogger.h"
 
 #include <iostream>
-#include <ctime>
 
 #include <assert.h>
 
@@ -67,104 +65,13 @@
 */
 
 // global vars are needed for visualization purposes only
+static constexpr char output_path[] = "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Outputs/";
+
 std::vector<Eigen::MatrixXd> iteration_outputs;
 int counter = 0;
 SMPLWrapper* smpl;
 GeneralMesh* input;
-double* shape_res;
-double* pose_res;
-double* translation_res;
-
-std::string getNewLogFolder(const std::string tag = "test")
-{
-    std::string logName("C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Outputs/");
-    logName += tag;
-    logName += "_";
-    
-    time_t rawtime;
-    struct tm * timeinfo;
-    char buffer[80];
-    time(&rawtime);
-    timeinfo = localtime(&rawtime);
-    strftime(buffer, sizeof(buffer), "%y%m%d_%H_%M", timeinfo);
-    
-    logName += buffer;
-    logName += "/";
-    
-    CreateDirectory(logName.c_str(), NULL);
-
-    return logName;
-}
-
-
-void logSMPLParams(double* translation, double* pose, double* shape, Eigen::MatrixXd& jointsLoc, std::string logFolderName)
-{
-    std::ofstream out(logFolderName + "smpl_params.txt");
-
-    out << "Translation \n[ ";
-    if (translation != nullptr)
-        for (int i = 0; i < SMPLWrapper::SPACE_DIM; i++)
-            out << translation[i] << " , ";
-    else
-        for (int i = 0; i < SMPLWrapper::SPACE_DIM; i++)
-            out << "0." << " , ";
-
-    out << "]" << std::endl;
-
-    out << "Pose params [ \n";
-    if (pose != nullptr)
-    {
-        for (int i = 0; i < SMPLWrapper::JOINTS_NUM; i++)
-        {
-            for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
-            {
-                out << pose[i * SMPLWrapper::SPACE_DIM + j] << " , ";
-            }
-            out << std::endl;
-        }
-    }
-    else
-    {
-        for (int i = 0; i < SMPLWrapper::JOINTS_NUM; i++)
-        {
-            for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
-            {
-                out << "0." << " , ";
-            }
-            out << std::endl;
-        }
-    }
-
-    out << "]" << std::endl;
-
-    out << "Shape (betas) params [ \n";
-    if (shape != nullptr)
-        for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; i++)
-            out << shape[i] << " , ";
-    else
-        for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; i++)
-            out << "0." << " , ";
-    out << std::endl << "]" << std::endl;
-
-    out << "Joints locations for posed and shaped model [\n";
-    // translate
-    Eigen::MatrixXd translatedJointLoc(jointsLoc);
-    for (int i = 0; i < translatedJointLoc.rows(); ++i)
-    {
-        for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)
-        {
-            translatedJointLoc(i, j) += translation[j];
-        }
-    }
-    if (translatedJointLoc.size() > 0)
-    {
-        out << translatedJointLoc << std::endl;
-    }
-
-    out << "]" << std::endl;
-    out.close();
-}
-
+ShapeUnderClothOptimizer* optimizer;
 
 bool visulaze_progress_pre_draw(igl::opengl::glfw::Viewer & viewer) {
     if (viewer.core.is_animating && counter < iteration_outputs.size())
@@ -206,7 +113,6 @@ bool visulaze_progress_pre_draw(igl::opengl::glfw::Viewer & viewer) {
     return false;
 }
 
-
 bool visulaze_progress_key_down(igl::opengl::glfw::Viewer& viewer, unsigned char key, int modifier)
 {
     if (key == ' ' )
@@ -233,12 +139,13 @@ bool visulaze_progress_key_down(igl::opengl::glfw::Viewer& viewer, unsigned char
         viewer.data().add_edges(verts, closest_points, Eigen::RowVector3d(1., 0., 0.));
 
         // visualize joint locations
-        Eigen::MatrixXd finJointLocations = smpl->calcJointLocations(shape_res, pose_res);
+        Eigen::MatrixXd finJointLocations = smpl->calcJointLocations(
+            optimizer->getEstimatesShapeParams(), optimizer->getEstimatesPoseParams());
         for (int i = 0; i < finJointLocations.rows(); ++i)
         {
             for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)
             {
-                finJointLocations(i, j) += translation_res[j];
+                finJointLocations(i, j) += optimizer->getEstimatesTranslationParams()[j];
             }
         }
         viewer.data().add_points(finJointLocations, Eigen::RowVector3d(1., 1., 0.));
@@ -246,16 +153,13 @@ bool visulaze_progress_key_down(igl::opengl::glfw::Viewer& viewer, unsigned char
     return false;
 }
 
-
 int main()
 {
     try {
         // Females
         char gender = 'f';
         const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";  // A-pose
-        //const char* input_name = "D:/Data/smpl_outs/pose_hand_up.obj";
-        //const char* input_name = "D:/Data/smpl_outs/smpl_2.obj";
-        //const char* input_name = "D:/Data/Clo/clo_model.obj";
+
         //Males
         //gender = 'm';
         //const char* input_name = "D:/Data/SketchFab/Web.obj";
@@ -268,11 +172,12 @@ int main()
         std::cout << "Input mesh loaded!\n";
         smpl = new SMPLWrapper(gender, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
         std::cout << "SMPL model loaded\n";
-        ShapeUnderClothOptimizer optimizer(smpl, input, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
+        optimizer = new ShapeUnderClothOptimizer(smpl, input, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
         std::cout << "Optimizer loaded\n";
 
         //////// NEW CODE: 
-        std::string logFolderName = getNewLogFolder("OP_images_" + input->getName());
+        CustomLogger logger("C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Outputs/", "OP_images_" + input->getName());
+
         ////// Photographer
         Photographer photographer(input);
 
@@ -280,58 +185,41 @@ int main()
         photographer.addCameraToPosition(1.0f, -0.5f, 2.0f, 4.0f);
         photographer.addCameraToPosition(-1.0f, 0.0f, 1.0f, 4.0f);
 
-        CreateDirectory((logFolderName + "/images/").c_str(), NULL);
-        photographer.renderToImages(logFolderName + "/images/");
-        photographer.saveImageCamerasParamsCV(logFolderName + "/images/");
+        photographer.renderToImages(logger.getPhotosFolderPath());
+        photographer.saveImageCamerasParamsCV(logger.getPhotosFolderPath());
 
         //photographer.viewScene();
 
         /////// OpenPose
-        OpenPoseWrapper openpose(input, logFolderName);
+        OpenPoseWrapper openpose(input, logger.getLogFolderPath());
         openpose.runPoseEstimation();
 
         ////////
 
         // for experiments
-        //int gm_params[] = { 0, 10, 50 };
+        int gm_params[] = { 0, 10, 50 };
 
-        //for (int i = 0; i < 5; i++)
-        //{
-        //    // Logging For convenience
-        //    //std::string logFolderName = getNewLogFolder("3cyc_ptrsA_in_scale_" + std::to_string(inside_sclaing_param) + input->getName());
-        //    std::string logFolderName = getNewLogFolder("in_shape_gem_mc_" + std::to_string(gm_params[i]) + input->getName());
-        //    igl::writeOBJ(logFolderName + input->getName() + ".obj", input->getVertices(), input->getFaces());
+        for (int i = 0; i < 5; i++)
+        {
+            CustomLogger gm_logger(output_path, "in_shape_gem_mc_" + std::to_string(gm_params[i]) + input->getName());
+            // save input for convenience
+            igl::writeOBJ(gm_logger.getLogFolderPath() + input->getName() + ".obj", input->getVertices(), input->getFaces());
 
-        //    // Redirect optimizer output to file
-        //    std::ofstream out(logFolderName + "optimization.txt");
-        //    std::streambuf *coutbuf = std::cout.rdbuf();    //save old buf
-        //    std::cout.rdbuf(out.rdbuf());                   //redirect std::cout to file!
-        //    std::cout << "Input file: " << input_name << std::endl;
-        //    std::cout << logFolderName + "optimization.txt" << std::endl;
+            gm_logger.startRedirectCoutToFile("optimization.txt");
+            std::cout << "Input file: " << input_name << std::endl;
 
-        //    // collect the meshes from each iteration
-        //    iteration_outputs.clear();
-        //    //optimizer.findOptimalParameters(&iteration_outputs, outside_shape_param);
-        //    optimizer.findOptimalParameters(nullptr, gm_params[i]);
+            // collect the meshes from each iteration
+            iteration_outputs.clear();
+            //optimizer.findOptimalParameters(&iteration_outputs, outside_shape_param);
+            optimizer->findOptimalParameters(nullptr, gm_params[i]);
 
-        //    std::cout.rdbuf(coutbuf);   //  reset cout to standard output again
-        //    out.close();
-        //    std::cout << "Optimization finished!\n";
+            gm_logger.endRedirectCoutToFile();
+            std::cout << "Optimization finished!\n";
 
-        //    // Save the results
-        //    shape_res = optimizer.getEstimatesShapeParams();
-        //    pose_res = optimizer.getEstimatesPoseParams();
-        //    translation_res = optimizer.getEstimatesTranslationParams();
-        //    Eigen::MatrixXd finJointLocations = smpl->calcJointLocations(shape_res, pose_res);
-
-        //    logSMPLParams(translation_res, pose_res, shape_res, finJointLocations, logFolderName);
-        //    smpl->saveToObj(translation_res, pose_res, shape_res, (logFolderName + "posed_shaped.obj"));
-        //    smpl->saveToObj(translation_res, nullptr, shape_res, (logFolderName + "unposed_shaped.obj"));
-        //    smpl->saveToObj(translation_res, pose_res, nullptr, (logFolderName + "posed_unshaped.obj"));
-
-        //    delete[] shape_res;
-        //    delete[] pose_res;
-        //}
+            // Save the results
+            gm_logger.logSMPLParams(*smpl, *optimizer);
+            gm_logger.saveFinalSMPLObject(*smpl, *optimizer);
+        }
         
 
         // FOR TESTING 

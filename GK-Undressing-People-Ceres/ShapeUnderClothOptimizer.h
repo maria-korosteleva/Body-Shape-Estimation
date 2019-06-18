@@ -36,9 +36,9 @@ public:
 
     // The getters below return a copy of the corresponding parameters
     // So the caller is responsible for the memory allocated
-    double * getEstimatesTranslationParams();
-    double * getEstimatesPoseParams();
-    double * getEstimatesShapeParams();
+    double * getEstimatesTranslationParams() const;
+    double * getEstimatesPoseParams() const;
+    double * getEstimatesShapeParams() const;
 
     // parameter is some parameter of the underlying procedures; used for experiments; the semantics should be controlled by the programmer
     void findOptimalParameters(std::vector<Eigen::MatrixXd>* iteration_results = nullptr, const double parameter = 1.);

@@ -172,6 +172,7 @@
   <ItemGroup>
     <ClInclude Include="AbsoluteDistanceForPose.h" />
     <ClInclude Include="AbsoluteDistanceForShape.h" />
+    <ClInclude Include="CustomLogger.h" />
     <ClInclude Include="OpenPoseWrapper.h" />
     <ClInclude Include="ShapeUnderClothOptimizer.h" />
     <ClInclude Include="SMPLWrapper.h" />
@@ -181,6 +182,7 @@
     <ClCompile Include="..\..\..\my_modules\GeneralMesh\GeneralMesh.cpp" />
     <ClCompile Include="AbsoluteDistanceForPose.cpp" />
     <ClCompile Include="AbsoluteDistanceForShape.cpp" />
+    <ClCompile Include="CustomLogger.cpp" />
     <ClCompile Include="GK-Undressing-People-Ceres.cpp" />
     <ClCompile Include="OpenPoseWrapper.cpp" />
     <ClCompile Include="ShapeUnderClothOptimizer.cpp" />

@@ -44,7 +44,7 @@ void ShapeUnderClothOptimizer::setNewPriorPath(const char * prior_path)
 }
 
 
-double * ShapeUnderClothOptimizer::getEstimatesTranslationParams()
+double * ShapeUnderClothOptimizer::getEstimatesTranslationParams() const
 {
     if (this->translation_ != nullptr)
     {
@@ -58,7 +58,7 @@ double * ShapeUnderClothOptimizer::getEstimatesTranslationParams()
 }
 
 
-double * ShapeUnderClothOptimizer::getEstimatesPoseParams()
+double * ShapeUnderClothOptimizer::getEstimatesPoseParams() const
 {
     if (this->pose_ != nullptr)
     {
@@ -72,7 +72,7 @@ double * ShapeUnderClothOptimizer::getEstimatesPoseParams()
 }
 
 
-double * ShapeUnderClothOptimizer::getEstimatesShapeParams()
+double * ShapeUnderClothOptimizer::getEstimatesShapeParams() const
 {
     if (this->shape_ != nullptr)
     {

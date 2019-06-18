@@ -55,7 +55,7 @@ public:
     // shape_jac is expected to have space for SHAPE_SIZE Matrices
     E::MatrixXd calcModel(const double * const pose, const double * const shape, E::MatrixXd * pose_jac = nullptr, E::MatrixXd * shape_jac = nullptr) const;
 
-    E::MatrixXd calcJointLocations(const double * shape, const double * pose);
+    E::MatrixXd calcJointLocations(const double * shape, const double * pose) const;
 
     // Pose/shape parameters can be nullptr: allows to get template/pose without shaping/shaping of the T-pose
     void saveToObj(const double * translation, const double * pose, const double* shape, const std::string path) const;
