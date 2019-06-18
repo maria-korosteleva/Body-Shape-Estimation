@@ -34,8 +34,8 @@ public:
     void setNewInput(GeneralMesh*);
     void setNewPriorPath(const char*);
 
-    // The getters below return a copy of the corresponding parameters
-    // So the caller is responsible for the memory allocated
+    // The getters below return a pointer to the corresponding parameters
+    // They will be re-written with each findOptimalParameters() call
     double * getEstimatesTranslationParams() const { return translation_;  };
     double * getEstimatesPoseParams() const { return pose_; };
     double * getEstimatesShapeParams() const { return shape_; };
