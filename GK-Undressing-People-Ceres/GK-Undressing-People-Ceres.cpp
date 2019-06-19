@@ -23,45 +23,14 @@
 #include "OpenPoseWrapper.h"
 
 /*
-    TODO
-    + libigl installation
-    + Input mesh reader and storage
-    + Smpl wrapper - Shape
-    + the simpliest optimizer possible (no translation and pose, shape only, with known correspondance)
-    + move to simple types (double*) 
-    + Declare constexpressions for model sizes
-    + utils: Fill with zeros, print array, etc.  (only needed incide optimizer
-    + glog output to file
-    + log result params & objects
-    + log result objects inside SMPL
-    + SMPL wrapper Pose
-    + Pose estimation using ceres
-    + ceres rotations vs non-ceres
-    + simplify function hierarchy 
-    + regularization
-    + LBS optimization (sparse weight matrix etc)
-    + point-to-surface distance
-        + Idea: try numerical derivative for point-to-surface distance
-    + add translation
-    + Log input name
-    + optimization process visualization on-the-fly
-    + Acuurate shape and pose estimation (iterative?)
-
-    - initial pose estimation with openpose
-
-    - use normalized General Mesh vertices for optimization 
-
-    - Shape regularization 
-    x directional pose estimation -- idea: add it to the main objective as additional resudual
-    - move (important) parameters outside
-    - Idea: allow start optimization from the last results
-    - libigl as static library
-    - SMPL wrapper avalible for everyone
-    + Idea: could keep some python scripts?
-    + Idea: will the optimizer work for different types of the input blocks (so that optimization separation won't be needed)?
-    + libigl menu
-    + Readme with installation notes
-    x learning curve visualization
+    TODO initial pose estimation with openpose
+    TODO use normalized General Mesh vertices for optimization 
+    TODO Shape regularization 
+    TODO directional pose estimation -- idea: add it to the main objective as additional resudual
+    TODO move (important) parameters outside
+    TODO Idea: allow start optimization from the last results
+    TODO libigl as static library
+    TODO SMPL wrapper avalible for everyone
 */
 
 // global vars are needed for visualization purposes only
@@ -202,7 +171,6 @@ int main()
         CustomLogger logger("C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Outputs/", "OP_images_" + input->getName());
 
         ///// 2. Initial pose estimation /////
-
         ////// 2.1 Prepare pictures for OpenPose: Photographer /////
         photographer.addCameraToPosition(0.0f, 1.0f, 3.0f, 4.0f);
         photographer.addCameraToPosition(1.0f, -0.5f, 2.0f, 4.0f);

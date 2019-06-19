@@ -1,10 +1,6 @@
 #pragma once
-/*
-Runs the OpenPose 3D pose estimation for 3D input scan
+//Runs the OpenPose 3D pose estimation for 3D input scan
 
-TODO:
-
-*/
 #include <igl/opengl/glfw/Viewer.h>
 
 #include <GeneralMesh/GeneralMesh.h>
