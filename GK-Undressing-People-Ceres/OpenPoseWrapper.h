@@ -12,8 +12,9 @@
 class OpenPoseWrapper
 {
 public:
-    OpenPoseWrapper(const std::string images_path, 
-        const std::string camera_parameters_path, 
+    OpenPoseWrapper(const std::string images_path,
+        const std::string camera_parameters_path,
+        const int number_of_cameras,
         const std::string out_path = "./tmp/",
         const std::string models_path = "./models/");
     ~OpenPoseWrapper();
@@ -30,6 +31,7 @@ public:
 private: 
     std::string images_path_;
     std::string cameras_path_;
+    int number_of_cameras_;
     std::string out_path_;
 
     std::string models_path_;

@@ -181,7 +181,7 @@ int main()
 
         ////// TODO 2.2 Run OpenPose /////
         OpenPoseWrapper openpose(logger.getPhotosFolderPath(),
-            logger.getPhotosFolderPath(),
+            logger.getPhotosFolderPath(), 3,
             logger.getOpenPoseGuessesPath(), 
             "C:/Users/Maria/MyDocs/libs/Installed_libs/ml_models/openpose");
 

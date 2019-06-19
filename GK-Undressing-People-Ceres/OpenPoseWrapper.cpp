@@ -1,11 +1,13 @@
 #include "OpenPoseWrapper.h"
 
-OpenPoseWrapper::OpenPoseWrapper(const std::string images_path, 
-    const std::string camera_parameters_path, 
+OpenPoseWrapper::OpenPoseWrapper(const std::string images_path,
+    const std::string camera_parameters_path,
+    const int number_of_images,
     const std::string outpath,
     const std::string model_path)
     : images_path_(images_path), 
     cameras_path_(camera_parameters_path),
+    number_of_cameras_(number_of_images),
     models_path_(model_path),
     out_path_(outpath)
 {
@@ -73,7 +75,7 @@ void OpenPoseWrapper::openPoseConfiguration_(op::Wrapper& opWrapper)
         wrapperStructInput.cameraParameterPath = cameras_path_;
         wrapperStructInput.producerString = images_path_;
         wrapperStructInput.producerType = op::ProducerType::ImageDirectory;
-        wrapperStructInput.numberViews = 3;     // TODO check for need
+        wrapperStructInput.numberViews = number_of_cameras_;
         opWrapper.configure(wrapperStructInput);
 
         // Output 
