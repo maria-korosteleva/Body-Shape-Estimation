@@ -184,7 +184,6 @@ int main()
             logger.getPhotosFolderPath(), 3,
             logger.getOpenPoseGuessesPath(), 
             "C:/Users/Maria/MyDocs/libs/Installed_libs/ml_models/openpose");
-
         openpose.runPoseEstimation();
 
         ////// TODO 2.3 Map OpenPose pose to SMPL /////

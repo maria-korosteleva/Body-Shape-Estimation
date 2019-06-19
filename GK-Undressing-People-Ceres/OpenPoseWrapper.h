@@ -9,6 +9,8 @@
 // Set to single-thread (for sequential processing and/or debugging and/or reducing latency)
 //#define OPENPOSE_WRAPPER_DISABLE_MULTITHREAD 
 
+using PtrToDatum = std::shared_ptr<std::vector<std::shared_ptr<op::Datum>>>;
+
 class OpenPoseWrapper
 {
 public:
@@ -38,8 +40,10 @@ private:
 
     // the code is mostly borrowed from the OpenPoseDemo :
     // https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/examples/openpose/openpose.cpp
+    // Plus https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/examples/tutorial_api_cpp/11_asynchronous_custom_output.cpp
     void openPoseConfiguration_(op::Wrapper& opWrapper);
 
-    void get3DPoseFromFile_();
+    // see https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/examples/tutorial_api_cpp/11_asynchronous_custom_output.cpp
+    void print3DKeypoints_(PtrToDatum& datumsPtr);
 };
 
