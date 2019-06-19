@@ -6,6 +6,9 @@
 #include <GeneralMesh/GeneralMesh.h>
 #include "SMPLWrapper.h"
 
+// Set to single-thread (for sequential processing and/or debugging and/or reducing latency)
+//#define OPENPOSE_WRAPPER_DISABLE_MULTITHREAD 
+
 class OpenPoseWrapper
 {
 public:
@@ -17,6 +20,8 @@ public:
 
     // Runs the 3D pose estimation for the input scan set before
     // all artefacts are saved to the out_path_ folder
+    // the code is mostly borrowed from the OpenPoseDemo: 
+    // https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/examples/openpose/openpose.cpp
     void runPoseEstimation();
 
     // Maps the found BODY25 3D pose to the SMPL skeleton
@@ -29,7 +34,9 @@ private:
 
     std::string models_path_;
 
-    void openPoseSetup_();
+    // the code is mostly borrowed from the OpenPoseDemo :
+    // https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/examples/openpose/openpose.cpp
+    void openPoseConfiguration_(op::Wrapper& opWrapper);
 
     void get3DPoseFromFile_();
 };
