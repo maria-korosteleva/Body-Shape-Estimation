@@ -29,24 +29,19 @@ void OpenPoseWrapper::runPoseEstimation()
         op::Wrapper opWrapper(op::ThreadManagerMode::AsynchronousOut);
         openPoseConfiguration_(opWrapper);
 
-        // Start, run, and stop processing - exec() blocks this thread until OpenPose wrapper has finished
+        // Run!!!
         op::log("Starting thread(s)...", op::Priority::High);
-        //opWrapper.exec();
-
         opWrapper.start();
 
-        // Pop the last result
-        PtrToDatum datumProcessed;
-        if (opWrapper.waitAndPop(datumProcessed))
-        {
-            print3DKeypoints_(datumProcessed);
-        }
-        // Something else happened
-        else
+        // Save the last result
+        bool success = opWrapper.waitAndPop(last_pose_);
+        if (!success)
             throw std::exception("Processed datum could not be emplaced.");
 
         op::log("Stopping thread(s)", op::Priority::High);
         opWrapper.stop();
+
+        log3DKeypoints_(last_pose_);
 
         // Measuring total time
         op::printTime(opTimer, "OpenPose 3D pose estimation successfully finished. Total time: ", " seconds.", op::Priority::High);
@@ -114,29 +109,24 @@ void OpenPoseWrapper::openPoseConfiguration_(op::Wrapper& opWrapper)
     }
 }
 
-void OpenPoseWrapper::print3DKeypoints_(PtrToDatum& datumsPtr)
+void OpenPoseWrapper::log3DKeypoints_(PtrToDatum & datumsPtr)
 {
-    // Example: How to use the pose keypoints
     if (datumsPtr != nullptr && !datumsPtr->empty())
     {
+        std::ofstream out(out_path_ + pose_filename);
         // 3D
-        op::log("\n3D Keypoints:");
-        // Accesing each element of the keypoints
         const auto& poseKeypoints3D = datumsPtr->at(0)->poseKeypoints3D;
-        op::log("Person pose keypoints 3D:");
-        for (auto person = 0; person < poseKeypoints3D.getSize(0); person++)
+        int person = 0;
+        for (auto bodyPart = 0; bodyPart < poseKeypoints3D.getSize(1); bodyPart++)
         {
-            op::log("Person " + std::to_string(person) + " (x, y, score):");
-            for (auto bodyPart = 0; bodyPart < poseKeypoints3D.getSize(1); bodyPart++)
+            std::string valueToPrint;
+            for (auto xyscore = 0; xyscore < poseKeypoints3D.getSize(2); xyscore++)
             {
-                std::string valueToPrint;
-                for (auto xyscore = 0; xyscore < poseKeypoints3D.getSize(2); xyscore++)
-                {
-                    valueToPrint += std::to_string(poseKeypoints3D[{person, bodyPart, xyscore}]) + " ";
-                }
-                op::log(valueToPrint);
+                valueToPrint += std::to_string(poseKeypoints3D[{person, bodyPart, xyscore}]) + ", ";
             }
+            out << valueToPrint << std::endl;
         }
+        out.close();
     }
     else
         op::log("Nullptr or empty datumsPtr found.", op::Priority::High);

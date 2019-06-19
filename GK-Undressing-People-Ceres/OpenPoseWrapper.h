@@ -1,6 +1,7 @@
 #pragma once
 //Runs the OpenPose 3D pose estimation for 3D input scan
 
+#include <fstream>
 #include <openpose/headers.hpp>
 
 #include <GeneralMesh/GeneralMesh.h>
@@ -31,12 +32,7 @@ public:
     double* mapToSmpl(SMPLWrapper * smpl);
 
 private: 
-    std::string images_path_;
-    std::string cameras_path_;
-    int number_of_cameras_;
-    std::string out_path_;
-
-    std::string models_path_;
+    static constexpr char pose_filename[] = "3D_keypoints.txt";
 
     // the code is mostly borrowed from the OpenPoseDemo :
     // https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/examples/openpose/openpose.cpp
@@ -44,6 +40,16 @@ private:
     void openPoseConfiguration_(op::Wrapper& opWrapper);
 
     // see https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/examples/tutorial_api_cpp/11_asynchronous_custom_output.cpp
-    void print3DKeypoints_(PtrToDatum& datumsPtr);
+    void log3DKeypoints_(PtrToDatum& datumsPtr);
+    
+    std::string images_path_;
+    std::string cameras_path_;
+    int number_of_cameras_;
+    std::string out_path_;
+
+    std::string models_path_;
+
+    PtrToDatum last_pose_;
+
 };
 
