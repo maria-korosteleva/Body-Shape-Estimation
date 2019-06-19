@@ -4,18 +4,24 @@ Ancessor of https://motionlab.kaist.ac.kr/git/mariako/Giga-Korea-Undressing-Peop
 Reimplementation of the Zhang et al"Detailed, accurate, human shape estimation from clothed 3D scan sequences" (https://arxiv.org/abs/1703.04454).
 
 ## System requirements
-The project is developed under Windows 10, using Visual Studio 2017 x64, and have never been tested in other environment.
+* The project is developed under Windows 10, using Visual Studio 2017 x64, and have never been tested in other environment.
+* Uses some C++11 features
+* Uses Windows-specific functionality to work with the filesystem. If you are using other OS, you'd need to modify the CustomLogger
 
 ## Dependecies
 1. Eigen (http://eigen.tuxfamily.org/index.php?title=Main_Page)
 1. libigl (https://libigl.github.io/)
-*NOTE*: if compilation produces POSIX erroes, add the following before including igl headersflags
+*NOTE*: if compilation produces POSIX errors, add the following before including igl headersflags
 '''
 #ifdef _MSC_VER
 #pragma warning(disable:4996)
 #endif
 '''
 1. Ceres (http://ceres-solver.org/index.html) compiled to be used on x64 platform (same goes for the Ceres dependencies).
+1. OpenPose (https://github.com/CMU-Perceptual-Computing-Lab/openpose/). 
+	1. *Important* The path to the OpenPose models should be set inside the program
+
+All needed dependencies (and their dependencies) could be found here: https://motionlab.kaist.ac.kr/git/mariako/Installed_libs
 
 VS property sheets to work with the latter two libraries are provided for your reference.
 
