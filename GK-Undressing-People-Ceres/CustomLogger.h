@@ -20,6 +20,7 @@ public:
 
     std::string getLogFolderPath() const { return log_folder_name_; }
     std::string getPhotosFolderPath() const { return log_folder_name_ + photo_subfolder_; }
+    std::string getOpenPoseGuessesPath() const { return log_folder_name_ + op_guesses_subfolder_; }
 
     void logSMPLParams(const SMPLWrapper& smpl, const ShapeUnderClothOptimizer& optimizer) const;
     void logSMPLParams(
@@ -35,6 +36,7 @@ private:
     static constexpr char photo_subfolder_[] = "/photos/";
     static constexpr char iterations_3D_subfolder_[] = "/iterations_objects/";
     static constexpr char final_3D_subfolder_[] = "/final_objects/";
+    static constexpr char op_guesses_subfolder_[] = "/OP_guesses/";
     static constexpr char smpl_param_filename_[] = "smpl_params.txt";
 
     void createNewLogFolder_();

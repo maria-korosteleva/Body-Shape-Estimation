@@ -180,7 +180,11 @@ int main()
         photographer.saveImageCamerasParamsCV(logger.getPhotosFolderPath());
 
         ////// TODO 2.2 Run OpenPose /////
-        OpenPoseWrapper openpose(input, logger.getLogFolderPath());
+        OpenPoseWrapper openpose(logger.getPhotosFolderPath(),
+            logger.getPhotosFolderPath(),
+            logger.getOpenPoseGuessesPath(), 
+            "C:/Users/Maria/MyDocs/libs/Installed_libs/ml_models/openpose");
+
         openpose.runPoseEstimation();
 
         ////// TODO 2.3 Map OpenPose pose to SMPL /////
