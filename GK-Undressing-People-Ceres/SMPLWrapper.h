@@ -85,7 +85,7 @@ public:
 private:
     void readTemplate_();
     void readJointMat_();
-    //void readJointNames_();
+    void readJointNames_();
     void readShapes_();
     void readWeights_();
     void readHierarchy_();

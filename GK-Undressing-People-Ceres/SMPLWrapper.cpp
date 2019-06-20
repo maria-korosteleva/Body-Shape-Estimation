@@ -18,6 +18,7 @@ SMPLWrapper::SMPLWrapper(char gender, const std::string path)
 
     readTemplate_();
     readJointMat_();
+    readJointNames_();
     readShapes_();
     readWeights_();
     readHierarchy_();
@@ -218,6 +219,33 @@ void SMPLWrapper::readJointMat_()
     for (int i = 0; i < joints_n; i++)
         for (int j = 0; j < verts_n; j++)
             inFile >> this->jointRegressorMat_(i, j);
+
+    inFile.close();
+}
+
+void SMPLWrapper::readJointNames_()
+{
+    std::string file_name(this->general_path_);
+    file_name += "joint_names.txt";
+
+    std::fstream inFile;
+    inFile.open(file_name, std::ios_base::in);
+    int joints_n;
+    inFile >> joints_n;
+    // Sanity check
+    if (joints_n != JOINTS_NUM)
+    {
+        throw std::exception("Number of joint names specified doesn't match current SMPLWrapper settings");
+    }
+
+    std::string joint_name;
+    int jointId;
+    for (int i = 0; i < joints_n; i++)
+    {
+        inFile >> joint_name;
+        inFile >> jointId;
+        joint_names_.insert(DictEntryInt(joint_name, jointId));
+    }
 
     inFile.close();
 }
