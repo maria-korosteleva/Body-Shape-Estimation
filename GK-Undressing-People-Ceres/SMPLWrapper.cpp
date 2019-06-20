@@ -26,14 +26,10 @@ SMPLWrapper::SMPLWrapper(char gender, const std::string path)
 
     template_mean_point_ = this->verts_template_.colwise().mean();
 
-    initializeCurrentState_();
 }
 
 SMPLWrapper::~SMPLWrapper()
 {
-    delete[] pose_;
-    delete[] shape_;
-    delete[] translation_;
 }
 
 E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * const shape, E::MatrixXd * pose_jac, E::MatrixXd * shape_jac) const
@@ -88,7 +84,7 @@ E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * con
 
 E::MatrixXd SMPLWrapper::calcModel(E::MatrixXd * pose_jac, E::MatrixXd * shape_jac) const
 {
-    return calcModel(pose_, shape_, pose_jac, shape_jac);
+    return calcModel(state_.pose, state_.shape, pose_jac, shape_jac);
 }
 
 E::MatrixXd SMPLWrapper::calcJointLocations(const double * shape, const double * pose = nullptr)  const
@@ -110,7 +106,7 @@ E::MatrixXd SMPLWrapper::calcJointLocations(const double * shape, const double *
 
 E::MatrixXd SMPLWrapper::calcJointLocations() const
 {
-    return calcJointLocations(shape_, pose_);
+    return calcJointLocations(state_.shape, state_.pose);
 }
 
 void SMPLWrapper::saveToObj(const double* translation, const double* pose, const double* shape, const std::string path) const
@@ -133,17 +129,17 @@ void SMPLWrapper::saveToObj(const double* translation, const double* pose, const
 
 void SMPLWrapper::saveToObj(const std::string path) const
 {
-    saveToObj(translation_, pose_, shape_, path);
+    saveToObj(state_.translation, state_.pose, state_.shape, path);
 }
 
 void SMPLWrapper::savePosedOnlyToObj(const std::string path) const
 {
-    saveToObj(translation_, pose_, nullptr, path);
+    saveToObj(state_.translation, state_.pose, nullptr, path);
 }
 
 void SMPLWrapper::saveShapedOnlyToObj(const std::string path) const
 {
-    saveToObj(translation_, nullptr, shape_, path);
+    saveToObj(state_.translation, nullptr, state_.shape, path);
 }
 
 void SMPLWrapper::logParameters(const std::string path) const
@@ -152,7 +148,7 @@ void SMPLWrapper::logParameters(const std::string path) const
 
     out << "Translation \n[ ";
     for (int i = 0; i < SMPLWrapper::SPACE_DIM; i++)
-        out << translation_[i] << " , ";
+        out << state_.translation[i] << " , ";
     out << "]" << std::endl;
 
     out << std::endl << "Pose params [ \n";
@@ -160,7 +156,7 @@ void SMPLWrapper::logParameters(const std::string path) const
     {
         for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
         {
-            out << pose_[i * SMPLWrapper::SPACE_DIM + j] << " , ";
+            out << state_.pose[i * SMPLWrapper::SPACE_DIM + j] << " , ";
         }
         out << std::endl;
     }
@@ -168,7 +164,7 @@ void SMPLWrapper::logParameters(const std::string path) const
 
     out << std::endl << "Shape (betas) params [ \n";
     for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; i++)
-        out << shape_[i] << " , ";
+        out << state_.shape[i] << " , ";
     out << std::endl << "]" << std::endl;
 
     out << std::endl << "Joints locations for posed and shaped model [\n";
@@ -178,7 +174,7 @@ void SMPLWrapper::logParameters(const std::string path) const
     {
         for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)
         {
-            translatedJointLoc(i, j) += translation_[j];
+            translatedJointLoc(i, j) += state_.translation[j];
         }
     }
     out << translatedJointLoc << std::endl;
@@ -360,21 +356,6 @@ void SMPLWrapper::readKeyDirections_()
     }
 
     inFile.close();
-}
-
-void SMPLWrapper::initializeCurrentState_()
-{
-    pose_ = new double[POSE_SIZE];
-    for (int i = 0; i < POSE_SIZE; i++)
-        pose_[i] = 0.;
-
-    shape_ = new double[SHAPE_SIZE];
-    for (int i = 0; i < SHAPE_SIZE; i++)
-        shape_[i] = 0.;
-
-    translation_ = new double[SPACE_DIM];
-    for (int i = 0; i < SPACE_DIM; i++)
-        translation_[i] = 0.;
 }
 
 void SMPLWrapper::shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::MatrixXd* shape_jac) const
@@ -661,4 +642,26 @@ E::SparseMatrix<double> SMPLWrapper::getLBSMatrix_(E::MatrixXd & verts) const
     LBSMat.setFromTriplets(LBSTripletList.begin(), LBSTripletList.end());
 
     return LBSMat;
+}
+
+SMPLWrapper::State::State()
+{
+    pose = new double[POSE_SIZE];
+    for (int i = 0; i < POSE_SIZE; i++)
+        pose[i] = 0.;
+
+    shape = new double[SHAPE_SIZE];
+    for (int i = 0; i < SHAPE_SIZE; i++)
+        shape[i] = 0.;
+
+    translation = new double[SPACE_DIM];
+    for (int i = 0; i < SPACE_DIM; i++)
+        translation[i] = 0.;
+}
+
+SMPLWrapper::State::~State()
+{
+    delete[] pose;
+    delete[] shape;
+    delete[] translation;
 }

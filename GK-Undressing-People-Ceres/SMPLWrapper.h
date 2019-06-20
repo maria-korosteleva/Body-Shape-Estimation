@@ -27,6 +27,14 @@ using DirPair = std::pair < std::string, std::string >;
 class SMPLWrapper
 {
 public:
+    struct State {
+        double* pose = nullptr;
+        double* shape = nullptr;
+        double* translation = nullptr;
+
+        State();
+        ~State();
+    };
     static constexpr std::size_t SHAPE_SIZE = 10;
     static constexpr std::size_t SPACE_DIM = 3;
     static constexpr std::size_t POSE_SIZE = 72;
@@ -50,10 +58,7 @@ public:
     const DictionaryInt& getKeyVertices() const         { return this->key_vertices_; }
     const std::vector <DirPair>& getKeyDirections() const { return this->key_directions_; }
     // beware: returns pointer to the inner arrays
-    double* getPosePointer() const { return pose_; }
-    double* getShapePointer() const { return shape_; }
-    double* getTranslationPointer() const { return translation_; }
-    
+    State getStatePointers() const { return state_; }
 
     // Translation/Pose/shape parameters in the fucntions below can be nullptr: 
     // allows to get template/pose without shaping/shaping of the T-pose
@@ -86,8 +91,6 @@ private:
     void readHierarchy_();
     void readKeyVertices_();
     void readKeyDirections_();
-
-    void initializeCurrentState_();
 
     // for evaluation uses vertex info from the last parameter and uses last parameter for output
     // if not nullptr, shape_jac is expected to be an array of SHAPE_SIZE of MatrixXd, one matrix for each shape parameter
@@ -139,8 +142,6 @@ private:
     std::vector <DirPair> key_directions_;
 
     // current state
-    double* pose_ = nullptr;
-    double* shape_ = nullptr;
-    double* translation_ = nullptr;
+    State state_;
 };
 
