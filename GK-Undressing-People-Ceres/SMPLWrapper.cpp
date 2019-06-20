@@ -1,7 +1,7 @@
 #include "SMPLWrapper.h"
 
 
-SMPLWrapper::SMPLWrapper(char gender, const char* path)
+SMPLWrapper::SMPLWrapper(char gender, const std::string path)
 {
     // set the info
     if (gender != 'f' && gender != 'm') 
@@ -13,29 +13,27 @@ SMPLWrapper::SMPLWrapper(char gender, const char* path)
     this->gender_ = gender;
 
     // !!!! expects a pre-defined file structure
-    // TODO remove specific structure expectation
-    this->general_path_ = path;
-    this->general_path_ += '/';
+    general_path_ = path + "/";
+    gender_path_ = general_path_ + gender + "_smpl/";
 
-    this->gender_path_ = path;
-    this->gender_path_ += '/';
-    this->gender_path_ += gender;
-    this->gender_path_ += "_smpl/";
+    readTemplate_();
+    readJointMat_();
+    readShapes_();
+    readWeights_();
+    readHierarchy_();
+    readKeyVertices_();
+    readKeyDirections_();
 
-    this->readTemplate_();
-    this->readJointMat_();
-    this->readShapes_();
-    this->readWeights_();
-    this->readHierarchy_();
-    this->readKeyVertices_();
-    this->readKeyDirections_();
+    template_mean_point_ = this->verts_template_.colwise().mean();
 
-    this->template_mean_point_ = this->verts_template_.colwise().mean();
-
+    initializeCurrentState_();
 }
 
 SMPLWrapper::~SMPLWrapper()
 {
+    delete[] pose_;
+    delete[] shape_;
+    delete[] translation_;
 }
 
 E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * const shape, E::MatrixXd * pose_jac, E::MatrixXd * shape_jac) const
@@ -88,6 +86,11 @@ E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * con
     return verts;
 }
 
+E::MatrixXd SMPLWrapper::calcModel(E::MatrixXd * pose_jac, E::MatrixXd * shape_jac) const
+{
+    return calcModel(pose_, shape_, pose_jac, shape_jac);
+}
+
 E::MatrixXd SMPLWrapper::calcJointLocations(const double * shape, const double * pose = nullptr)  const
 {
     E::MatrixXd verts = this->calcModel(nullptr, shape);
@@ -103,6 +106,11 @@ E::MatrixXd SMPLWrapper::calcJointLocations(const double * shape, const double *
     this->getJointsTransposedGlobalTransformation_(pose, baseJointLocations, nullptr, &posedJointLocations);
 
     return posedJointLocations;
+}
+
+E::MatrixXd SMPLWrapper::calcJointLocations() const
+{
+    return calcJointLocations(shape_, pose_);
 }
 
 void SMPLWrapper::saveToObj(const double* translation, const double* pose, const double* shape, const std::string path) const
@@ -121,6 +129,62 @@ void SMPLWrapper::saveToObj(const double* translation, const double* pose, const
     }
 
     igl::writeOBJ(path, verts, this->faces_);
+}
+
+void SMPLWrapper::saveToObj(const std::string path) const
+{
+    saveToObj(translation_, pose_, shape_, path);
+}
+
+void SMPLWrapper::savePosedOnlyToObj(const std::string path) const
+{
+    saveToObj(translation_, pose_, nullptr, path);
+}
+
+void SMPLWrapper::saveShapedOnlyToObj(const std::string path) const
+{
+    saveToObj(translation_, nullptr, shape_, path);
+}
+
+void SMPLWrapper::logParameters(const std::string path) const
+{
+    std::ofstream out(path);
+
+    out << "Translation \n[ ";
+    for (int i = 0; i < SMPLWrapper::SPACE_DIM; i++)
+        out << translation_[i] << " , ";
+    out << "]" << std::endl;
+
+    out << std::endl << "Pose params [ \n";
+    for (int i = 0; i < SMPLWrapper::JOINTS_NUM; i++)
+    {
+        for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
+        {
+            out << pose_[i * SMPLWrapper::SPACE_DIM + j] << " , ";
+        }
+        out << std::endl;
+    }
+    out << "]" << std::endl;
+
+    out << std::endl << "Shape (betas) params [ \n";
+    for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; i++)
+        out << shape_[i] << " , ";
+    out << std::endl << "]" << std::endl;
+
+    out << std::endl << "Joints locations for posed and shaped model [\n";
+    Eigen::MatrixXd translatedJointLoc(calcJointLocations());
+    // translate
+    for (int i = 0; i < translatedJointLoc.rows(); ++i)
+    {
+        for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)
+        {
+            translatedJointLoc(i, j) += translation_[j];
+        }
+    }
+    out << translatedJointLoc << std::endl;
+    out << "]" << std::endl;
+
+    out.close();
 }
 
 void SMPLWrapper::readTemplate_()
@@ -296,6 +360,21 @@ void SMPLWrapper::readKeyDirections_()
     }
 
     inFile.close();
+}
+
+void SMPLWrapper::initializeCurrentState_()
+{
+    pose_ = new double[POSE_SIZE];
+    for (int i = 0; i < POSE_SIZE; i++)
+        pose_[i] = 0.;
+
+    shape_ = new double[SHAPE_SIZE];
+    for (int i = 0; i < SHAPE_SIZE; i++)
+        shape_[i] = 0.;
+
+    translation_ = new double[SPACE_DIM];
+    for (int i = 0; i < SPACE_DIM; i++)
+        translation_[i] = 0.;
 }
 
 void SMPLWrapper::shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::MatrixXd* shape_jac) const

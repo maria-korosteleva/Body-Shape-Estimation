@@ -40,7 +40,7 @@ public:
     gender is either "f" or "m"
     The joints hierarchy is expectes to be so that the parent's id is always less than the child's
     */
-    SMPLWrapper(char gender, const char* path);
+    SMPLWrapper(char gender, const std::string path);
     ~SMPLWrapper();
 
     char getGender() const                    { return gender_; };
@@ -49,39 +49,35 @@ public:
     const E::VectorXd& getTemplateMeanPoint() const  { return this->template_mean_point_; };
     const DictionaryInt& getKeyVertices() const         { return this->key_vertices_; }
     const std::vector <DirPair>& getKeyDirections() const { return this->key_directions_; }
+    // beware: returns pointer to the inner arrays
+    double* getPosePointer() const { return pose_; }
+    double* getShapePointer() const { return shape_; }
+    double* getTranslationPointer() const { return translation_; }
+    
 
-    // Pose/shape parameters can be nullptr: allows to get template/pose without shaping/shaping of the T-pose
+    // Translation/Pose/shape parameters in the fucntions below can be nullptr: 
+    // allows to get template/pose without shaping/shaping of the T-pose
+
     // When initialized pose_jac is expected to have space for POSE_SIZE Matrices, 
     // shape_jac is expected to have space for SHAPE_SIZE Matrices
     E::MatrixXd calcModel(const double * const pose, const double * const shape, E::MatrixXd * pose_jac = nullptr, E::MatrixXd * shape_jac = nullptr) const;
+    // using current SMPLWrapper state
+    E::MatrixXd calcModel(E::MatrixXd * pose_jac = nullptr, E::MatrixXd * shape_jac = nullptr) const;
 
     E::MatrixXd calcJointLocations(const double * shape, const double * pose) const;
+    // using current SMPLWrapper state
+    E::MatrixXd calcJointLocations() const;
 
-    // Pose/shape parameters can be nullptr: allows to get template/pose without shaping/shaping of the T-pose
     void saveToObj(const double * translation, const double * pose, const double* shape, const std::string path) const;
+    // using current SMPLWrapper state
+    void saveToObj(const std::string path) const;
+    void savePosedOnlyToObj(const std::string path) const;
+    void saveShapedOnlyToObj(const std::string path) const;
+    void logParameters(const std::string path) const;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 private:
-    // initial info
-    char gender_;
-    std::string gender_path_;
-    std::string general_path_;
-
-    // model info
-    E::MatrixXi faces_;
-    E::MatrixXd verts_template_;
-    E::VectorXd template_mean_point_;
-    E::MatrixXd shape_diffs_[10];  // store only differences between blendshapes and template
-    E::MatrixXd jointRegressorMat_;
-    int joints_parents_[JOINTS_NUM];
-    DictionaryInt joint_names_;
-    E::SparseMatrix<double> weights_;
-    // vertices on the important parts of the body
-    DictionaryInt key_vertices_;
-    std::vector <DirPair> key_directions_;
-
-    // private functions
     void readTemplate_();
     void readJointMat_();
     //void readJointNames_();
@@ -90,6 +86,8 @@ private:
     void readHierarchy_();
     void readKeyVertices_();
     void readKeyDirections_();
+
+    void initializeCurrentState_();
 
     // for evaluation uses vertex info from the last parameter and uses last parameter for output
     // if not nullptr, shape_jac is expected to be an array of SHAPE_SIZE of MatrixXd, one matrix for each shape parameter
@@ -121,5 +119,28 @@ private:
     // Both are expected to be filled and alive at the moment of invocation.
     // Inspired by igl::lbs_matrix(..)
     E::SparseMatrix<double> getLBSMatrix_(E::MatrixXd & verts) const;
+
+    // initial info
+    char gender_;
+    std::string gender_path_;
+    std::string general_path_;
+
+    // model info
+    E::MatrixXi faces_;
+    E::MatrixXd verts_template_;
+    E::VectorXd template_mean_point_;
+    E::MatrixXd shape_diffs_[10];  // store only differences between blendshapes and template
+    E::MatrixXd jointRegressorMat_;
+    int joints_parents_[JOINTS_NUM];
+    DictionaryInt joint_names_;
+    E::SparseMatrix<double> weights_;
+    // vertices on the important parts of the body
+    DictionaryInt key_vertices_;
+    std::vector <DirPair> key_directions_;
+
+    // current state
+    double* pose_ = nullptr;
+    double* shape_ = nullptr;
+    double* translation_ = nullptr;
 };
 
