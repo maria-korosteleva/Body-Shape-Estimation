@@ -2,7 +2,9 @@
 /*
 The class is a wrapper around SMPL model. In 
 The class is able to calculate the SMPL model output based on pose and shape parameters.
-Careful with describing the joint names -- they are used in OpenPoseWrapper
+Careful with describing the joint names -- they are used in OpenPoseWrapper. 
+Current naming follows (as close as possible) the BODY_25
+https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/doc/output.md#reading-saved-results
 
 TODO: 
     - Add pose blendshape 

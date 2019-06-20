@@ -57,6 +57,30 @@ void OpenPoseWrapper::mapToSmpl(SMPLWrapper& smpl)
 {
     const std::map<unsigned int, std::string>& keypoints_names = op::getPoseBodyPartMapping(op::PoseModel::BODY_25);
     const auto& keypoints_pairs = op::getPosePartPairs(op::PoseModel::BODY_25);
+    // map the pairs const 
+
+    const int keypoint_to_match[10] = { 2, 3, 5, 6, 9, 10, 11, 12, 13, 14 };
+
+    // special case -- root -- 8
+    // special case -- neck -- 0
+    // the rest
+    for (int i = 0; i < 10; i++)
+    {
+        int keypoint = keypoint_to_match[i];
+        int child;
+        for (int j = 0; j < keypoints_pairs.size(); j++)
+        {
+            if (keypoints_pairs[j] == keypoint)
+                child = keypoints_pairs[j + 1];;
+        }
+
+        std::cout << "Keypoint pair " << keypoint << " -> " << child << std::endl;
+
+        Eigen::Vector3d dir = (last_pose_.row(child) - last_pose_.row(keypoint)).transpose();
+
+        // send to smpl
+        smpl.rotateJointToDirection(keypoints_names.at(keypoint), dir);
+    }
 
     // take a 'parent'
     std::string keypoint = "RShoulder";
@@ -67,10 +91,6 @@ void OpenPoseWrapper::mapToSmpl(SMPLWrapper& smpl)
     // calculate direction to the 'child'
     // 3 is RElbow
     // 2 is RShoulder
-    Eigen::Vector3d dir = (last_pose_.row(3) - last_pose_.row(2)).transpose();
-
-    // send to smpl
-    smpl.rotateJointToDirection("RShoulder", dir);
 }
 
 void OpenPoseWrapper::openPoseConfiguration_(op::Wrapper& opWrapper)
