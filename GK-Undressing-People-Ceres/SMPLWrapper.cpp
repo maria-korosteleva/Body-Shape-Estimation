@@ -25,12 +25,41 @@ SMPLWrapper::SMPLWrapper(char gender, const std::string path)
     readKeyVertices_();
     readKeyDirections_();
 
-    template_mean_point_ = this->verts_template_.colwise().mean();
-
+    mean_point_template_ = verts_template_.colwise().mean();
+    joint_locations_template_ = calcJointLocations(nullptr, nullptr);
 }
 
 SMPLWrapper::~SMPLWrapper()
 {
+}
+
+void SMPLWrapper::setBoneDirection(const std::string parent_joint_name, E::VectorXd direction)
+{
+    std::cout << "Setting Bone Direction for joint " << parent_joint_name << std::endl
+        << "To direction " << direction << std::endl;
+    
+    // find id
+    int joint_id;
+    try {
+        joint_id = joint_names_.at(parent_joint_name);
+    }
+    catch (std::out_of_range& e)
+    {
+        std::cout << "SMPLWRapper::setBoneConnection was supplied with unknown joint" << std::endl;
+        throw e;
+    }
+
+    // find child
+    int child_id;
+    for (int i = 0; i < JOINTS_NUM; i++)
+    {
+        if (joints_parents_[child_id] == joint_id)
+            child_id = i;
+    }
+
+    // get default bone direction
+    // calculate rotation from default bone to input direction
+    // set rotation to the parent_joint
 }
 
 E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * const shape, E::MatrixXd * pose_jac, E::MatrixXd * shape_jac) const

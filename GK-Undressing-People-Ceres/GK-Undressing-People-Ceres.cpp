@@ -66,7 +66,8 @@ bool visulaze_progress_pre_draw(igl::opengl::glfw::Viewer & viewer) {
             for (auto const& keyIterator : inputKeyPoints)
             {
                 input_key_points.block(res_id, 0, 1, 3) = keyIterator.second;
-                smpl_key_points.block(res_id, 0, 1, 3) = iteration_outputs[counter].row(smplKeyVerts[keyIterator.first]);
+                smpl_key_points.block(res_id, 0, 1, 3) = 
+                    iteration_outputs[counter].row(smplKeyVerts[keyIterator.first]);
                 res_id++;
             }
             viewer.data().add_points(input_key_points, Eigen::RowVector3d(1., 1., 0.));
@@ -92,7 +93,8 @@ bool visulaze_progress_key_down(igl::opengl::glfw::Viewer& viewer, unsigned char
     }
     else if (key == 'F')
     {
-        std::cout << "[Shift+F] pressed: Showing the final result. Press [space] to go back to animation mode." << std::endl;
+        std::cout << "[Shift+F] pressed: Showing the final result."
+            << "Press [space] to go back to animation mode." << std::endl;
 
         viewer.core.is_animating = false;
         
@@ -104,7 +106,9 @@ bool visulaze_progress_key_down(igl::opengl::glfw::Viewer& viewer, unsigned char
         Eigen::VectorXd sqrD;
         Eigen::MatrixXd closest_points;
         Eigen::VectorXi closest_face_ids;
-        igl::point_mesh_squared_distance(verts, input->getVertices(), input->getFaces(), sqrD, closest_face_ids, closest_points);
+        igl::point_mesh_squared_distance(verts, 
+            input->getVertices(), input->getFaces(), sqrD, 
+            closest_face_ids, closest_points);
 
         viewer.data().set_mesh(verts, faces);
         viewer.data().add_edges(verts, closest_points, Eigen::RowVector3d(1., 0., 0.));
@@ -155,7 +159,8 @@ int main()
         std::cout << "Input mesh loaded!" << std::endl;
         smpl = new SMPLWrapper(gender, smpl_model_path);
         std::cout << "SMPL model loaded" << std::endl;
-        optimizer = new ShapeUnderClothOptimizer(smpl, input, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
+        optimizer = new ShapeUnderClothOptimizer(smpl, input, 
+            "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
         std::cout << "Optimizer loaded" << std::endl;
         Photographer photographer(input);
         std::cout << "Photographer loaded" << std::endl;
@@ -172,7 +177,7 @@ int main()
         photographer.renderToImages(logger.getPhotosFolderPath());
         photographer.saveImageCamerasParamsCV(logger.getPhotosFolderPath());
 
-        ////// TODO 2.2 Run OpenPose /////
+        ////// 2.2 Run OpenPose /////
         OpenPoseWrapper openpose(logger.getPhotosFolderPath(),
             logger.getPhotosFolderPath(), 3,
             logger.getOpenPoseGuessesPath(), 
@@ -180,6 +185,9 @@ int main()
         openpose.runPoseEstimation();
 
         ////// TODO 2.3 Map OpenPose pose to SMPL /////
+        openpose.mapToSmpl(*smpl);
+
+        logger.saveFinalModel(*smpl);
 
         ///// 3. Run shape&pose optimization ////
         /// TODO Update with the SMPLWrapper changes
@@ -190,7 +198,8 @@ int main()
         //{
         //    CustomLogger gm_logger(output_path, "in_shape_gem_mc_" + std::to_string(gm_params[i]) + input->getName());
         //    // save input for convenience
-        //    igl::writeOBJ(gm_logger.getLogFolderPath() + input->getName() + ".obj", input->getVertices(), input->getFaces());
+        //    igl::writeOBJ(gm_logger.getLogFolderPath() + input->getName() + ".obj", 
+        //      input->getVertices(), input->getFaces());
 
         //    gm_logger.startRedirectCoutToFile("optimization.txt");
         //    std::cout << "Input file: " << input_name << std::endl;

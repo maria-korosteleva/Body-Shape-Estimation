@@ -78,5 +78,5 @@ void CustomLogger::createNewLogFolder_()
     CreateDirectory(log_folder_name_.c_str(), NULL);
     CreateDirectory((log_folder_name_ + photo_subfolder_).c_str(), NULL);
     CreateDirectory((log_folder_name_ + op_guesses_subfolder_).c_str(), NULL);
-    
+    CreateDirectory((log_folder_name_ + final_3D_subfolder_).c_str(), NULL);
 }

@@ -53,9 +53,24 @@ void OpenPoseWrapper::runPoseEstimation()
     }
 }
 
-double * OpenPoseWrapper::mapToSmpl(SMPLWrapper * smpl)
+void OpenPoseWrapper::mapToSmpl(SMPLWrapper& smpl)
 {
-    return nullptr;
+    const std::map<unsigned int, std::string>& keypoints_names = op::getPoseBodyPartMapping(op::PoseModel::BODY_25);
+    const auto& keypoints_pairs = op::getPosePartPairs(op::PoseModel::BODY_25);
+
+    // take a 'parent'
+    std::string keypoint = "RShoulder";
+    auto it = std::find_if(keypoints_names.begin(), keypoints_names.end(),
+        [&keypoint](const std::pair<unsigned int, std::string> &p) {
+        return p.second == keypoint;
+    });
+    // calculate direction to the 'child'
+    // 3 is RElbow
+    // 2 is RShoulder
+    Eigen::Vector3d dir = (last_pose_.row(3) - last_pose_.row(2)).transpose();
+
+    // send to smpl
+    smpl.setBoneDirection("RShoulder", dir);
 }
 
 void OpenPoseWrapper::openPoseConfiguration_(op::Wrapper& opWrapper)

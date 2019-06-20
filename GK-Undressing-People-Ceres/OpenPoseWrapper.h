@@ -31,7 +31,7 @@ public:
     void runPoseEstimation();
 
     // Maps the found BODY25 3D pose to the SMPL skeleton
-    double* mapToSmpl(SMPLWrapper * smpl);
+    void mapToSmpl(SMPLWrapper& smpl);
 
 private: 
     static constexpr char pose_filename[] = "3D_keypoints.txt";

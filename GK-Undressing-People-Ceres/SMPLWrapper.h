@@ -41,6 +41,32 @@ public:
     static constexpr std::size_t JOINTS_NUM = POSE_SIZE / SPACE_DIM;
     static constexpr std::size_t VERTICES_NUM = 6890;
     static constexpr std::size_t WEIGHTS_BY_VERTEX = 4;     // number of joints each vertex depend on
+    //enum Joints {
+    //    jROOT,
+    //    jRhip,
+    //    jLHip,
+    //    jLowBack,
+    //    jRKnee,
+    //    jLKnee,
+    //    jMiddleBack,
+    //    jRAnkle,
+    //    jLAnkle,
+    //    jTopBack,
+    //    RFoot 	10
+    //    LFoot 	11
+    //    Neck 	12
+    //    RScapula 13
+    //    LScapula 14
+    //    Head 	15
+    //    RShoulder 16
+    //    LShoulder 17
+    //    RElbow	18
+    //    LElbow	19
+    //    RWrist	20
+    //    LWrist	21
+    //    RHand 	22
+    //    LHand	23
+    //};
 
     /*
     Class should be initialized with the gender of the model to use and with the path to the model folder,
@@ -54,11 +80,13 @@ public:
     char getGender() const                    { return gender_; };
     const E::MatrixXi& getFaces() const              { return this->faces_; };
     const E::MatrixXd& getTemplateVertices() const   { return this->verts_template_; };
-    const E::VectorXd& getTemplateMeanPoint() const  { return this->template_mean_point_; };
+    const E::VectorXd& getTemplateMeanPoint() const  { return this->mean_point_template_; };
     const DictionaryInt& getKeyVertices() const         { return this->key_vertices_; }
     const std::vector <DirPair>& getKeyDirections() const { return this->key_directions_; }
     // beware: returns pointer to the inner arrays
     State getStatePointers() const { return state_; }
+
+    void setBoneDirection(const std::string parent_joint_name, E::VectorXd direction);
 
     // Translation/Pose/shape parameters in the fucntions below can be nullptr: 
     // allows to get template/pose without shaping/shaping of the T-pose
@@ -131,7 +159,8 @@ private:
     // model info
     E::MatrixXi faces_;
     E::MatrixXd verts_template_;
-    E::VectorXd template_mean_point_;
+    E::VectorXd mean_point_template_;
+    E::MatrixXd joint_locations_template_;
     E::MatrixXd shape_diffs_[10];  // store only differences between blendshapes and template
     E::MatrixXd jointRegressorMat_;
     int joints_parents_[JOINTS_NUM];
