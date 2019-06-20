@@ -34,14 +34,15 @@ void OpenPoseWrapper::runPoseEstimation()
         opWrapper.start();
 
         // Save the last result
-        bool success = opWrapper.waitAndPop(last_pose_);
+        bool success = opWrapper.waitAndPop(last_pose_datum_);
         if (!success)
             throw std::exception("Processed datum could not be emplaced.");
 
         op::log("Stopping thread(s)", op::Priority::High);
         opWrapper.stop();
 
-        log3DKeypoints_(last_pose_);
+        log3DKeypoints_(last_pose_datum_);
+        last_pose_ = convertKeypointsToEigen_(last_pose_datum_);
 
         // Measuring total time
         op::printTime(opTimer, "OpenPose 3D pose estimation successfully finished. Total time: ", " seconds.", op::Priority::High);
@@ -130,4 +131,28 @@ void OpenPoseWrapper::log3DKeypoints_(PtrToDatum & datumsPtr)
     }
     else
         op::log("Nullptr or empty datumsPtr found.", op::Priority::High);
+}
+
+Eigen::MatrixXd OpenPoseWrapper::convertKeypointsToEigen_(PtrToDatum & datumsPtr)
+{
+    Eigen::MatrixXd keypoints;
+
+    if (datumsPtr != nullptr && !datumsPtr->empty())
+    {
+        const auto& poseKeypoints3D = datumsPtr->at(0)->poseKeypoints3D;
+        keypoints.resize(poseKeypoints3D.getSize(1), poseKeypoints3D.getSize(2));
+
+        int person = 0;
+        for (auto bodyPart = 0; bodyPart < poseKeypoints3D.getSize(1); bodyPart++)
+        {
+            for (auto xyscore = 0; xyscore < poseKeypoints3D.getSize(2); xyscore++)
+            {
+                keypoints(bodyPart, xyscore) = poseKeypoints3D[{person, bodyPart, xyscore}];
+            }
+        }
+    }
+    else
+        op::log("ConvertPoseToEigen: Nullptr or empty datumsPtr found.", op::Priority::High);
+
+    return keypoints;
 }
