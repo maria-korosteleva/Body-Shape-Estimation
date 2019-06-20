@@ -33,9 +33,11 @@
     TODO SMPL wrapper avalible for everyone
 */
 
-// global vars are needed for visualization purposes only
-static constexpr char output_path[] = "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Outputs/";
 
+static constexpr char output_path[] = "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Outputs/";
+static constexpr char smpl_model_path[] = "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources";
+
+// global vars are needed for visualization purposes only
 std::vector<Eigen::MatrixXd> iteration_outputs;
 int counter = 0;
 SMPLWrapper* smpl;
@@ -124,26 +126,16 @@ bool visulaze_progress_key_down(igl::opengl::glfw::Viewer& viewer, unsigned char
 
 void generateSMPLoutput()
 {
-    double* pose_res = new double[SMPLWrapper::POSE_SIZE];
-    double* shape_res = new double[SMPLWrapper::SHAPE_SIZE];
-    double translation_res[3] = { 0, 0, 0 };
-    for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
-    {
-        pose_res[i] = 0.;
-        if (i < SMPLWrapper::SHAPE_SIZE)
-            shape_res[i] = 0.;
-    }
-    pose_res[50] = -0.7854; // pi/4
-    pose_res[53] = 0.7854;
-    //shape_res[0] = -0.5;
+    SMPLWrapper new_smpl('f', smpl_model_path);
+    SMPLWrapper::State smpl_state_ptrs = new_smpl.getStatePointers();
+
+    smpl_state_ptrs.pose[50] = -0.7854; // pi/4
+    smpl_state_ptrs.pose[53] = 0.7854;
+    //smpl_state_ptrs.shape[0] = -0.5;
 
     CustomLogger logger(output_path, "smpl_output");
 
-    smpl->saveToObj(nullptr, pose_res, nullptr, logger.getLogFolderPath() + "pose_A.obj");
-    logger.logSMPLParams(shape_res, pose_res, translation_res);
-
-    delete[] shape_res;
-    delete[] pose_res;
+    logger.saveFinalModel(new_smpl);
 }
 
 int main()
@@ -161,7 +153,7 @@ int main()
         ///// 1. Load and Initialize stuff /////
         input = new GeneralMesh(input_name);
         std::cout << "Input mesh loaded!" << std::endl;
-        smpl = new SMPLWrapper(gender, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
+        smpl = new SMPLWrapper(gender, smpl_model_path);
         std::cout << "SMPL model loaded" << std::endl;
         optimizer = new ShapeUnderClothOptimizer(smpl, input, "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources");
         std::cout << "Optimizer loaded" << std::endl;
@@ -190,7 +182,7 @@ int main()
         ////// TODO 2.3 Map OpenPose pose to SMPL /////
 
         ///// 3. Run shape&pose optimization ////
-
+        /// TODO Update with the SMPLWrapper changes
         // for experiments
         //int gm_params[] = { 0, 10, 50 };
 

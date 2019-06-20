@@ -11,107 +11,14 @@ CustomLogger::~CustomLogger()
 {
 }
 
-void CustomLogger::logSMPLParams(const SMPLWrapper & smpl, const ShapeUnderClothOptimizer & optimizer) const
+void CustomLogger::saveFinalModel(const SMPLWrapper & smpl)
 {
-    double *shape_res, *pose_res, *translation_res;
-    
-    shape_res = optimizer.getEstimatesShapeParams();
-    pose_res = optimizer.getEstimatesPoseParams();
-    translation_res = optimizer.getEstimatesTranslationParams();
-    Eigen::MatrixXd finJointLocations = smpl.calcJointLocations(shape_res, pose_res);
-    
-    logSMPLParams(shape_res, pose_res, translation_res, &finJointLocations);
-}
+    smpl.logParameters(log_folder_name_ + smpl_param_filename_);
 
-void CustomLogger::logSMPLParams(
-    const double * shape_res, const double * pose_res, const double * translation_res, 
-    const Eigen::MatrixXd *jointPositions) const
-{
-    std::ofstream out(log_folder_name_ + smpl_param_filename_);
+    smpl.saveToObj(log_folder_name_ + final_3D_subfolder_ + "posed_shaped.obj");
+    smpl.saveShapedOnlyToObj(log_folder_name_ + final_3D_subfolder_ + "unposed_shaped.obj");
+    smpl.savePosedOnlyToObj(log_folder_name_ + final_3D_subfolder_ + "posed_unshaped.obj");
 
-    out << "Translation \n[ ";
-    if (translation_res != nullptr)
-        for (int i = 0; i < SMPLWrapper::SPACE_DIM; i++)
-            out << translation_res[i] << " , ";
-    else
-        for (int i = 0; i < SMPLWrapper::SPACE_DIM; i++)
-            out << "0." << " , ";
-    out << "]" << std::endl;
-
-    out << std::endl << "Pose params [ \n";
-    if (pose_res != nullptr)
-    {
-        for (int i = 0; i < SMPLWrapper::JOINTS_NUM; i++)
-        {
-            for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
-            {
-                out << pose_res[i * SMPLWrapper::SPACE_DIM + j] << " , ";
-            }
-            out << std::endl;
-        }
-    }
-    else
-    {
-        for (int i = 0; i < SMPLWrapper::JOINTS_NUM; i++)
-        {
-            for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
-            {
-                out << "0." << " , ";
-            }
-            out << std::endl;
-        }
-    }
-    out << "]" << std::endl;
-
-    out << std::endl << "Shape (betas) params [ \n";
-    if (shape_res != nullptr)
-        for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; i++)
-            out << shape_res[i] << " , ";
-    else
-        for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; i++)
-            out << "0." << " , ";
-    out << std::endl << "]" << std::endl;
-
-    out << std::endl << "Joints locations for posed and shaped model [\n";
-    if (jointPositions != nullptr)
-    {
-        Eigen::MatrixXd translatedJointLoc(*jointPositions);
-        // translate
-        if (translation_res != nullptr)
-        {
-            for (int i = 0; i < translatedJointLoc.rows(); ++i)
-            {
-                for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)
-                {
-                    translatedJointLoc(i, j) += translation_res[j];
-                }
-            }
-        }
-
-        out << translatedJointLoc << std::endl;
-    }
-    else
-    {
-        out << "\tNo joint locations supplied" << std::endl;
-    }
-    out << "]" << std::endl;
-
-    out.close();
-}
-
-void CustomLogger::saveFinalSMPLObject(const SMPLWrapper & smpl, const ShapeUnderClothOptimizer & optimizer) const
-{
-    CreateDirectory((log_folder_name_ + final_3D_subfolder_).c_str(), NULL);
-
-    double *shape_res, *pose_res, *translation_res;
-
-    shape_res = optimizer.getEstimatesShapeParams();
-    pose_res = optimizer.getEstimatesPoseParams();
-    translation_res = optimizer.getEstimatesTranslationParams();
-
-    smpl.saveToObj(translation_res, pose_res,   shape_res,  (log_folder_name_ + final_3D_subfolder_ + "posed_shaped.obj"));
-    smpl.saveToObj(translation_res, nullptr,    shape_res,  (log_folder_name_ + final_3D_subfolder_ + "unposed_shaped.obj"));
-    smpl.saveToObj(translation_res, pose_res,   nullptr,    (log_folder_name_ + final_3D_subfolder_ + "posed_unshaped.obj"));
 }
 
 void CustomLogger::saveIterationsSMPLObjects(const SMPLWrapper & smpl, const std::vector<Eigen::MatrixXd>& vertices_vector) const

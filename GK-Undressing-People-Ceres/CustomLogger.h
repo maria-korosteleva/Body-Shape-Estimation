@@ -22,11 +22,7 @@ public:
     std::string getPhotosFolderPath() const { return log_folder_name_ + photo_subfolder_; }
     std::string getOpenPoseGuessesPath() const { return log_folder_name_ + op_guesses_subfolder_; }
 
-    void logSMPLParams(const SMPLWrapper& smpl, const ShapeUnderClothOptimizer& optimizer) const;
-    void logSMPLParams(
-        const double* shape_res, const double* pose_res, const double* translation_res, 
-        const Eigen::MatrixXd *jointPositions = nullptr) const;
-    void saveFinalSMPLObject(const SMPLWrapper& smpl, const ShapeUnderClothOptimizer& optimizer) const;
+    void saveFinalModel(const SMPLWrapper& smpl);
     void saveIterationsSMPLObjects(const SMPLWrapper& smpl, const std::vector<Eigen::MatrixXd>& vertices_vector) const;
 
     void startRedirectCoutToFile(const std::string filename = "cout.txt");
