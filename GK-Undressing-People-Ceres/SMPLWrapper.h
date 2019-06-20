@@ -2,6 +2,7 @@
 /*
 The class is a wrapper around SMPL model. In 
 The class is able to calculate the SMPL model output based on pose and shape parameters.
+Careful with describing the joint names -- they are used in OpenPoseWrapper
 
 TODO: 
     - Add pose blendshape 
@@ -87,7 +88,7 @@ public:
     State getStatePointers() const { return state_; }
 
     // Method can only be used with SPACE_DIM==3
-    void setBoneDirection(const std::string parent_joint_name, E::Vector3d direction);
+    void rotateJointToDirection(const std::string joint_name, E::Vector3d direction);
 
     // Translation/Pose/shape parameters in the fucntions below can be nullptr: 
     // allows to get template/pose without shaping/shaping of the T-pose

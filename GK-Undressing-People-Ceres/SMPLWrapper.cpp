@@ -33,18 +33,16 @@ SMPLWrapper::~SMPLWrapper()
 {
 }
 
-void SMPLWrapper::setBoneDirection(const std::string parent_joint_name, E::Vector3d direction)
+void SMPLWrapper::rotateJointToDirection(const std::string joint_name, E::Vector3d direction)
 {
-    assert(SMPLWrapper::SPACE_DIM == 3 && "setBoneDirection() can only be used in 3D world");
+    assert(SMPLWrapper::SPACE_DIM == 3 && "rotateJointToDirection() can only be used in 3D world");
 
-    std::cout << "Setting Bone Direction for joint " << parent_joint_name << std::endl
+    std::cout << "Setting Bone Direction for joint " << joint_name << std::endl
         << "To direction \n" << direction << std::endl;
     
     // find id
     int joint_id;
-    try {
-        joint_id = joint_names_.at(parent_joint_name);
-    }
+    try { joint_id = joint_names_.at(joint_name); }
     catch (std::out_of_range& e)
     {
         std::cout << "SMPLWRapper::setBoneConnection was supplied with unknown joint" << std::endl;
@@ -55,7 +53,7 @@ void SMPLWrapper::setBoneDirection(const std::string parent_joint_name, E::Vecto
     int child_id;
     for (int i = 0; i < JOINTS_NUM; i++)
     {
-        if (joints_parents_[i] == joint_id)
+        if (joints_parents_[i] == joint_id)     
             child_id = i;
     }
 
@@ -65,33 +63,21 @@ void SMPLWrapper::setBoneDirection(const std::string parent_joint_name, E::Vecto
 
     std::cout << "Default direction \n" << default_dir << std::endl;
 
-    // calculate rotation from default bone to input direction
-    E::Vector3d axis = default_dir.cross(direction);
-    // E::Vector3d axis = direction.cross(default_dir);
-
-    std::cout << "Cross-product \n" << axis << std::endl;
-
-    // TODO check for division by zero
-    double angle = asin(axis.norm() / (direction.norm() * default_dir.norm()));
-    axis.normalize();
-    axis = angle * axis;
-
-    std::cout << "Angle-axis rotation \n" << axis << std::endl;
-
-    // set rotation to the parent_joint
-    // control for the default orientation
-    for (int i = 0; i < SPACE_DIM; i++)
+    // control for zero vectors
+    if (direction.norm() * default_dir.norm() > 0.0)
     {
-        state_.pose[joint_id * SPACE_DIM + i] = axis(i);
+        E::Vector3d axis = default_dir.cross(direction);
+        double angle = asin(axis.norm() / (direction.norm() * default_dir.norm()));
+        axis.normalize();
+        axis = angle * axis;
+
+        std::cout << "Angle-axis rotation \n" << axis << std::endl;
+
+        for (int i = 0; i < SPACE_DIM; i++)
+        {
+            state_.pose[joint_id * SPACE_DIM + i] = axis(i);
+        }
     }
-
-    // sanity check
-    E::MatrixXd updatedJointLocations = calcJointLocations();
-    E::Vector3d current_dir =
-        (updatedJointLocations.row(child_id) - updatedJointLocations.row(joint_id)).transpose();
-    std::cout << "New bone direction \n" << current_dir << std::endl;
-    std::cout << "Target-fact difference \n" << direction - current_dir << std::endl;
-
 }
 
 E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * const shape, E::MatrixXd * pose_jac, E::MatrixXd * shape_jac) const

@@ -147,6 +147,7 @@ int main()
     try {
         char gender = 'f';
         const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";  // A-pose
+        //const char* input_name = "D:/Data/SketchFab/Sexy Girl.obj";  // A-pose
         //gender = 'm';
         //const char* input_name = "D:/Data/SketchFab/Web.obj";
 

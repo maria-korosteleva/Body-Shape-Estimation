@@ -70,7 +70,7 @@ void OpenPoseWrapper::mapToSmpl(SMPLWrapper& smpl)
     Eigen::Vector3d dir = (last_pose_.row(3) - last_pose_.row(2)).transpose();
 
     // send to smpl
-    smpl.setBoneDirection("RShoulder", dir);
+    smpl.rotateJointToDirection("RShoulder", dir);
 }
 
 void OpenPoseWrapper::openPoseConfiguration_(op::Wrapper& opWrapper)
