@@ -59,7 +59,7 @@ bool visulaze_progress_pre_draw(igl::opengl::glfw::Viewer & viewer) {
             Eigen::MatrixXd smpl_key_points(input->getKeyPoints().size(), 3);
 
             CoordsDictionary inputKeyPoints = input->getKeyPoints();
-            Dictionary smplKeyVerts = smpl->getKeyVertices();
+            DictionaryInt smplKeyVerts = smpl->getKeyVertices();
             int res_id = 0;
             for (auto const& keyIterator : inputKeyPoints)
             {

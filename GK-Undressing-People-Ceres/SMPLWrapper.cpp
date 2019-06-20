@@ -34,11 +34,9 @@ SMPLWrapper::SMPLWrapper(char gender, const char* path)
 
 }
 
-
 SMPLWrapper::~SMPLWrapper()
 {
 }
-
 
 E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * const shape, E::MatrixXd * pose_jac, E::MatrixXd * shape_jac) const
 {
@@ -90,7 +88,6 @@ E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * con
     return verts;
 }
 
-
 E::MatrixXd SMPLWrapper::calcJointLocations(const double * shape, const double * pose = nullptr)  const
 {
     E::MatrixXd verts = this->calcModel(nullptr, shape);
@@ -107,7 +104,6 @@ E::MatrixXd SMPLWrapper::calcJointLocations(const double * shape, const double *
 
     return posedJointLocations;
 }
-
 
 void SMPLWrapper::saveToObj(const double* translation, const double* pose, const double* shape, const std::string path) const
 {
@@ -127,7 +123,6 @@ void SMPLWrapper::saveToObj(const double* translation, const double* pose, const
     igl::writeOBJ(path, verts, this->faces_);
 }
 
-
 void SMPLWrapper::readTemplate_()
 {
     std::string file_name(this->gender_path_);
@@ -142,7 +137,6 @@ void SMPLWrapper::readTemplate_()
         throw std::exception(message.c_str());
     }
 }
-
 
 void SMPLWrapper::readJointMat_()
 {
@@ -168,7 +162,6 @@ void SMPLWrapper::readJointMat_()
     inFile.close();
 }
 
-
 void SMPLWrapper::readShapes_()
 {
     std::string file_path(this->gender_path_);
@@ -188,7 +181,6 @@ void SMPLWrapper::readShapes_()
         this->shape_diffs_[i] -= this->verts_template_;
     }
 }
-
 
 void SMPLWrapper::readWeights_()
 {
@@ -227,7 +219,6 @@ void SMPLWrapper::readWeights_()
     inFile.close();
 }
 
-
 void SMPLWrapper::readHierarchy_()
 {
     std::string file_name(this->general_path_);
@@ -253,7 +244,6 @@ void SMPLWrapper::readHierarchy_()
     inFile.close();
 }
 
-
 void SMPLWrapper::readKeyVertices_()
 {
     std::string file_name(this->general_path_);
@@ -275,12 +265,11 @@ void SMPLWrapper::readKeyVertices_()
     {
         inFile >> key_name;
         inFile >> vertexId;
-        this->key_vertices_.insert(DictEntry(key_name, vertexId));
+        this->key_vertices_.insert(DictEntryInt(key_name, vertexId));
     }
 
     inFile.close();
 }
-
 
 void SMPLWrapper::readKeyDirections_()
 {
@@ -309,7 +298,6 @@ void SMPLWrapper::readKeyDirections_()
     inFile.close();
 }
 
-
 void SMPLWrapper::shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::MatrixXd* shape_jac) const
 {
 #ifdef DEBUG
@@ -328,7 +316,6 @@ void SMPLWrapper::shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::
         }
     }
 }
-
 
 void SMPLWrapper::poseSMPL_(const double * const pose, E::MatrixXd & verts, E::MatrixXd * pose_jac) const
 {
@@ -354,7 +341,6 @@ void SMPLWrapper::poseSMPL_(const double * const pose, E::MatrixXd & verts, E::M
         }
     }
 }
-
 
 E::MatrixXd SMPLWrapper::getJointsTransposedGlobalTransformation_(
     const double * const pose,
@@ -483,7 +469,6 @@ E::MatrixXd SMPLWrapper::getJointsTransposedGlobalTransformation_(
     return pointTransformTotal;
 }
 
-
 E::MatrixXd SMPLWrapper::get3DLocalTransformMat_(const double * const jointAxisAngleRotation, const E::MatrixXd & jointToParentDist, E::MatrixXd* localTransformJac) const
 {
     // init
@@ -558,7 +543,6 @@ E::MatrixXd SMPLWrapper::get3DLocalTransformMat_(const double * const jointAxisA
     return localTransform;
 }
 
-
 E::MatrixXd SMPLWrapper::get3DTranslationMat_(const E::MatrixXd & translationVector) const
 {
     E::MatrixXd translation;
@@ -567,7 +551,6 @@ E::MatrixXd SMPLWrapper::get3DTranslationMat_(const E::MatrixXd & translationVec
 
     return translation;
 }
-
 
 E::SparseMatrix<double> SMPLWrapper::getLBSMatrix_(E::MatrixXd & verts) const
 {
@@ -600,4 +583,3 @@ E::SparseMatrix<double> SMPLWrapper::getLBSMatrix_(E::MatrixXd & verts) const
 
     return LBSMat;
 }
-

@@ -20,8 +20,8 @@ TODO:
 
 namespace E = Eigen;
 
-using Dictionary = std::map<std::string, int>;
-using DictEntry = std::pair<std::string, int>;
+using DictionaryInt = std::map<std::string, int>;
+using DictEntryInt = std::pair<std::string, int>;
 using DirPair = std::pair < std::string, std::string >;
 
 class SMPLWrapper
@@ -47,7 +47,7 @@ public:
     const E::MatrixXi& getFaces() const              { return this->faces_; };
     const E::MatrixXd& getTemplateVertices() const   { return this->verts_template_; };
     const E::VectorXd& getTemplateMeanPoint() const  { return this->template_mean_point_; };
-    const Dictionary& getKeyVertices() const         { return this->key_vertices_; }
+    const DictionaryInt& getKeyVertices() const         { return this->key_vertices_; }
     const std::vector <DirPair>& getKeyDirections() const { return this->key_directions_; }
 
     // Pose/shape parameters can be nullptr: allows to get template/pose without shaping/shaping of the T-pose
@@ -75,14 +75,16 @@ private:
     E::MatrixXd shape_diffs_[10];  // store only differences between blendshapes and template
     E::MatrixXd jointRegressorMat_;
     int joints_parents_[JOINTS_NUM];
+    DictionaryInt joint_names_;
     E::SparseMatrix<double> weights_;
     // vertices on the important parts of the body
-    Dictionary key_vertices_;
+    DictionaryInt key_vertices_;
     std::vector <DirPair> key_directions_;
 
     // private functions
     void readTemplate_();
     void readJointMat_();
+    //void readJointNames_();
     void readShapes_();
     void readWeights_();
     void readHierarchy_();

@@ -1,0 +1,50 @@
+Root 0
+Rhip 1
+LHip 2
+LowBack 3
+RKnee	4 
+LKnee	5
+MiddleBack 6
+RAnkle 
+
+    7. 'ankle_right': [21, 22, 23],
+    8. 'ankle_left': [24, 25, 26],
+    9. 'back_top': [27, 28, 29],
+    10. 'feet_tip_right': [30, 31, 32],
+    11. 'feet_tip_left': [33, 34, 35],
+    12. 'neck': [36, 37, 38],
+    13. 'scapula_right': [39, 40, 41],
+    14. 'scapula_left': [42, 43, 44],
+    15. 'head': [45, 46, 47],    # higher than neck
+    16. 'shoulder_right': [48, 49, 50],
+    17. 'shoulder_left': [51, 52, 53],
+    18. 'elbow_right': [54, 55, 56],
+    19. 'elbow_left': [57, 58, 59],
+    20. 'wrist_right': [60, 61, 62],
+    21. 'wrist_left': [63, 64, 65],
+    22. 'hand_tip_right': [66, 67, 68],
+    23. 'hand_tip_left': [69, 70, 71],
+}
+RHip 1
+
+
+head 411 
+nose 331
+RHand 5475
+LHand 2200
+RElb 5113
+LElb 1635
+RShould 4721 
+LShould 1239
+LFoot 3438
+RFoot 6838 
+LKnee 1013 
+RKnee 4533
+LHip 3475 
+RHip 4985 
+back 3471 
+belly 1769
+RHandFing 5888
+LHandFing 2430
+RFootFing 6646
+LFootFing 3244
