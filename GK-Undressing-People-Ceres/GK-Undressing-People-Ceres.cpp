@@ -189,6 +189,12 @@ int main()
 
         logger.saveFinalModel(*smpl);
 
+        igl::opengl::glfw::Viewer viewer;
+        //igl::opengl::glfw::imgui::ImGuiMenu menu;
+        //viewer.plugins.push_back(&menu);
+        viewer.data().set_mesh(smpl->calcModel(), smpl->getFaces());
+        viewer.launch();
+
         ///// 3. Run shape&pose optimization ////
         /// TODO Update with the SMPLWrapper changes
         // for experiments

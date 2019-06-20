@@ -86,7 +86,8 @@ public:
     // beware: returns pointer to the inner arrays
     State getStatePointers() const { return state_; }
 
-    void setBoneDirection(const std::string parent_joint_name, E::VectorXd direction);
+    // Method can only be used with SPACE_DIM==3
+    void setBoneDirection(const std::string parent_joint_name, E::Vector3d direction);
 
     // Translation/Pose/shape parameters in the fucntions below can be nullptr: 
     // allows to get template/pose without shaping/shaping of the T-pose
