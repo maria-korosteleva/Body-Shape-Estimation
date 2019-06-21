@@ -44,32 +44,6 @@ public:
     static constexpr std::size_t JOINTS_NUM = POSE_SIZE / SPACE_DIM;
     static constexpr std::size_t VERTICES_NUM = 6890;
     static constexpr std::size_t WEIGHTS_BY_VERTEX = 4;     // number of joints each vertex depend on
-    //enum Joints {
-    //    jROOT,
-    //    jRhip,
-    //    jLHip,
-    //    jLowBack,
-    //    jRKnee,
-    //    jLKnee,
-    //    jMiddleBack,
-    //    jRAnkle,
-    //    jLAnkle,
-    //    jTopBack,
-    //    RFoot 	10
-    //    LFoot 	11
-    //    Neck 	12
-    //    RScapula 13
-    //    LScapula 14
-    //    Head 	15
-    //    RShoulder 16
-    //    LShoulder 17
-    //    RElbow	18
-    //    LElbow	19
-    //    RWrist	20
-    //    LWrist	21
-    //    RHand 	22
-    //    LHand	23
-    //};
 
     /*
     Class should be initialized with the gender of the model to use and with the path to the model folder,

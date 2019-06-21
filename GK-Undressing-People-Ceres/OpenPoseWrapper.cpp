@@ -56,6 +56,13 @@ void OpenPoseWrapper::runPoseEstimation()
 
 void OpenPoseWrapper::mapToSmpl(SMPLWrapper& smpl)
 {
+    if (last_pose_.size() == 0)
+    {
+        op::log("OpenPose::Error::request to match detected pose to smpl made before any pose was detected", 
+            op::Priority::High);
+        throw std::exception("OpenPose::Error::Request to match detected pose to smpl made before any pose was detected");
+    }
+
     const std::map<unsigned int, std::string>& keypoints_names = op::getPoseBodyPartMapping(op::PoseModel::BODY_25);
     const auto& keypoints_pairs = op::getPosePartPairs(op::PoseModel::BODY_25);
     // map the pairs const 
@@ -85,6 +92,10 @@ void OpenPoseWrapper::mapToSmpl(SMPLWrapper& smpl)
 
         std::cout << "OP Keypoint pair " << keypoint << " -> " << child << std::endl;
 
+        if (!isDetected_(keypoint) || !isDetected_(child))
+            continue;
+
+        // implicitly cut the 4th coordinate
         Eigen::Vector3d dir = (last_pose_.row(child) - last_pose_.row(keypoint)).transpose();
 
         // send to smpl
@@ -195,11 +206,27 @@ Eigen::MatrixXd OpenPoseWrapper::convertKeypointsToEigen_(PtrToDatum & datumsPtr
     else
         op::log("ConvertPoseToEigen: Nullptr or empty datumsPtr found.", op::Priority::High);
 
+    std::cout << "Converted keypoints " << std::endl
+        << keypoints << std::endl;
+
     return keypoints;
 }
 
 Eigen::MatrixXd OpenPoseWrapper::normalizeKeypoints_(const Eigen::MatrixXd& keypoints)
 {
-    Eigen::VectorXd mean_point = keypoints.colwise().mean();
-    return keypoints.rowwise() - mean_point.transpose();
+    Eigen::MatrixXd normalized(keypoints);
+    Eigen::Matrix<double, -1, 3> coords_block = normalized.block(0, 0, keypoints.rows(), 3);
+    Eigen::Vector3d mean_point = coords_block.colwise().mean();
+    normalized.block(0, 0, normalized.rows(), 3) = (coords_block.rowwise() - mean_point.transpose());
+
+    return normalized;
+}
+
+bool OpenPoseWrapper::isDetected_(const int keypoint)
+{
+    std::cout << "Check detected " << keypoint
+        << " : " << last_pose_(keypoint, 3) 
+        << " : " << (last_pose_(keypoint, 3) > 0) << std::endl;
+
+    return last_pose_(keypoint, 3) > 0.0;
 }
