@@ -93,7 +93,12 @@ void OpenPoseWrapper::mapToSmpl(SMPLWrapper& smpl)
         std::cout << "OP Keypoint pair " << keypoint << " -> " << child << std::endl;
 
         if (!isDetected_(keypoint) || !isDetected_(child))
+        {
+            std::cout << "OpenPoseWrapper::Warning::Keypoint pair " 
+                << keypoint << " -> " << child 
+                << " is skipped. One or both ends were not detected." << std::endl;
             continue;
+        }
 
         // implicitly cut the 4th coordinate
         Eigen::Vector3d dir = (last_pose_.row(child) - last_pose_.row(keypoint)).transpose();
@@ -224,9 +229,5 @@ Eigen::MatrixXd OpenPoseWrapper::normalizeKeypoints_(const Eigen::MatrixXd& keyp
 
 bool OpenPoseWrapper::isDetected_(const int keypoint)
 {
-    std::cout << "Check detected " << keypoint
-        << " : " << last_pose_(keypoint, 3) 
-        << " : " << (last_pose_(keypoint, 3) > 0) << std::endl;
-
     return last_pose_(keypoint, 3) > 0.0;
 }
