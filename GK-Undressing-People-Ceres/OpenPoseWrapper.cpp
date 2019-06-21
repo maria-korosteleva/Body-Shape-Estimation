@@ -59,38 +59,43 @@ void OpenPoseWrapper::mapToSmpl(SMPLWrapper& smpl)
     const auto& keypoints_pairs = op::getPosePartPairs(op::PoseModel::BODY_25);
     // map the pairs const 
 
-    const int keypoint_to_match[10] = { 2, 3, 5, 6, 9, 10, 11, 12, 13, 14 };
+    static constexpr int n_pairs = 12;
+    Eigen::Matrix<double, n_pairs, 2> directions_to_match;
+    // Important: directions should follow the hierarchy -- from root to end effectors
+    directions_to_match <<
+        8, 1,
+        1, 0,
+        2, 3,
+        3, 4,
+        5, 6,
+        6, 7,
+        9, 10,
+        10, 11,
+        11, 22,
+        12, 13,
+        13, 14,
+        14, 19;
 
-    // special case -- root -- 8
-    // special case -- neck -- 0
     // the rest
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < n_pairs; i++)
     {
-        int keypoint = keypoint_to_match[i];
-        int child;
-        for (int j = 0; j < keypoints_pairs.size(); j++)
-        {
-            if (keypoints_pairs[j] == keypoint)
-                child = keypoints_pairs[j + 1];;
-        }
+        int keypoint = directions_to_match(i, 0);
+        int child = directions_to_match(i, 1);
 
-        std::cout << "Keypoint pair " << keypoint << " -> " << child << std::endl;
+        std::cout << "OP Keypoint pair " << keypoint << " -> " << child << std::endl;
 
         Eigen::Vector3d dir = (last_pose_.row(child) - last_pose_.row(keypoint)).transpose();
 
         // send to smpl
-        smpl.rotateJointToDirection(keypoints_names.at(keypoint), dir);
+        if (keypoint == 8)
+        {
+            smpl.rotateJointToDirection("Root", dir);
+        }
+        else
+        {
+            smpl.rotateJointToDirection(keypoints_names.at(keypoint), dir);
+        }
     }
-
-    // take a 'parent'
-    std::string keypoint = "RShoulder";
-    auto it = std::find_if(keypoints_names.begin(), keypoints_names.end(),
-        [&keypoint](const std::pair<unsigned int, std::string> &p) {
-        return p.second == keypoint;
-    });
-    // calculate direction to the 'child'
-    // 3 is RElbow
-    // 2 is RShoulder
 }
 
 void OpenPoseWrapper::openPoseConfiguration_(op::Wrapper& opWrapper)

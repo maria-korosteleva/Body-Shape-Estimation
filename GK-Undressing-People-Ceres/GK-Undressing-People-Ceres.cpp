@@ -114,8 +114,7 @@ bool visulaze_progress_key_down(igl::opengl::glfw::Viewer& viewer, unsigned char
         viewer.data().add_edges(verts, closest_points, Eigen::RowVector3d(1., 0., 0.));
 
         // visualize joint locations
-        Eigen::MatrixXd finJointLocations = smpl->calcJointLocations(
-            optimizer->getEstimatesShapeParams(), optimizer->getEstimatesPoseParams());
+        Eigen::MatrixXd finJointLocations = smpl->calcJointLocations();
         for (int i = 0; i < finJointLocations.rows(); ++i)
         {
             for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)

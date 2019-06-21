@@ -101,7 +101,6 @@ public:
     // using current SMPLWrapper state
     E::MatrixXd calcModel(E::MatrixXd * pose_jac = nullptr, E::MatrixXd * shape_jac = nullptr) const;
 
-    E::MatrixXd calcJointLocations(const double * shape, const double * pose) const;
     // using current SMPLWrapper state
     E::MatrixXd calcJointLocations() const;
 
@@ -131,6 +130,8 @@ private:
     // if not nullptr, pose_jac is expected to be an array of POSE_SIZE of MatrixXd, one matrix for each pose parameter
     void poseSMPL_(const double * const pose, E::MatrixXd & verts, E::MatrixXd * pose_jac = nullptr) const;
 
+    E::MatrixXd calcJointLocations_(const double * shape = nullptr, const double * pose = nullptr) const;
+
     // Assumes that SPACE_DIM == 3
     // Assumes the default joint angles to be all zeros
     // Returns matrix of dimentions (SPACE_DIM + 1) * JOINTS_NUM  x  SPACE_DIM 
@@ -138,14 +139,17 @@ private:
     // can calculate analytic jacobian
     E::MatrixXd getJointsTransposedGlobalTransformation_(
         const double * const pose, 
-        E::MatrixXd & jointLocations, 
+        const E::MatrixXd & jointLocations, 
         E::MatrixXd * jacsTotal = nullptr, 
         E::MatrixXd * finJointLocations = nullptr) const;
     
     // Assumes that SPACE_DIM == 3
     // fills the dependence of the Transformation matric on all three coordinates for the input rotation. 
     // When initialized jac is expected to have space for POSE_SIZE Matrices
-    E::MatrixXd get3DLocalTransformMat_(const double * const jointAxisAngleRotation, const E::MatrixXd & jointToParentDist, E::MatrixXd* localTransformJac = nullptr) const;
+    E::MatrixXd get3DLocalTransformMat_(
+        const double * const jointAxisAngleRotation, 
+        const E::MatrixXd & jointToParentDist, 
+        E::MatrixXd* localTransformJac = nullptr) const;
     
     // Assumes that SPACE_DIM == 3
     E::MatrixXd get3DTranslationMat_(const E::MatrixXd & translationVector) const;
