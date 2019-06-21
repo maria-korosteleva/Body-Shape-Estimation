@@ -22,6 +22,7 @@ public:
         const std::string models_path = "./models/");
     ~OpenPoseWrapper();
 
+    // Each keypoint is in 4D, indicating if it was estimated
     Eigen::MatrixXd getKeypoints() { return last_pose_; }
 
     // Runs the 3D pose estimation for the input scan set before
@@ -44,6 +45,7 @@ private:
     // see https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/examples/tutorial_api_cpp/11_asynchronous_custom_output.cpp
     void log3DKeypoints_(PtrToDatum& datumsPtr);
     Eigen::MatrixXd convertKeypointsToEigen_(PtrToDatum& datumsPtr);
+    Eigen::MatrixXd normalizeKeypoints_(const Eigen::MatrixXd& keypoints);
     
     std::string images_path_;
     std::string cameras_path_;

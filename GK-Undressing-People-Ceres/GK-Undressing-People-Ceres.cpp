@@ -193,6 +193,10 @@ int main()
         //igl::opengl::glfw::imgui::ImGuiMenu menu;
         //viewer.plugins.push_back(&menu);
         viewer.data().set_mesh(smpl->calcModel(), smpl->getFaces());
+        Eigen::MatrixXd op_keypoints = openpose.getKeypoints();
+        op_keypoints = op_keypoints.block(0, 0, op_keypoints.rows(), 3);
+
+        viewer.data().set_points(op_keypoints, Eigen::RowVector3d(1., 1., 0.));
         viewer.launch();
 
         ///// 3. Run shape&pose optimization ////

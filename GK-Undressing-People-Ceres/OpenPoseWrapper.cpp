@@ -43,6 +43,7 @@ void OpenPoseWrapper::runPoseEstimation()
 
         log3DKeypoints_(last_pose_datum_);
         last_pose_ = convertKeypointsToEigen_(last_pose_datum_);
+        last_pose_ = normalizeKeypoints_(last_pose_);
 
         // Measuring total time
         op::printTime(opTimer, "OpenPose 3D pose estimation successfully finished. Total time: ", " seconds.", op::Priority::High);
@@ -195,4 +196,10 @@ Eigen::MatrixXd OpenPoseWrapper::convertKeypointsToEigen_(PtrToDatum & datumsPtr
         op::log("ConvertPoseToEigen: Nullptr or empty datumsPtr found.", op::Priority::High);
 
     return keypoints;
+}
+
+Eigen::MatrixXd OpenPoseWrapper::normalizeKeypoints_(const Eigen::MatrixXd& keypoints)
+{
+    Eigen::VectorXd mean_point = keypoints.colwise().mean();
+    return keypoints.rowwise() - mean_point.transpose();
 }
