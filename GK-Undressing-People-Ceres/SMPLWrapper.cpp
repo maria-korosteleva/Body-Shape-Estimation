@@ -37,8 +37,8 @@ void SMPLWrapper::rotateJointToDirection(const std::string joint_name, E::Vector
 {
     assert(SMPLWrapper::SPACE_DIM == 3 && "rotateJointToDirection() can only be used in 3D world");
 
-    std::cout << "Setting Bone Direction for joint " << joint_name << std::endl;
-       // << "To direction \n" << direction << std::endl;
+    std::cout << "Setting Bone Direction for joint " << joint_name << std::endl
+        << "To direction \n" << direction << std::endl;
     
     // find id
     int joint_id;
@@ -74,23 +74,43 @@ void SMPLWrapper::rotateJointToDirection(const std::string joint_name, E::Vector
     E::Vector3d default_dir =
         (joint_locations.row(child_id) - joint_locations.row(joint_id)).transpose();
 
-    //std::cout << "Default direction \n" << default_dir << std::endl;
+    std::cout << "Default direction \n" << default_dir << std::endl;
 
     // control for zero vectors
     if (direction.norm() * default_dir.norm() > 0.0)
     {
         E::Vector3d axis = default_dir.cross(direction);
-        double angle = asin(axis.norm() / (direction.norm() * default_dir.norm()));
+        double sin_a = axis.norm() / (direction.norm() * default_dir.norm());
+        double cos_a = default_dir.dot(direction) / (direction.norm() * default_dir.norm());
+        double angle = atan2(sin_a, cos_a);
+
+        std::cout << "Angle: " << angle * 180 / 3.1415 << std::endl;
+
         axis.normalize();
         axis = angle * axis;
 
-        //std::cout << "Angle-axis rotation \n" << axis << std::endl;
+        std::cout << "Angle-axis rotation \n" << axis << std::endl;
 
         for (int i = 0; i < SPACE_DIM; i++)
         {
             state_.pose[joint_id * SPACE_DIM + i] = axis(i);
         }
     }
+
+    // sanity check
+    E::MatrixXd new_joint_locations = calcJointLocations_(nullptr, state_.pose);
+    E::Vector3d new_dir = (new_joint_locations.row(child_id) - new_joint_locations.row(joint_id)).transpose();
+    
+    std::cout << "Difference with the target " << std::endl
+        << new_dir - direction << std::endl;
+
+    E::Vector3d axis = default_dir.cross(new_dir);
+    double sin_a = axis.norm() / (new_dir.norm() * default_dir.norm());
+    double cos_a = default_dir.dot(new_dir) / (new_dir.norm() * default_dir.norm());
+    double angle = atan2(sin_a, cos_a);
+
+    std::cout << "Fact Turned Angle: " << angle * 180 / 3.1415 << std::endl;
+
 }
 
 E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * const shape, E::MatrixXd * pose_jac, E::MatrixXd * shape_jac) const
@@ -661,7 +681,7 @@ E::MatrixXd SMPLWrapper::get3DLocalTransformMat_(const double * const jointAxisA
     if (norm > 0.0001)  // don't waste computations on zero joint movement
     {
         // apply Rodrigues formula
-        exponent += w_skew * sin(norm) + w_skew * w_skew * (1. - cos(norm));
+        exponent = E::Matrix3d::Identity() * cos(norm) + w_skew * sin(norm) + w_skew * w_skew * (1. - cos(norm));
         localTransform.block(0, 0, 3, 3) = exponent;
     }
     

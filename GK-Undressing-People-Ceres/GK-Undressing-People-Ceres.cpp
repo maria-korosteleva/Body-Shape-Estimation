@@ -166,7 +166,7 @@ int main()
         std::cout << "Photographer loaded" << std::endl;
 
         CustomLogger logger("C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Outputs/", 
-            "map_op_most_body" + input->getName());
+            "map_op_pose_debug" + input->getName());
 
         ///// 2. Initial pose estimation /////
         ////// 2.1 Prepare pictures for OpenPose: Photographer /////
