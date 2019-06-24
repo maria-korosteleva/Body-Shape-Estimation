@@ -65,10 +65,11 @@ public:
 
     // Methods can only be used with SPACE_DIM==3
     void rotateJointToDirection(const std::string joint_name, E::Vector3d direction);
-    
     // Matching both directions exaclty is not guaranteed -- 
     // vertical direction will be matched approximately
     void rotateRoot(E::Vector3d body_up, E::Vector3d body_right_to_left);
+    // assumes that hips are already aligned by root rotation
+    void twistBack(E::Vector3d shoulder_dir);
 
     // Translation/Pose/shape parameters in the fucntions below can be nullptr: 
     // allows to get template/pose without shaping/shaping of the T-pose
@@ -79,8 +80,6 @@ public:
         E::MatrixXd * pose_jac = nullptr, E::MatrixXd * shape_jac = nullptr);
     // using current SMPLWrapper state
     E::MatrixXd calcModel(E::MatrixXd * pose_jac = nullptr, E::MatrixXd * shape_jac = nullptr);
-
-    // using current SMPLWrapper state
     E::MatrixXd calcJointLocations();
 
     void saveToObj(const double * translation, const double * pose, const double* shape, const std::string path);

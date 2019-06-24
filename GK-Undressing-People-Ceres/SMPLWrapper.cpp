@@ -150,6 +150,10 @@ void SMPLWrapper::rotateRoot(E::Vector3d body_up, E::Vector3d body_right_to_left
 
 }
 
+void SMPLWrapper::twistBack(E::Vector3d shoulder_hip_diff)
+{
+}
+
 E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * const shape, 
     E::MatrixXd * pose_jac, E::MatrixXd * shape_jac)
 {

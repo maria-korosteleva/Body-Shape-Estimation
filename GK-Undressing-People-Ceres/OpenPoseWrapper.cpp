@@ -63,55 +63,9 @@ void OpenPoseWrapper::mapToSmpl(SMPLWrapper& smpl)
         throw std::exception("OpenPose::Error::Request to match detected pose to smpl made before any pose was detected");
     }
 
-    // get the model info
-    const std::map<unsigned int, std::string>& keypoints_names = op::getPoseBodyPartMapping(op::PoseModel::BODY_25);
-    const auto& keypoints_pairs = op::getPosePartPairs(op::PoseModel::BODY_25);
-
-    // set the root
-    int root_id = 8; int neck_id = 1; int Lhip_id = 12; int Rhip_id = 9;
-    if (isDetected_(Lhip_id) && isDetected_(Rhip_id) && isDetected_(root_id) && isDetected_(neck_id))
-    {
-        Eigen::Vector3d up =
-            (last_pose_.row(neck_id) - last_pose_.row(root_id)).transpose();
-        Eigen::Vector3d right_to_left =
-            (last_pose_.row(Lhip_id) - last_pose_.row(Rhip_id)).transpose();
-        smpl.rotateRoot(up, right_to_left);
-    } // or fail
-    else
-    {
-        std::cout << "OpenPoseWrapper::Warning::Root rotation setup "
-            << " is skipped. One or both ends were not detected." << std::endl;
-    }
-    
-
-    // the end effectors joints
-    static constexpr int n_dirs = 11;
-    Eigen::Matrix<double, n_dirs, 2> directions_to_match;
-    // Important: directions should follow the hierarchy -- from root to end effectors
-    directions_to_match <<
-        1, 0,   2, 3,   3, 4,   5, 6,   6, 7,   9, 10,   10, 11,   11, 22,   12, 13,   13, 14,   14, 19;
-
-    for (int i = 0; i < n_dirs; i++)
-    {
-        int keypoint = directions_to_match(i, 0);
-        int child = directions_to_match(i, 1);
-
-        std::cout << "OP Keypoint pair " << keypoint << " -> " << child << std::endl;
-
-        if (!isDetected_(keypoint) || !isDetected_(child))
-        {
-            std::cout << "OpenPoseWrapper::Warning::Keypoint pair " 
-                << keypoint << " -> " << child 
-                << " is skipped. One or both ends were not detected." << std::endl;
-            continue;
-        }
-
-        // implicitly cut the 4th coordinate
-        Eigen::Vector3d dir = (last_pose_.row(child) - last_pose_.row(keypoint)).transpose();
-        
-        // keypoint names are the same as smpl joints names
-        smpl.rotateJointToDirection(keypoints_names.at(keypoint), dir);
-    }
+    sendRootRotationToSMPL_(smpl);
+    sendTwistToSMPL_(smpl);
+    sendLimbsRotationToSMPL_(smpl);
 }
 
 void OpenPoseWrapper::openPoseConfiguration_(op::Wrapper& opWrapper)
@@ -229,4 +183,73 @@ Eigen::MatrixXd OpenPoseWrapper::normalizeKeypoints_(const Eigen::MatrixXd& keyp
 bool OpenPoseWrapper::isDetected_(const int keypoint)
 {
     return last_pose_(keypoint, 3) > 0.0;
+}
+
+void OpenPoseWrapper::sendRootRotationToSMPL_(SMPLWrapper & smpl)
+{
+    int root_id = 8, neck_id = 1, Lhip_id = 12, Rhip_id = 9;
+    
+    if (isDetected_(Lhip_id) && isDetected_(Rhip_id) && isDetected_(root_id) && isDetected_(neck_id))
+    {
+        Eigen::Vector3d up =
+            (last_pose_.row(neck_id) - last_pose_.row(root_id)).transpose();
+        Eigen::Vector3d right_to_left =
+            (last_pose_.row(Lhip_id) - last_pose_.row(Rhip_id)).transpose();
+        smpl.rotateRoot(up, right_to_left);
+    } // or fail
+    else
+    {
+        std::cout << "OpenPoseWrapper::Warning::Root rotation setup is skipped."
+            << "Some of the involved keypoints were not detected." << std::endl;
+    }
+}
+
+void OpenPoseWrapper::sendTwistToSMPL_(SMPLWrapper & smpl)
+{
+    int Rshoulder_id = 2, Lshouder_id = 5;
+
+    if (isDetected_(Rshoulder_id) && isDetected_(Lshouder_id))
+    {
+        Eigen::Vector3d shoulder_dir =
+            (last_pose_.row(Rshoulder_id) - last_pose_.row(Lshouder_id)).transpose();
+        smpl.twistBack(shoulder_dir);
+    } // or fail
+    else
+    {
+        std::cout << "OpenPoseWrapper::Warning::Back Twist setup is skipped."
+            << "Some of the involved keypoints were not detected." << std::endl;
+    }
+}
+
+void OpenPoseWrapper::sendLimbsRotationToSMPL_(SMPLWrapper & smpl)
+{
+    const std::map<unsigned int, std::string>& keypoints_names = op::getPoseBodyPartMapping(op::PoseModel::BODY_25);
+
+    static constexpr int n_dirs = 11;
+    Eigen::Matrix<double, n_dirs, 2> directions_to_match;
+    // Important: directions should follow the hierarchy -- from root to end effectors
+    directions_to_match <<
+        1, 0, 2, 3, 3, 4, 5, 6, 6, 7, 9, 10, 10, 11, 11, 22, 12, 13, 13, 14, 14, 19;
+
+    for (int i = 0; i < n_dirs; i++)
+    {
+        int keypoint = directions_to_match(i, 0);
+        int child = directions_to_match(i, 1);
+
+        std::cout << "OP Keypoint pair " << keypoint << " -> " << child << std::endl;
+
+        if (!isDetected_(keypoint) || !isDetected_(child))
+        {
+            std::cout << "OpenPoseWrapper::Warning::Keypoint pair "
+                << keypoint << " -> " << child
+                << " is skipped. One or both ends were not detected." << std::endl;
+            continue;
+        }
+
+        // implicitly cut the 4th coordinate
+        Eigen::Vector3d dir = (last_pose_.row(child) - last_pose_.row(keypoint)).transpose();
+
+        // keypoint names are the same as smpl joints names
+        smpl.rotateJointToDirection(keypoints_names.at(keypoint), dir);
+    }
 }

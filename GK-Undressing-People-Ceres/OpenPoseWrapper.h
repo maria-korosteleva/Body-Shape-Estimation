@@ -1,5 +1,5 @@
 #pragma once
-//Runs the OpenPose 3D pose estimation for 3D input scan
+// Runs the OpenPose 3D pose estimation for 3D input scan. Relies on using BODY_25 model
 
 #include <fstream>
 #include <openpose/headers.hpp>
@@ -49,6 +49,10 @@ private:
     Eigen::MatrixXd normalizeKeypoints_(const Eigen::MatrixXd& keypoints);
 
     bool isDetected_(const int keypoint);
+    // expect that BODY_25 model is used
+    void sendRootRotationToSMPL_(SMPLWrapper& smpl);
+    void sendTwistToSMPL_(SMPLWrapper& smpl);
+    void sendLimbsRotationToSMPL_(SMPLWrapper& smpl);
     
     std::string images_path_;
     std::string cameras_path_;
