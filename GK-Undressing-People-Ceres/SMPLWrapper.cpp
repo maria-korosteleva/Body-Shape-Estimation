@@ -86,14 +86,11 @@ void SMPLWrapper::rotateJointToDirection(const std::string joint_name, E::Vector
     // sanity check
     E::MatrixXd new_joint_locations = calcJointLocations_(nullptr, state_.pose);
     E::Vector3d new_dir = (new_joint_locations.row(child_id) - new_joint_locations.row(joint_id)).transpose();
-    
     std::cout << "Difference with the target " << std::endl
         << new_dir.normalized() - direction.normalized() << std::endl;
 
     E::Vector3d fact_axis = angle_axis_(default_dir, new_dir);
-
     std::cout << "Fact Turned Angle: " << fact_axis.norm() * 180 / 3.1415 << std::endl;
-
 }
 
 void SMPLWrapper::rotateRoot(E::Vector3d body_up, E::Vector3d body_right_to_left)
@@ -154,7 +151,7 @@ void SMPLWrapper::twistBack(E::Vector3d shoulder_dir)
     std::cout << "Angle-axis rotation with angle " << angle * 180 / 3.1415
         << "\n" << rotation << std::endl;
 
-    // divide between the joints
+    // divide between the back joints
     assignJointGlobalRotation_(joint_names_.at("LowBack"), axis * angle / 3);
     updateJointsGlobalTransformation_();
 

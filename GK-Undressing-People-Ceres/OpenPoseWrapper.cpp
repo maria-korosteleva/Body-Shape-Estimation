@@ -211,7 +211,7 @@ void OpenPoseWrapper::sendTwistToSMPL_(SMPLWrapper & smpl)
     if (isDetected_(Rshoulder_id) && isDetected_(Lshouder_id))
     {
         Eigen::Vector3d shoulder_dir =
-            (last_pose_.row(Rshoulder_id) - last_pose_.row(Lshouder_id)).transpose();
+            (last_pose_.row(Lshouder_id) - last_pose_.row(Rshoulder_id)).transpose();
         smpl.twistBack(shoulder_dir);
     } // or fail
     else

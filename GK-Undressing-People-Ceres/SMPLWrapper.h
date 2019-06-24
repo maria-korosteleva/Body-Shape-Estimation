@@ -68,11 +68,8 @@ public:
     // Matching both directions exaclty is not guaranteed -- 
     // vertical direction will be matched approximately
     void rotateRoot(E::Vector3d body_up, E::Vector3d body_right_to_left);
-    // assumes that hips are already aligned by root rotation
+    // shoulder_dir points from right to left 
     void twistBack(E::Vector3d shoulder_dir);
-
-    // Translation/Pose/shape parameters in the fucntions below can be nullptr: 
-    // allows to get template/pose without shaping/shaping of the T-pose
 
     // When initialized pose_jac is expected to have space for POSE_SIZE Matrices, 
     // shape_jac is expected to have space for SHAPE_SIZE Matrices
