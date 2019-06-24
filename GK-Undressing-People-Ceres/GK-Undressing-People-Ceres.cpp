@@ -166,38 +166,62 @@ int main()
         std::cout << "Photographer loaded" << std::endl;
 
         CustomLogger logger("C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Outputs/", 
-            "map_op_pose_debug" + input->getName());
+            "large_angles_pose_debug_" + input->getName());
+
+        ///// Pose DEBUG
+
+        logger.startRedirectCoutToFile("joint_rotation_info.txt");
+        Eigen::Vector3d direction;
+        //direction << -0.135993, 0.15157, 0.102849;
+        direction << 1, 1, 0;
+        smpl->rotateJointToDirection("LShoulder", direction);
+
+        //direction << -0.075334, 0.0701836, -0.0602188;
+        direction << -1, 1, 0;
+        smpl->rotateJointToDirection("LElbow", direction);
+
+        logger.saveFinalModel(*smpl);
+        logger.endRedirectCoutToFile();
+
+        igl::opengl::glfw::Viewer viewer;
+        viewer.data().set_mesh(smpl->calcModel(), smpl->getFaces());
+        viewer.launch();
+
+        /////
+
+
+
 
         ///// 2. Initial pose estimation /////
         ////// 2.1 Prepare pictures for OpenPose: Photographer /////
-        photographer.addCameraToPosition(0.0f, 1.0f, 3.0f, 4.0f);
-        photographer.addCameraToPosition(1.0f, -0.5f, 2.0f, 4.0f);
-        photographer.addCameraToPosition(-1.0f, 0.0f, 1.0f, 4.0f);
+        //photographer.addCameraToPosition(0.0f, 1.0f, 3.0f, 4.0f);
+        //photographer.addCameraToPosition(1.0f, -0.5f, 2.0f, 4.0f);
+        //photographer.addCameraToPosition(-1.0f, 0.0f, 1.0f, 4.0f);
 
-        photographer.renderToImages(logger.getPhotosFolderPath());
-        photographer.saveImageCamerasParamsCV(logger.getPhotosFolderPath());
+        //photographer.renderToImages(logger.getPhotosFolderPath());
+        //photographer.saveImageCamerasParamsCV(logger.getPhotosFolderPath());
 
-        ////// 2.2 Run OpenPose /////
-        OpenPoseWrapper openpose(logger.getPhotosFolderPath(),
-            logger.getPhotosFolderPath(), 3,
-            logger.getOpenPoseGuessesPath(), 
-            "C:/Users/Maria/MyDocs/libs/Installed_libs/ml_models/openpose");
-        openpose.runPoseEstimation();
+        //////// 2.2 Run OpenPose /////
+        //OpenPoseWrapper openpose(logger.getPhotosFolderPath(),
+        //    logger.getPhotosFolderPath(), 3,
+        //    logger.getOpenPoseGuessesPath(), 
+        //    "C:/Users/Maria/MyDocs/libs/Installed_libs/ml_models/openpose");
+        //openpose.runPoseEstimation();
 
-        ////// TODO 2.3 Map OpenPose pose to SMPL /////
-        openpose.mapToSmpl(*smpl);
+        //////// TODO 2.3 Map OpenPose pose to SMPL /////
+        //openpose.mapToSmpl(*smpl);
 
-        logger.saveFinalModel(*smpl);
+        //logger.saveFinalModel(*smpl);
 
-        igl::opengl::glfw::Viewer viewer;
-        //igl::opengl::glfw::imgui::ImGuiMenu menu;
-        //viewer.plugins.push_back(&menu);
-        viewer.data().set_mesh(smpl->calcModel(), smpl->getFaces());
-        Eigen::MatrixXd op_keypoints = openpose.getKeypoints();
-        op_keypoints = op_keypoints.block(0, 0, op_keypoints.rows(), 3);
+        //igl::opengl::glfw::Viewer viewer;
+        ////igl::opengl::glfw::imgui::ImGuiMenu menu;
+        ////viewer.plugins.push_back(&menu);
+        //viewer.data().set_mesh(smpl->calcModel(), smpl->getFaces());
+        //Eigen::MatrixXd op_keypoints = openpose.getKeypoints();
+        //op_keypoints = op_keypoints.block(0, 0, op_keypoints.rows(), 3);
 
-        viewer.data().set_points(op_keypoints, Eigen::RowVector3d(1., 1., 0.));
-        viewer.launch();
+        //viewer.data().set_points(op_keypoints, Eigen::RowVector3d(1., 1., 0.));
+        //viewer.launch();
 
         ///// 3. Run shape&pose optimization ////
         /// TODO Update with the SMPLWrapper changes

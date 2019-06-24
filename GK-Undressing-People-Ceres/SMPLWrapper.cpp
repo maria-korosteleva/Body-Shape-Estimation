@@ -102,7 +102,7 @@ void SMPLWrapper::rotateJointToDirection(const std::string joint_name, E::Vector
     E::Vector3d new_dir = (new_joint_locations.row(child_id) - new_joint_locations.row(joint_id)).transpose();
     
     std::cout << "Difference with the target " << std::endl
-        << new_dir - direction << std::endl;
+        << new_dir.normalized() - direction.normalized() << std::endl;
 
     E::Vector3d axis = default_dir.cross(new_dir);
     double sin_a = axis.norm() / (new_dir.norm() * default_dir.norm());
@@ -681,7 +681,7 @@ E::MatrixXd SMPLWrapper::get3DLocalTransformMat_(const double * const jointAxisA
     if (norm > 0.0001)  // don't waste computations on zero joint movement
     {
         // apply Rodrigues formula
-        exponent = E::Matrix3d::Identity() * cos(norm) + w_skew * sin(norm) + w_skew * w_skew * (1. - cos(norm));
+        exponent += w_skew * sin(norm) + w_skew * w_skew * (1. - cos(norm));
         localTransform.block(0, 0, 3, 3) = exponent;
     }
     
