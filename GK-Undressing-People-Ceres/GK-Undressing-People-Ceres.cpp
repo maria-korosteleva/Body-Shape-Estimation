@@ -166,18 +166,18 @@ int main()
         std::cout << "Photographer loaded" << std::endl;
 
         CustomLogger logger("C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Outputs/", 
-            "large_angles_pose_debug_" + input->getName());
+            "local_axis_pose_debug_" + input->getName());
 
         ///// Pose DEBUG
 
         logger.startRedirectCoutToFile("joint_rotation_info.txt");
         Eigen::Vector3d direction;
         //direction << -0.135993, 0.15157, 0.102849;
-        direction << 1, 1, 0;
+        direction << 1, 1, 1;
         smpl->rotateJointToDirection("LShoulder", direction);
 
         //direction << -0.075334, 0.0701836, -0.0602188;
-        direction << -1, 1, 0;
+        direction << 1, 1, -0.5;
         smpl->rotateJointToDirection("LElbow", direction);
 
         logger.saveFinalModel(*smpl);

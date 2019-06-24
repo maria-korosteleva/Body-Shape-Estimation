@@ -89,11 +89,35 @@ void SMPLWrapper::rotateJointToDirection(const std::string joint_name, E::Vector
         axis.normalize();
         axis = angle * axis;
 
-        std::cout << "Angle-axis rotation \n" << axis << std::endl;
+        // apply adjacency transformation to the reculting vector
+        // get the transformation matrix
+        Eigen::MatrixXd total_transform = getJointsTransposedGlobalTransformation_(state_.pose, joint_locations_template_);
+        Eigen::MatrixXd joint_transform_3x4 = total_transform.block(joint_id * (SPACE_DIM + 1), 0, (SPACE_DIM + 1), SPACE_DIM);
+        joint_transform_3x4.transposeInPlace();
+
+        Eigen::MatrixXd joint_rotation_3x3 = joint_transform_3x4.block(0, 0, SPACE_DIM, SPACE_DIM);
+        std::cout << "Rotation matrix \n" << joint_rotation_3x3 << std::endl;
+        
+        Eigen::MatrixXd joint_transform_4x4(4, 4);
+        joint_transform_4x4 << joint_transform_3x4, 0., 0., 0., 1.;
+        std::cout << "Transformation matrix \n" << joint_transform_4x4 << std::endl;
+       
+        Eigen::Vector4d axis_vector;
+        axis_vector << axis, 0.0;
+
+        // perform the transformation
+        //Eigen::Vector4d axis_local = joint_transform_4x4.inverse() * axis_vector * joint_transform_4x4;
+        Eigen::Vector3d axis_local = joint_rotation_3x3.transpose() * axis;
+        //axis_local =
+
+        std::cout << "Angle-axis rotation with angle " << axis.norm() * 180 / 3.1415
+            << "\n" << axis << std::endl;
+        std::cout << "Local angle-axis rotation with angle " << axis_local.norm() * 180 / 3.1415
+            << " \n" << axis_local << std::endl;
 
         for (int i = 0; i < SPACE_DIM; i++)
         {
-            state_.pose[joint_id * SPACE_DIM + i] = axis(i);
+            state_.pose[joint_id * SPACE_DIM + i] = axis_local(i);
         }
     }
 
