@@ -58,34 +58,40 @@ void OpenPoseWrapper::mapToSmpl(SMPLWrapper& smpl)
 {
     if (last_pose_.size() == 0)
     {
-        op::log("OpenPose::Error::request to match detected pose to smpl made before any pose was detected", 
+        op::log("OpenPose::Error::request to match detected pose to smpl made before any pose was detected",
             op::Priority::High);
         throw std::exception("OpenPose::Error::Request to match detected pose to smpl made before any pose was detected");
     }
 
+    // get the model info
     const std::map<unsigned int, std::string>& keypoints_names = op::getPoseBodyPartMapping(op::PoseModel::BODY_25);
     const auto& keypoints_pairs = op::getPosePartPairs(op::PoseModel::BODY_25);
-    // map the pairs const 
 
-    static constexpr int n_pairs = 12;
-    Eigen::Matrix<double, n_pairs, 2> directions_to_match;
+    // set the root
+    int root_id = 8; int neck_id = 1; int Lhip_id = 12; int Rhip_id = 9;
+    if (isDetected_(Lhip_id) && isDetected_(Rhip_id) && isDetected_(root_id) && isDetected_(neck_id))
+    {
+        Eigen::Vector3d up =
+            (last_pose_.row(neck_id) - last_pose_.row(root_id)).transpose();
+        Eigen::Vector3d right_to_left =
+            (last_pose_.row(Lhip_id) - last_pose_.row(Rhip_id)).transpose();
+        smpl.rotateRoot(up, right_to_left);
+    } // or fail
+    else
+    {
+        std::cout << "OpenPoseWrapper::Warning::Root rotation setup "
+            << " is skipped. One or both ends were not detected." << std::endl;
+    }
+    
+
+    // the end effectors joints
+    static constexpr int n_dirs = 11;
+    Eigen::Matrix<double, n_dirs, 2> directions_to_match;
     // Important: directions should follow the hierarchy -- from root to end effectors
     directions_to_match <<
-        8, 1,
-        1, 0,
-        2, 3,
-        3, 4,
-        5, 6,
-        6, 7,
-        9, 10,
-        10, 11,
-        11, 22,
-        12, 13,
-        13, 14,
-        14, 19;
+        1, 0,   2, 3,   3, 4,   5, 6,   6, 7,   9, 10,   10, 11,   11, 22,   12, 13,   13, 14,   14, 19;
 
-    // the rest
-    for (int i = 0; i < n_pairs; i++)
+    for (int i = 0; i < n_dirs; i++)
     {
         int keypoint = directions_to_match(i, 0);
         int child = directions_to_match(i, 1);
@@ -102,16 +108,9 @@ void OpenPoseWrapper::mapToSmpl(SMPLWrapper& smpl)
 
         // implicitly cut the 4th coordinate
         Eigen::Vector3d dir = (last_pose_.row(child) - last_pose_.row(keypoint)).transpose();
-
-        // send to smpl
-        if (keypoint == 8)
-        {
-            smpl.rotateJointToDirection("Root", dir);
-        }
-        else
-        {
-            smpl.rotateJointToDirection(keypoints_names.at(keypoint), dir);
-        }
+        
+        // keypoint names are the same as smpl joints names
+        smpl.rotateJointToDirection(keypoints_names.at(keypoint), dir);
     }
 }
 
