@@ -11,7 +11,7 @@ CustomLogger::~CustomLogger()
 {
 }
 
-void CustomLogger::saveFinalModel(const SMPLWrapper & smpl)
+void CustomLogger::saveFinalModel(SMPLWrapper & smpl)
 {
     smpl.logParameters(log_folder_name_ + smpl_param_filename_);
 
@@ -21,7 +21,7 @@ void CustomLogger::saveFinalModel(const SMPLWrapper & smpl)
 
 }
 
-void CustomLogger::saveIterationsSMPLObjects(const SMPLWrapper & smpl, const std::vector<Eigen::MatrixXd>& vertices_vector) const
+void CustomLogger::saveIterationsSMPLObjects(const SMPLWrapper & smpl, const std::vector<Eigen::MatrixXd>& vertices_vector)
 {
     CreateDirectory((log_folder_name_ + iterations_3D_subfolder_).c_str(), NULL);
 

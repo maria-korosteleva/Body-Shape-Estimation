@@ -71,19 +71,20 @@ public:
 
     // When initialized pose_jac is expected to have space for POSE_SIZE Matrices, 
     // shape_jac is expected to have space for SHAPE_SIZE Matrices
-    E::MatrixXd calcModel(const double * const pose, const double * const shape, E::MatrixXd * pose_jac = nullptr, E::MatrixXd * shape_jac = nullptr) const;
+    E::MatrixXd calcModel(const double * const pose, const double * const shape, 
+        E::MatrixXd * pose_jac = nullptr, E::MatrixXd * shape_jac = nullptr);
     // using current SMPLWrapper state
-    E::MatrixXd calcModel(E::MatrixXd * pose_jac = nullptr, E::MatrixXd * shape_jac = nullptr) const;
+    E::MatrixXd calcModel(E::MatrixXd * pose_jac = nullptr, E::MatrixXd * shape_jac = nullptr);
 
     // using current SMPLWrapper state
-    E::MatrixXd calcJointLocations() const;
+    E::MatrixXd calcJointLocations();
 
-    void saveToObj(const double * translation, const double * pose, const double* shape, const std::string path) const;
+    void saveToObj(const double * translation, const double * pose, const double* shape, const std::string path);
     // using current SMPLWrapper state
-    void saveToObj(const std::string path) const;
-    void savePosedOnlyToObj(const std::string path) const;
-    void saveShapedOnlyToObj(const std::string path) const;
-    void logParameters(const std::string path) const;
+    void saveToObj(const std::string path);
+    void savePosedOnlyToObj(const std::string path);
+    void saveShapedOnlyToObj(const std::string path);
+    void logParameters(const std::string path);
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -99,23 +100,23 @@ private:
 
     // for evaluation uses vertex info from the last parameter and uses last parameter for output
     // if not nullptr, shape_jac is expected to be an array of SHAPE_SIZE of MatrixXd, one matrix for each shape parameter
-    void shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::MatrixXd* shape_jac = nullptr) const;
+    void shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::MatrixXd* shape_jac = nullptr);
     // for evaluation uses vertex info from the last parameter and uses last parameter for output
     // if not nullptr, pose_jac is expected to be an array of POSE_SIZE of MatrixXd, one matrix for each pose parameter
-    void poseSMPL_(const double * const pose, E::MatrixXd & verts, E::MatrixXd * pose_jac = nullptr) const;
+    void poseSMPL_(const double * const pose, E::MatrixXd & verts, E::MatrixXd * pose_jac = nullptr);
 
-    E::MatrixXd calcJointLocations_(const double * shape = nullptr, const double * pose = nullptr) const;
+    E::MatrixXd calcJointLocations_(const double * shape = nullptr, const double * pose = nullptr);
 
     // Assumes that SPACE_DIM == 3
     // Assumes the default joint angles to be all zeros
-    // Returns matrix of dimentions (SPACE_DIM + 1) * JOINTS_NUM  x  SPACE_DIM 
-    // of stacked transposed global transformation matrices of each joint, with the row of homogenious coordinates removed
-    // can calculate analytic jacobian
-    E::MatrixXd getJointsTransposedGlobalTransformation_(
+    // Updates joints_global_transform_ of stacked transposed global transformation matrices of each joint, 
+    // with the row of homogenious coordinates removed
+    // Can calculate analytic jacobian
+    void updateJointsTransposedGlobalTransformation_(
         const double * const pose, 
         const E::MatrixXd & jointLocations, 
         E::MatrixXd * jacsTotal = nullptr, 
-        E::MatrixXd * finJointLocations = nullptr) const;
+        E::MatrixXd * finJointLocations = nullptr);
     
     // Assumes that SPACE_DIM == 3
     // fills the dependence of the Transformation matric on all three coordinates for the input rotation. 
@@ -154,5 +155,10 @@ private:
 
     // current state
     State state_;
+
+    // in the form of stacked transposed matrices with the homo row clipped: JOINTS_NUM * 4 x 3
+    // Need to be recaculated after each pose change.
+    // !! Pose is allowed to be changed directly, so make sure it's fresh before using
+    E::MatrixXd joints_global_transform_;
 };
 

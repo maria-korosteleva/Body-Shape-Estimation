@@ -22,8 +22,8 @@ public:
     std::string getPhotosFolderPath() const { return log_folder_name_ + photo_subfolder_; }
     std::string getOpenPoseGuessesPath() const { return log_folder_name_ + op_guesses_subfolder_; }
 
-    void saveFinalModel(const SMPLWrapper& smpl);
-    void saveIterationsSMPLObjects(const SMPLWrapper& smpl, const std::vector<Eigen::MatrixXd>& vertices_vector) const;
+    void saveFinalModel(SMPLWrapper& smpl);
+    void saveIterationsSMPLObjects(const SMPLWrapper& smpl, const std::vector<Eigen::MatrixXd>& vertices_vector);
 
     void startRedirectCoutToFile(const std::string filename = "cout.txt");
     void endRedirectCoutToFile();
