@@ -170,11 +170,13 @@ int main()
 
         //// Debug
         Eigen::Vector3d up;
-        up << 0, 1, 0;
+        up << 0, 0.75, -0.25;
         Eigen::Vector3d right;
-        right << 1, 0, 0;
+        right << 1, 0, -1;
 
+        logger.startRedirectCoutToFile("root_rotation_info.txt");
         smpl->rotateRoot(up, right);
+        logger.endRedirectCoutToFile();
         
         logger.saveFinalModel(*smpl);
 

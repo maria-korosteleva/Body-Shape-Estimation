@@ -109,7 +109,7 @@ void SMPLWrapper::rotateJointToDirection(const std::string joint_name, E::Vector
 
     E::Vector3d fact_axis = angle_axis_(default_dir, new_dir);
 
-    std::cout << "Fact Turned Angle: " << fact_axis.norm * 180 / 3.1415 << std::endl;
+    std::cout << "Fact Turned Angle: " << fact_axis.norm() * 180 / 3.1415 << std::endl;
 
 }
 
@@ -127,14 +127,26 @@ void SMPLWrapper::rotateRoot(E::Vector3d body_up, E::Vector3d body_right_to_left
 
     std::cout << "Vertical Angle-axis rotation with angle_for_up " << axis_for_up.norm() * 180 / 3.1415
         << "\n" << axis_for_up << std::endl;
-
     
-    // rotate around resulting to match 
+    // get new x vector
+    E::Vector3d new_x = rotate_by_angle_axis_(E::Vector3d(1., 0., 0), axis_for_up);
+    E::Vector3d axis_for_right = angle_axis_(new_x, body_right_to_left);
 
+    std::cout << "Horisontal Angle-axis rotation with angle_for_right " << axis_for_right.norm() * 180 / 3.1415
+        << "\n" << axis_for_right << std::endl;
 
-    // perform log map
+    // Combine rotations
+    // the initial vertical rotation might be spoliled, if the requested directions are not perpendicular 
+    E::Vector3d combined_axis = combine_two_angle_axis_(axis_for_up, axis_for_right);
 
-    // set the result
+    std::cout << "Combined rotation with angle " << combined_axis.norm() * 180 / 3.1415
+        << "\n" << combined_axis << std::endl;
+
+    // set the result : root is a joint N 0
+    for (int i = 0; i < SPACE_DIM; i++)
+    {
+        state_.pose[0 * SPACE_DIM + i] = combined_axis(i);
+    }
 
 }
 
@@ -521,6 +533,47 @@ E::Vector3d SMPLWrapper::angle_axis_(E::Vector3d from, E::Vector3d to)
         return axis;
     }
     return E::Vector3d(0, 0, 0);
+}
+
+E::Vector3d SMPLWrapper::rotate_by_angle_axis_(E::Vector3d vector, E::Vector3d angle_axis_rotation)
+{
+    double angle = angle_axis_rotation.norm();
+    E::Vector3d axis = angle_axis_rotation.normalized();
+
+    // Rodrigues' rotation formula
+    // https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
+    E::Vector3d rotated_vec =
+        cos(angle) * vector
+        + sin(angle) * axis.cross(vector)
+        + (1 - cos(angle)) * axis.dot(vector) * axis;
+
+    return rotated_vec;
+}
+
+E::Vector3d SMPLWrapper::combine_two_angle_axis_(E::Vector3d first, E::Vector3d second)
+{
+    double angle_first = first.norm();
+    E::Vector3d axis_first = first.normalized();
+    double angle_second = second.norm();
+    E::Vector3d axis_second = second.normalized();
+
+    // Rodrigues' Formula 
+    // https://math.stackexchange.com/questions/382760/composition-of-two-axis-angle-rotations
+    // get axis
+    E::Vector3d axis_sin_scaled =
+        cos(angle_first / 2) * sin(angle_second / 2) * axis_second
+        + sin(angle_first / 2) * cos(angle_second / 2) * axis_first
+        + sin(angle_first / 2) * sin(angle_second / 2) * second.cross(first);
+    E::Vector3d axis = axis_sin_scaled.normalized();
+
+    // get angle
+    double angle_half_sin = axis_sin_scaled.norm();
+    double angle_half_cos = cos(angle_first / 2) * cos(angle_second / 2)
+        - axis_first.dot(axis_second) * sin(angle_first / 2) * sin(angle_second / 2);
+
+    double angle = 2 * atan2(angle_half_sin, angle_half_cos);
+
+    return angle * axis;
 }
 
 void SMPLWrapper::shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::MatrixXd* shape_jac)

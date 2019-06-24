@@ -65,6 +65,9 @@ public:
 
     // Methods can only be used with SPACE_DIM==3
     void rotateJointToDirection(const std::string joint_name, E::Vector3d direction);
+    
+    // Matching both directions exaclty is not guaranteed -- 
+    // vertical direction will be matched approximately
     void rotateRoot(E::Vector3d body_up, E::Vector3d body_right_to_left);
 
     // Translation/Pose/shape parameters in the fucntions below can be nullptr: 
@@ -101,6 +104,8 @@ private:
 
     // in 3D only
     static E::Vector3d angle_axis_(E::Vector3d from, E::Vector3d to);
+    static E::Vector3d rotate_by_angle_axis_(E::Vector3d vector, E::Vector3d angle_axis_rotation);
+    static E::Vector3d combine_two_angle_axis_(E::Vector3d first, E::Vector3d second);
 
     // for evaluation uses vertex info from the last parameter and uses last parameter for output
     // if not nullptr, shape_jac is expected to be an array of SHAPE_SIZE of MatrixXd, one matrix for each shape parameter
