@@ -80,24 +80,7 @@ void SMPLWrapper::rotateJointToDirection(const std::string joint_name, E::Vector
     if (direction.norm() * default_dir.norm() > 0.0)
     {
         E::Vector3d axis = angle_axis_(default_dir, direction);
-
-        // To local coordinates
-        Eigen::MatrixXd joint_inverse_rotation = 
-            joints_global_transform_.block(joint_id * (SPACE_DIM + 1), 0, SPACE_DIM, SPACE_DIM);
-        std::cout << "Rotation matrix (inversed) \n" << joint_inverse_rotation << std::endl;
-
-        Eigen::Vector3d axis_local = joint_inverse_rotation * axis;
-
-        std::cout << "Angle-axis rotation with angle_for_up " << axis.norm() * 180 / 3.1415
-            << "\n" << axis << std::endl;
-        std::cout << "Local angle_for_up-axis rotation with angle_for_up " << axis_local.norm() * 180 / 3.1415
-            << " \n" << axis_local << std::endl;
-
-        // finally assign to pose
-        for (int i = 0; i < SPACE_DIM; i++)
-        {
-            state_.pose[joint_id * SPACE_DIM + i] = axis_local(i);
-        }
+        assignJointGlobalRotation_(joint_id, axis);
     }
 
     // sanity check
@@ -143,15 +126,43 @@ void SMPLWrapper::rotateRoot(E::Vector3d body_up, E::Vector3d body_right_to_left
         << "\n" << combined_axis << std::endl;
 
     // set the result : root is a joint N 0
-    for (int i = 0; i < SPACE_DIM; i++)
-    {
-        state_.pose[0 * SPACE_DIM + i] = combined_axis(i);
-    }
-
+    assignJointGlobalRotation_(0, combined_axis);
 }
 
-void SMPLWrapper::twistBack(E::Vector3d shoulder_hip_diff)
+void SMPLWrapper::twistBack(E::Vector3d shoulder_dir)
 {
+    assert(SMPLWrapper::SPACE_DIM == 3 && "rotateRoot() can only be used in 3D world");
+
+    std::cout << "Setting shoulders " << std::endl
+        << "To direction \n" << shoulder_dir << std::endl;
+
+    // get default bone direction; it also updates joint_global_transform_
+    E::MatrixXd joint_locations = calcJointLocations_(nullptr, state_.pose);
+
+    int Rshoulder_id = joint_names_.at("RShoulder");
+    int Lshoulder_id = joint_names_.at("LShoulder");
+
+    E::Vector3d default_dir =
+        (joint_locations.row(Lshoulder_id) - joint_locations.row(Rshoulder_id)).transpose();
+
+    std::cout << "Default direction \n" << default_dir << std::endl;
+
+    E::Vector3d rotation = angle_axis_(default_dir, shoulder_dir);
+    double angle = rotation.norm();
+    E::Vector3d axis = rotation.normalized();
+
+    std::cout << "Angle-axis rotation with angle " << angle * 180 / 3.1415
+        << "\n" << rotation << std::endl;
+
+    // divide between the joints
+    assignJointGlobalRotation_(joint_names_.at("LowBack"), axis * angle / 3);
+    updateJointsGlobalTransformation_();
+
+    assignJointGlobalRotation_(joint_names_.at("MiddleBack"), axis * angle / 3);
+    updateJointsGlobalTransformation_();
+
+    assignJointGlobalRotation_(joint_names_.at("TopBack"), axis * angle / 3);
+    updateJointsGlobalTransformation_();
 }
 
 E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * const shape, 
@@ -220,7 +231,7 @@ E::MatrixXd SMPLWrapper::calcJointLocations_(const double * shape, const double 
         else
         {
             E::MatrixXd posedJointLocations(SMPLWrapper::JOINTS_NUM, SMPLWrapper::SPACE_DIM);
-            updateJointsTransposedGlobalTransformation_(pose, joint_locations_template_, nullptr, &posedJointLocations);
+            updateJointsGlobalTransformation_(pose, joint_locations_template_, nullptr, &posedJointLocations);
             return posedJointLocations;
         }
     }
@@ -234,7 +245,7 @@ E::MatrixXd SMPLWrapper::calcJointLocations_(const double * shape, const double 
         else
         {
             E::MatrixXd posedJointLocations(SMPLWrapper::JOINTS_NUM, SMPLWrapper::SPACE_DIM);
-            updateJointsTransposedGlobalTransformation_(pose, baseJointLocations, nullptr, &posedJointLocations);
+            updateJointsGlobalTransformation_(pose, baseJointLocations, nullptr, &posedJointLocations);
             return posedJointLocations;
         }
     }
@@ -580,6 +591,28 @@ E::Vector3d SMPLWrapper::combine_two_angle_axis_(E::Vector3d first, E::Vector3d 
     return angle * axis;
 }
 
+void SMPLWrapper::assignJointGlobalRotation_(int joint_id, E::VectorXd rotation)
+{
+    Eigen::Vector3d rotation_local;
+    if (joint_id > 0)
+    {
+        Eigen::MatrixXd joint_inverse_rotation =
+            joints_global_transform_.block(joint_id * (SPACE_DIM + 1), 0, SPACE_DIM, SPACE_DIM);
+
+        rotation_local = joint_inverse_rotation * rotation;
+    }
+    else
+    {
+        rotation_local = rotation;
+    }
+    
+
+    for (int i = 0; i < SPACE_DIM; ++i)
+    {
+        state_.pose[joint_id * SPACE_DIM + i] = rotation_local(i);
+    }
+}
+
 void SMPLWrapper::shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::MatrixXd* shape_jac)
 {
 #ifdef DEBUG
@@ -608,7 +641,7 @@ void SMPLWrapper::poseSMPL_(const double * const pose, E::MatrixXd & verts, E::M
     E::SparseMatrix<double> LBSMat = this->getLBSMatrix_(verts);
 
     E::MatrixXd jointLocations = this->jointRegressorMat_ * verts;
-    updateJointsTransposedGlobalTransformation_(pose, jointLocations, pose_jac);
+    updateJointsGlobalTransformation_(pose, jointLocations, pose_jac);
 
     verts = LBSMat * joints_global_transform_;
 
@@ -622,7 +655,7 @@ void SMPLWrapper::poseSMPL_(const double * const pose, E::MatrixXd & verts, E::M
     }
 }
 
-void SMPLWrapper::updateJointsTransposedGlobalTransformation_(
+void SMPLWrapper::updateJointsGlobalTransformation_(
     const double * const pose,
     const E::MatrixXd & jointLocations,
     E::MatrixXd * jacsTotal, 
@@ -749,6 +782,11 @@ void SMPLWrapper::updateJointsTransposedGlobalTransformation_(
     }
 
     // now the joints_global_transform_ is updated
+}
+
+void SMPLWrapper::updateJointsGlobalTransformation_()
+{
+    updateJointsGlobalTransformation_(state_.pose, joint_locations_template_);
 }
 
 E::MatrixXd SMPLWrapper::get3DLocalTransformMat_(const double * const jointAxisAngleRotation, const E::MatrixXd & jointToParentDist, E::MatrixXd* localTransformJac) const

@@ -106,6 +106,9 @@ private:
     static E::Vector3d rotate_by_angle_axis_(E::Vector3d vector, E::Vector3d angle_axis_rotation);
     static E::Vector3d combine_two_angle_axis_(E::Vector3d first, E::Vector3d second);
 
+    // make sure that joint_transform is updated before calling this function
+    void assignJointGlobalRotation_(int joint_id, E::VectorXd rotation);
+
     // for evaluation uses vertex info from the last parameter and uses last parameter for output
     // if not nullptr, shape_jac is expected to be an array of SHAPE_SIZE of MatrixXd, one matrix for each shape parameter
     void shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::MatrixXd* shape_jac = nullptr);
@@ -120,12 +123,12 @@ private:
     // Updates joints_global_transform_ of stacked transposed global transformation matrices of each joint, 
     // with the row of homogenious coordinates removed
     // Can calculate analytic jacobian
-    void updateJointsTransposedGlobalTransformation_(
+    void updateJointsGlobalTransformation_(
         const double * const pose, 
         const E::MatrixXd & jointLocations, 
         E::MatrixXd * jacsTotal = nullptr, 
         E::MatrixXd * finJointLocations = nullptr);
-    
+    void updateJointsGlobalTransformation_();   // shortcut
     // Assumes that SPACE_DIM == 3
     // fills the dependence of the Transformation matric on all three coordinates for the input rotation. 
     // When initialized jac is expected to have space for POSE_SIZE Matrices
@@ -133,7 +136,6 @@ private:
         const double * const jointAxisAngleRotation, 
         const E::MatrixXd & jointToParentDist, 
         E::MatrixXd* localTransformJac = nullptr) const;
-    
     // Assumes that SPACE_DIM == 3
     E::MatrixXd get3DTranslationMat_(const E::MatrixXd & translationVector) const;
     
