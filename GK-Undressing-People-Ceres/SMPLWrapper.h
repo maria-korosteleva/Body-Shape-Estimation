@@ -63,8 +63,9 @@ public:
     // beware: returns pointer to the inner arrays
     State getStatePointers() const { return state_; }
 
-    // Method can only be used with SPACE_DIM==3
+    // Methods can only be used with SPACE_DIM==3
     void rotateJointToDirection(const std::string joint_name, E::Vector3d direction);
+    void rotateRoot(E::Vector3d body_up, E::Vector3d body_right_to_left);
 
     // Translation/Pose/shape parameters in the fucntions below can be nullptr: 
     // allows to get template/pose without shaping/shaping of the T-pose
@@ -97,6 +98,9 @@ private:
     void readHierarchy_();
     void readKeyVertices_();
     void readKeyDirections_();
+
+    // in 3D only
+    static E::Vector3d angle_axis_(E::Vector3d from, E::Vector3d to);
 
     // for evaluation uses vertex info from the last parameter and uses last parameter for output
     // if not nullptr, shape_jac is expected to be an array of SHAPE_SIZE of MatrixXd, one matrix for each shape parameter

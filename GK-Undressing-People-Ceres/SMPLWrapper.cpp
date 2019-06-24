@@ -35,6 +35,7 @@ SMPLWrapper::~SMPLWrapper()
 void SMPLWrapper::rotateJointToDirection(const std::string joint_name, E::Vector3d direction)
 {
     assert(SMPLWrapper::SPACE_DIM == 3 && "rotateJointToDirection() can only be used in 3D world");
+    assert(joint_name != "Root" && "use rotateRoot() function to setup root rotation");
 
     std::cout << "Setting Bone Direction for joint " << joint_name << std::endl
         << "To direction \n" << direction << std::endl;
@@ -75,18 +76,10 @@ void SMPLWrapper::rotateJointToDirection(const std::string joint_name, E::Vector
 
     std::cout << "Default direction \n" << default_dir << std::endl;
 
-    // control for zero vectors
+    // skip calculations for zero vectors
     if (direction.norm() * default_dir.norm() > 0.0)
     {
-        E::Vector3d axis = default_dir.cross(direction);
-        double sin_a = axis.norm() / (direction.norm() * default_dir.norm());
-        double cos_a = default_dir.dot(direction) / (direction.norm() * default_dir.norm());
-        double angle = atan2(sin_a, cos_a);
-
-        std::cout << "Angle: " << angle * 180 / 3.1415 << std::endl;
-
-        axis.normalize();
-        axis = angle * axis;
+        E::Vector3d axis = angle_axis_(default_dir, direction);
 
         // To local coordinates
         Eigen::MatrixXd joint_inverse_rotation = 
@@ -95,9 +88,9 @@ void SMPLWrapper::rotateJointToDirection(const std::string joint_name, E::Vector
 
         Eigen::Vector3d axis_local = joint_inverse_rotation * axis;
 
-        std::cout << "Angle-axis rotation with angle " << axis.norm() * 180 / 3.1415
+        std::cout << "Angle-axis rotation with angle_for_up " << axis.norm() * 180 / 3.1415
             << "\n" << axis << std::endl;
-        std::cout << "Local angle-axis rotation with angle " << axis_local.norm() * 180 / 3.1415
+        std::cout << "Local angle_for_up-axis rotation with angle_for_up " << axis_local.norm() * 180 / 3.1415
             << " \n" << axis_local << std::endl;
 
         // finally assign to pose
@@ -114,12 +107,34 @@ void SMPLWrapper::rotateJointToDirection(const std::string joint_name, E::Vector
     std::cout << "Difference with the target " << std::endl
         << new_dir.normalized() - direction.normalized() << std::endl;
 
-    E::Vector3d axis = default_dir.cross(new_dir);
-    double sin_a = axis.norm() / (new_dir.norm() * default_dir.norm());
-    double cos_a = default_dir.dot(new_dir) / (new_dir.norm() * default_dir.norm());
-    double angle = atan2(sin_a, cos_a);
+    E::Vector3d fact_axis = angle_axis_(default_dir, new_dir);
 
-    std::cout << "Fact Turned Angle: " << angle * 180 / 3.1415 << std::endl;
+    std::cout << "Fact Turned Angle: " << fact_axis.norm * 180 / 3.1415 << std::endl;
+
+}
+
+void SMPLWrapper::rotateRoot(E::Vector3d body_up, E::Vector3d body_right_to_left)
+{
+    assert(SMPLWrapper::SPACE_DIM == 3 && "rotateRoot() can only be used in 3D world");
+
+    std::cout << "Setting Root Rotation" << std::endl
+        << "With UP (Y) to \n" << body_up << std::endl
+        << "With Right (X) to \n" << body_right_to_left << std::endl;
+
+    // rotate to match Y and body_up
+    E::Vector3d default_up(0., 1., 0.);
+    E::Vector3d axis_for_up = angle_axis_(default_up, body_up);
+
+    std::cout << "Vertical Angle-axis rotation with angle_for_up " << axis_for_up.norm() * 180 / 3.1415
+        << "\n" << axis_for_up << std::endl;
+
+    
+    // rotate around resulting to match 
+
+
+    // perform log map
+
+    // set the result
 
 }
 
@@ -488,6 +503,24 @@ void SMPLWrapper::readKeyDirections_()
     }
 
     inFile.close();
+}
+
+E::Vector3d SMPLWrapper::angle_axis_(E::Vector3d from, E::Vector3d to)
+{
+    assert(SMPLWrapper::SPACE_DIM == 3 && "angle_axis_() can only be used in 3D world");
+
+    if (from.norm() * to.norm() > 0.0)
+    {
+        E::Vector3d axis = from.cross(to);
+        double sin_a = axis.norm() / (from.norm() * to.norm());
+        double cos_a = from.dot(to) / (from.norm() * to.norm());
+        double angle = atan2(sin_a, cos_a);
+
+        axis.normalize();
+        axis = angle * axis;
+        return axis;
+    }
+    return E::Vector3d(0, 0, 0);
 }
 
 void SMPLWrapper::shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::MatrixXd* shape_jac)
