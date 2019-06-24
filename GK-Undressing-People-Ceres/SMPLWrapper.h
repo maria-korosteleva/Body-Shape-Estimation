@@ -55,11 +55,11 @@ public:
     ~SMPLWrapper();
 
     char getGender() const                    { return gender_; };
-    const E::MatrixXi& getFaces() const              { return this->faces_; };
-    const E::MatrixXd& getTemplateVertices() const   { return this->verts_template_; };
-    const E::VectorXd& getTemplateMeanPoint() const  { return this->mean_point_template_; };
-    const DictionaryInt& getKeyVertices() const         { return this->key_vertices_; }
-    const std::vector <DirPair>& getKeyDirections() const { return this->key_directions_; }
+    const E::MatrixXi& getFaces() const              { return faces_; };
+    const E::MatrixXd& getTemplateVertices() const   { return verts_template_normalized_; };
+    const E::VectorXd& getTemplateMeanPoint() const  { return E::Vector3d(0, 0, 0); };
+    const DictionaryInt& getKeyVertices() const         { return key_vertices_; }
+    const std::vector <DirPair>& getKeyDirections() const { return key_directions_; }
     // beware: returns pointer to the inner arrays
     State getStatePointers() const { return state_; }
 
@@ -142,7 +142,7 @@ private:
     // model info
     E::MatrixXi faces_;
     E::MatrixXd verts_template_;
-    E::VectorXd mean_point_template_;
+    E::MatrixXd verts_template_normalized_;
     E::MatrixXd joint_locations_template_;
     E::MatrixXd shape_diffs_[10];  // store only differences between blendshapes and template
     E::MatrixXd jointRegressorMat_;

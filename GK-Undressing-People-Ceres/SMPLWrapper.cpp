@@ -25,7 +25,6 @@ SMPLWrapper::SMPLWrapper(char gender, const std::string path)
     readKeyVertices_();
     readKeyDirections_();
 
-    mean_point_template_ = verts_template_.colwise().mean();
     joint_locations_template_ = calcJointLocations();
 }
 
@@ -124,10 +123,11 @@ void SMPLWrapper::rotateJointToDirection(const std::string joint_name, E::Vector
 
 }
 
-E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * const shape, E::MatrixXd * pose_jac, E::MatrixXd * shape_jac)
+E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * const shape, 
+    E::MatrixXd * pose_jac, E::MatrixXd * shape_jac)
 {
     // assignment won't work without cast
-    E::MatrixXd verts = this->verts_template_;
+    E::MatrixXd verts = verts_template_normalized_;
 #ifdef DEBUG
     std::cout << "Calc model" << std::endl;
 #endif // DEBUG
@@ -214,7 +214,8 @@ E::MatrixXd SMPLWrapper::calcJointLocations()
     return calcJointLocations_(state_.shape, state_.pose);
 }
 
-void SMPLWrapper::saveToObj(const double* translation, const double* pose, const double* shape, const std::string path)
+void SMPLWrapper::saveToObj(const double* translation, const double* pose, const double* shape, 
+    const std::string path)
 {
     E::MatrixXd verts = calcModel(pose, shape);
     
@@ -290,17 +291,18 @@ void SMPLWrapper::logParameters(const std::string path)
 
 void SMPLWrapper::readTemplate_()
 {
-    std::string file_name(this->gender_path_);
-    file_name += this->gender_;
-    file_name += "_shapeAv.obj";
+    std::string file_name = gender_path_ + gender_ + "_shapeAv.obj";
 
-    bool success = igl::readOBJ(file_name, this->verts_template_, this->faces_);
+    bool success = igl::readOBJ(file_name, verts_template_, faces_);
     if (!success)
     {
         std::string message("Abort: Could not read SMPL template at ");
         message += file_name;
         throw std::exception(message.c_str());
     }
+
+    E::VectorXd mean_point = verts_template_.colwise().mean();
+    verts_template_normalized_ = verts_template_.rowwise() - mean_point.transpose();
 }
 
 void SMPLWrapper::readJointMat_()
@@ -356,9 +358,7 @@ void SMPLWrapper::readJointNames_()
 
 void SMPLWrapper::readShapes_()
 {
-    std::string file_path(this->gender_path_);
-    file_path += this->gender_;
-    file_path += "_blendshape/shape";
+    std::string file_path = gender_path_ + gender_ + "_blendshape/shape";
 
     Eigen::MatrixXi fakeFaces(SMPLWrapper::VERTICES_NUM, SMPLWrapper::SPACE_DIM);
 
@@ -368,9 +368,9 @@ void SMPLWrapper::readShapes_()
         file_name += std::to_string(i);
         file_name += ".obj";
 
-        igl::readOBJ(file_name, this->shape_diffs_[i], fakeFaces);
+        igl::readOBJ(file_name, shape_diffs_[i], fakeFaces);
 
-        this->shape_diffs_[i] -= this->verts_template_;
+        shape_diffs_[i] -= verts_template_;
     }
 }
 
