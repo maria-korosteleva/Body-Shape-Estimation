@@ -150,7 +150,7 @@ int main()
         //const char* input_name = "D:/Data/SketchFab/shan.obj"; 
         gender = 'm';
         //const char* input_name = "D:/Data/SketchFab/Web.obj";
-        const char* input_name = "D:/Data/SketchFab/yoongwoon.obj";
+        const char* input_name = "D:/Data/SketchFab/casual-man.obj";
 
         // for SMPL/DYNA inputs
         //const char* input_key_vertices_name = "D:/Data/smpl_outs/smpl_key_vertices.txt";
@@ -199,6 +199,8 @@ int main()
 
         photographer.renderToImages(logger.getPhotosFolderPath());
         photographer.saveImageCamerasParamsCV(logger.getPhotosFolderPath());
+
+        //photographer.viewScene();
 
         ////// 2.2 Run OpenPose /////
         OpenPoseWrapper openpose(logger.getPhotosFolderPath(),
