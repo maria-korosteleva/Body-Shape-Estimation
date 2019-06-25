@@ -1,5 +1,6 @@
 #pragma once
 // Runs the OpenPose 3D pose estimation for 3D input scan. Relies on using BODY_25 model
+// Hint: glog should be initialized from the outside
 
 #include <fstream>
 #include <openpose/headers.hpp>

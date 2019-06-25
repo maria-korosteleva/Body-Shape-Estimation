@@ -42,6 +42,9 @@
     <ClInclude Include="CustomLogger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PoseShapeExtractor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GK-Undressing-People-Ceres.cpp">
@@ -69,6 +72,9 @@
       <Filter>External source code</Filter>
     </ClCompile>
     <ClCompile Include="CustomLogger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PoseShapeExtractor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
