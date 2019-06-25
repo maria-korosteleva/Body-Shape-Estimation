@@ -3,6 +3,11 @@ Part of the GigaKorea project.
 Ancessor of https://motionlab.kaist.ac.kr/git/mariako/Giga-Korea-Undressing-People
 Reimplementation of the Zhang et al"Detailed, accurate, human shape estimation from clothed 3D scan sequences" (https://arxiv.org/abs/1703.04454).
 
+## Inputs requirements
+* obj or ply format
+* the input is expected to be given in a metric scale (m, sm, dm, mm..), corresponding to the measurments of the person in a real world.
+* gender should be exlicitely set
+
 ## System requirements
 * The project is developed under Windows 10, using Visual Studio 2017 x64, and have never been tested in other environment.
 * Uses some C++11 features
