@@ -41,6 +41,11 @@ void OpenPoseWrapper::runPoseEstimation()
         op::log("Stopping thread(s)", op::Priority::High);
         opWrapper.stop();
 
+        if (!checkCorrect3DDetection_(last_pose_datum_))
+        {
+            throw std::exception("OpenPoseWrapper::ERROR::No keypoints detected!!");
+        }
+
         log3DKeypoints_(last_pose_datum_);
         last_pose_ = convertKeypointsToEigen_(last_pose_datum_);
         last_pose_ = normalizeKeypoints_(last_pose_);
@@ -51,6 +56,7 @@ void OpenPoseWrapper::runPoseEstimation()
     catch (const std::exception& e)
     {
         op::log("OpenPose failed...", op::Priority::High);
+        throw e;
     }
 }
 
@@ -120,6 +126,18 @@ void OpenPoseWrapper::openPoseConfiguration_(op::Wrapper& opWrapper)
     }
 }
 
+bool OpenPoseWrapper::checkCorrect3DDetection_(PtrToDatum & datumsPtr)
+{
+    if (datumsPtr == nullptr || datumsPtr->empty())
+        return false;
+
+    const auto& poseKeypoints3D = datumsPtr->at(0)->poseKeypoints3D;
+    if (poseKeypoints3D.getSize(1) == 0)
+        return false;
+
+    return true;
+}
+
 void OpenPoseWrapper::log3DKeypoints_(PtrToDatum & datumsPtr)
 {
     if (datumsPtr != nullptr && !datumsPtr->empty())
@@ -173,6 +191,7 @@ Eigen::MatrixXd OpenPoseWrapper::convertKeypointsToEigen_(PtrToDatum & datumsPtr
 Eigen::MatrixXd OpenPoseWrapper::normalizeKeypoints_(const Eigen::MatrixXd& keypoints)
 {
     Eigen::MatrixXd normalized(keypoints);
+
     Eigen::Matrix<double, -1, 3> coords_block = normalized.block(0, 0, keypoints.rows(), 3);
     Eigen::Vector3d mean_point = coords_block.colwise().mean();
     normalized.block(0, 0, normalized.rows(), 3) = (coords_block.rowwise() - mean_point.transpose());

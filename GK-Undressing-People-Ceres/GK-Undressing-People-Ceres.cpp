@@ -146,9 +146,11 @@ int main()
     try {
         char gender = 'f';
         //const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";  // A-pose
-        const char* input_name = "D:/Data/SketchFab/Sexy Girl.obj";  // A-pose
-        //gender = 'm';
+        //const char* input_name = "D:/Data/SketchFab/Sexy Girl.obj"; 
+        //const char* input_name = "D:/Data/SketchFab/shan.obj"; 
+        gender = 'm';
         //const char* input_name = "D:/Data/SketchFab/Web.obj";
+        const char* input_name = "D:/Data/SketchFab/yoongwoon.obj";
 
         // for SMPL/DYNA inputs
         //const char* input_key_vertices_name = "D:/Data/smpl_outs/smpl_key_vertices.txt";
@@ -166,7 +168,7 @@ int main()
         std::cout << "Photographer loaded" << std::endl;
 
         CustomLogger logger("C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Outputs/", 
-            "op_back_twist_" + input->getName());
+            "op_map_tests_" + input->getName());
 
         //// Debug
         //Eigen::Vector3d shoulder;
@@ -187,7 +189,7 @@ int main()
 
 
         // save input for convenience
-        //input->saveNormalizedMesh(logger.getLogFolderPath());
+        input->saveNormalizedMesh(logger.getLogFolderPath());
 
         ///// 2. Initial pose estimation /////
         //// 2.1 Prepare pictures for OpenPose: Photographer /////
