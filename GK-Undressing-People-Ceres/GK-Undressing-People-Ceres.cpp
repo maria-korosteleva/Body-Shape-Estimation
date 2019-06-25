@@ -205,7 +205,7 @@ int main()
             "C:/Users/Maria/MyDocs/libs/Installed_libs/ml_models/openpose");
         openpose.runPoseEstimation();
 
-        ////// TODO 2.3 Map OpenPose pose to SMPL /////
+        ////// 2.3 Map OpenPose pose to SMPL /////
 
         logger.startRedirectCoutToFile("mapping_process_info.txt");
         openpose.mapToSmpl(*smpl);

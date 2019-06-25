@@ -32,7 +32,7 @@ SMPLWrapper::~SMPLWrapper()
 {
 }
 
-void SMPLWrapper::rotateJointToDirection(const std::string joint_name, E::Vector3d direction)
+void SMPLWrapper::rotateJointToDirection(const std::string joint_name, const E::Vector3d& direction)
 {
     assert(SMPLWrapper::SPACE_DIM == 3 && "rotateJointToDirection() can only be used in 3D world");
     assert(joint_name != "Root" && "use rotateRoot() function to setup root rotation");
@@ -93,7 +93,7 @@ void SMPLWrapper::rotateJointToDirection(const std::string joint_name, E::Vector
     std::cout << "Fact Turned Angle: " << fact_axis.norm() * 180 / 3.1415 << std::endl;
 }
 
-void SMPLWrapper::rotateRoot(E::Vector3d body_up, E::Vector3d body_right_to_left)
+void SMPLWrapper::rotateRoot(const E::Vector3d& body_up, const E::Vector3d& body_right_to_left)
 {
     assert(SMPLWrapper::SPACE_DIM == 3 && "rotateRoot() can only be used in 3D world");
 
@@ -126,7 +126,7 @@ void SMPLWrapper::rotateRoot(E::Vector3d body_up, E::Vector3d body_right_to_left
     assignJointGlobalRotation_(0, combined_axis);
 }
 
-void SMPLWrapper::twistBack(E::Vector3d shoulder_dir)
+void SMPLWrapper::twistBack(const E::Vector3d& shoulder_dir)
 {
     assert(SMPLWrapper::SPACE_DIM == 3 && "rotateRoot() can only be used in 3D world");
 
@@ -529,7 +529,7 @@ void SMPLWrapper::readKeyDirections_()
     inFile.close();
 }
 
-E::Vector3d SMPLWrapper::angle_axis_(E::Vector3d from, E::Vector3d to)
+E::Vector3d SMPLWrapper::angle_axis_(const E::Vector3d& from, const E::Vector3d& to)
 {
     assert(SMPLWrapper::SPACE_DIM == 3 && "angle_axis_() can only be used in 3D world");
 
@@ -547,7 +547,7 @@ E::Vector3d SMPLWrapper::angle_axis_(E::Vector3d from, E::Vector3d to)
     return E::Vector3d(0, 0, 0);
 }
 
-E::Vector3d SMPLWrapper::rotate_by_angle_axis_(E::Vector3d vector, E::Vector3d angle_axis_rotation)
+E::Vector3d SMPLWrapper::rotate_by_angle_axis_(const E::Vector3d& vector, const E::Vector3d& angle_axis_rotation)
 {
     double angle = angle_axis_rotation.norm();
     E::Vector3d axis = angle_axis_rotation.normalized();
@@ -562,7 +562,7 @@ E::Vector3d SMPLWrapper::rotate_by_angle_axis_(E::Vector3d vector, E::Vector3d a
     return rotated_vec;
 }
 
-E::Vector3d SMPLWrapper::combine_two_angle_axis_(E::Vector3d first, E::Vector3d second)
+E::Vector3d SMPLWrapper::combine_two_angle_axis_(const E::Vector3d& first, const E::Vector3d& second)
 {
     double angle_first = first.norm();
     E::Vector3d axis_first = first.normalized();

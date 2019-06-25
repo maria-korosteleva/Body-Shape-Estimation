@@ -64,12 +64,12 @@ public:
     State getStatePointers() const { return state_; }
 
     // Methods can only be used with SPACE_DIM==3
-    void rotateJointToDirection(const std::string joint_name, E::Vector3d direction);
+    void rotateJointToDirection(const std::string joint_name, const E::Vector3d& direction);
     // Matching both directions exaclty is not guaranteed -- 
     // vertical direction will be matched approximately
-    void rotateRoot(E::Vector3d body_up, E::Vector3d body_right_to_left);
+    void rotateRoot(const E::Vector3d& body_up, const E::Vector3d& body_right_to_left);
     // shoulder_dir points from right to left 
-    void twistBack(E::Vector3d shoulder_dir);
+    void twistBack(const E::Vector3d& shoulder_dir);
 
     // When initialized pose_jac is expected to have space for POSE_SIZE Matrices, 
     // shape_jac is expected to have space for SHAPE_SIZE Matrices
@@ -99,9 +99,9 @@ private:
     void readKeyDirections_();
 
     // in 3D only
-    static E::Vector3d angle_axis_(E::Vector3d from, E::Vector3d to);
-    static E::Vector3d rotate_by_angle_axis_(E::Vector3d vector, E::Vector3d angle_axis_rotation);
-    static E::Vector3d combine_two_angle_axis_(E::Vector3d first, E::Vector3d second);
+    static E::Vector3d angle_axis_(const E::Vector3d& from, const E::Vector3d& to);
+    static E::Vector3d rotate_by_angle_axis_(const E::Vector3d& vector, const E::Vector3d& angle_axis_rotation);
+    static E::Vector3d combine_two_angle_axis_(const E::Vector3d& first, const E::Vector3d& second);
 
     // make sure that joint_transform is updated before calling this function
     void assignJointGlobalRotation_(int joint_id, E::VectorXd rotation);
