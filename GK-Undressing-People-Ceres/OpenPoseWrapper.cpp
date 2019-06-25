@@ -182,9 +182,6 @@ Eigen::MatrixXd OpenPoseWrapper::convertKeypointsToEigen_(PtrToDatum & datumsPtr
     else
         op::log("ConvertPoseToEigen: Nullptr or empty datumsPtr found.", op::Priority::High);
 
-    std::cout << "Converted keypoints " << std::endl
-        << keypoints << std::endl;
-
     return keypoints;
 }
 
