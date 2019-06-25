@@ -1,33 +1,14 @@
 #include "PoseShapeExtractor.h"
 
 
-PoseShapeExtractor::PoseShapeExtractor(SMPLWrapper * smpl,
-    const std::string & open_pose_path, const std::string & pose_prior_path,
-    const std::string& logging_path)
-    : smpl_(smpl),
-    openpose_model_path_(open_pose_path), 
-    pose_prior_path_(pose_prior_path), 
-    logging_base_path_(logging_path)
-{
-    smpl_owner_ = false;
-    logger_ = nullptr;
-    optimizer_ = nullptr;
-    openpose_ = nullptr;
-
-    // as glog is used by class members
-    google::InitGoogleLogging("PoseShapeExtractor");
-}
-
-PoseShapeExtractor::PoseShapeExtractor(const std::string& smpl_model_path, char gender,
+PoseShapeExtractor::PoseShapeExtractor(const std::string& smpl_model_path,
     const std::string& open_pose_path,
     const std::string& pose_prior_path,
     const std::string& logging_path)
-    : openpose_model_path_(open_pose_path), pose_prior_path_(pose_prior_path),
-    logging_base_path_(logging_path)
+    : smpl_model_path_(smpl_model_path), openpose_model_path_(open_pose_path), 
+    pose_prior_path_(pose_prior_path), logging_base_path_(logging_path)
 {
-    smpl_ = new SMPLWrapper(gender, smpl_model_path);
-    smpl_owner_ = true;
-
+    smpl_ = nullptr;
     optimizer_ = nullptr;
     input_ = nullptr;
     logger_ = nullptr;
@@ -39,7 +20,7 @@ PoseShapeExtractor::PoseShapeExtractor(const std::string& smpl_model_path, char 
 
 PoseShapeExtractor::~PoseShapeExtractor()
 {
-    if (smpl_owner_)
+    if (smpl_ != nullptr)
         delete smpl_;
     if (optimizer_ != nullptr)
         delete optimizer_;
@@ -66,6 +47,17 @@ void PoseShapeExtractor::setupNewExperiment(GeneralMesh * input, const std::stri
         delete openpose_;
         openpose_ = nullptr;
     }
+
+    char input_gender = convertInputGenderToChar_(input);
+    if (smpl_ != nullptr && smpl_->getGender() != input_gender)
+    {
+        delete smpl_;
+        smpl_ = new SMPLWrapper(input_gender, smpl_model_path_);
+    }
+    else if (smpl_ == nullptr)
+    {
+        smpl_ = new SMPLWrapper(input_gender, smpl_model_path_);
+    }
 }
 
 SMPLWrapper* PoseShapeExtractor::runExtraction()
@@ -87,6 +79,20 @@ SMPLWrapper* PoseShapeExtractor::runExtraction()
         logger_->saveIterationsSMPLObjects(*smpl_, iteration_outputs);
 
     return smpl_;
+}
+
+void PoseShapeExtractor::viewCameraSetupForPhotos()
+{
+    if (input_ == nullptr)
+    {
+        throw std::exception("PoseShapeExtractor: need some input specified to show the cameras scene. Sorry 0:)");
+    }
+
+    Photographer photographer(input_);
+
+    photoSetUp_(photographer);
+    
+    photographer.viewScene();
 }
 
 void PoseShapeExtractor::viewFinalResult(bool withOpenPoseKeypoints)
@@ -137,25 +143,32 @@ void PoseShapeExtractor::viewIteratoinProcess()
     }
 }
 
-int PoseShapeExtractor::takePhotos_()
+int PoseShapeExtractor::photoSetUp_(Photographer& photographer)
 {
-    std::cout << "PoseShapeExtractor: I'm taking photos of the input!" << std::endl;
-
-    // TODO shared photographer?
-    Photographer photographer(input_);
-
     photographer.addCameraToPosition(0.0f, 1.0f, 3.0f, 4.0f);
     photographer.addCameraToPosition(1.0f, -0.5f, 2.0f, 4.0f);
     photographer.addCameraToPosition(-1.0f, 0.0f, 1.0f, 4.0f);
 
+    return 3;
+}
+
+int PoseShapeExtractor::takePhotos_()
+{
+    std::cout << "PoseShapeExtractor: I'm taking photos of the input!" << std::endl;
+
+    Photographer photographer(input_);
+
+    int num_cameras = photoSetUp_(photographer);
+
     photographer.renderToImages(logger_->getPhotosFolderPath());
     photographer.saveImageCamerasParamsCV(logger_->getPhotosFolderPath());
 
-    return 3;
+    return num_cameras;
 }
 
 void PoseShapeExtractor::estimateInitialPoseWithOP_(int num_pictures)
 {
+    std::cout << "PoseShapeExtractor: I'm estimating the pose with OpenPose!" << std::endl;
     if (openpose_ == nullptr)
     {
         openpose_ = new OpenPoseWrapper(logger_->getPhotosFolderPath(),
@@ -200,6 +213,24 @@ void PoseShapeExtractor::runPoseShapeOptimization_()
     //    gm_logger.logSMPLParams(*smpl, *optimizer);
     //    gm_logger.saveFinalSMPLObject(*smpl, *optimizer);
     //}
+}
+
+char PoseShapeExtractor::convertInputGenderToChar_(GeneralMesh * input)
+{
+    char gender;
+    switch (input_->getGender())
+    {
+    case GeneralMesh::FEMALE:
+        gender = 'f';
+        break;
+    case GeneralMesh::MALE:
+        gender = 'm';
+        break;
+    default:
+        gender = 'u';
+    }
+
+    return gender;
 }
 
 //bool PoseShapeExtractor::visualizeIterationPreDraw_(igl::opengl::glfw::Viewer & viewer)

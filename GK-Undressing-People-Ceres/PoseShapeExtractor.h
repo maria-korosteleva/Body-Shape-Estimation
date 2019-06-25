@@ -22,12 +22,7 @@
 class PoseShapeExtractor
 {
 public:
-    PoseShapeExtractor(SMPLWrapper* smpl,
-        const std::string& open_pose_path, 
-        const std::string& pose_prior_path,
-        const std::string& logging_path = "");
-
-    PoseShapeExtractor(const std::string& smpl_model_path, char gender,
+    PoseShapeExtractor(const std::string& smpl_model_path,
         const std::string& open_pose_path,
         const std::string& pose_prior_path,
         const std::string& logging_path = "");
@@ -41,15 +36,18 @@ public:
     void setSaveIntermediateResults(bool save) { save_iteration_results_ = save; };
 
     // TODO visualize
-    // TODO void viewCameraSetupForPhotos();
+    void viewCameraSetupForPhotos();
     void viewFinalResult(bool withOpenPoseKeypoints = false);
     void viewIteratoinProcess();
 
 private:
     // returns number of pictures taken
+    int photoSetUp_(Photographer& photographer);
     int takePhotos_();
     void estimateInitialPoseWithOP_(int num_pictures);
     void runPoseShapeOptimization_();
+
+    char convertInputGenderToChar_(GeneralMesh* input);
 
     // visulization
     //static bool visualizeIterationPreDraw_(igl::opengl::glfw::Viewer & viewer);
@@ -59,7 +57,7 @@ private:
     GeneralMesh * input_;
     //static GeneralMesh * s_input_;
     SMPLWrapper* smpl_;
-    bool smpl_owner_;
+    const std::string smpl_model_path_;
 
     CustomLogger* logger_;
     const std::string logging_base_path_;

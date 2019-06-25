@@ -42,28 +42,22 @@ void generateSMPLoutput()
 int main()
 {
     try {
-        char gender = 'f';
-        //const char* input_name = "D:/Data/DYNA/50004_jumping_jacks/00000.obj";  // A-pose
-        //const char* input_name = "D:/Data/DYNA/50004_punching/00053.obj";  // A-pose
-        const char* input_name = "D:/Data/SketchFab/Sexy Girl.obj"; 
-        //const char* input_name = "D:/Data/SketchFab/shan.obj"; 
-        //gender = 'm';
-        //const char* input_name = "D:/Data/SketchFab/Web.obj";
-        //const char* input_name = "D:/Data/SketchFab/casual-man.obj";
+        std::vector<GeneralMesh> inputs;
+        //inputs.push_back(GeneralMesh("D:/Data/DYNA/50004_jumping_jacks/00000.obj", GeneralMesh::FEMALE));
+        //inputs.push_back(GeneralMesh("D:/Data/DYNA/50004_punching/00053.obj", GeneralMesh::FEMALE));
+        inputs.push_back(GeneralMesh("D:/Data/SketchFab/Sexy Girl.obj", GeneralMesh::FEMALE));
+        //inputs.push_back(GeneralMesh("D:/Data/SketchFab/shan.obj", GeneralMesh::FEMALE));
+        //inputs.push_back(GeneralMesh("D:/Data/SketchFab/Web.obj", GeneralMesh::MALE));
+        //inputs.push_back(GeneralMesh("D:/Data/SketchFab/casual-man.obj", GeneralMesh::MALE));
 
-        // for SMPL/DYNA inputs
-        //const char* input_key_vertices_name = "D:/Data/smpl_outs/smpl_key_vertices.txt";
-        //input = new GeneralMesh(input_name, input_key_vertices_name);
+        std::cout << "Inputs are loaded! " << std::endl;
 
-        GeneralMesh input(input_name);
-        std::cout << "Input mesh loaded!" << std::endl;
-
-        PoseShapeExtractor extractor(smpl_model_path, gender,
+        PoseShapeExtractor extractor(smpl_model_path,
             "C:/Users/Maria/MyDocs/libs/Installed_libs/ml_models/openpose",
             "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources",
             output_path);
         
-        extractor.setupNewExperiment(&input, "main_refactor");
+        extractor.setupNewExperiment(&inputs[0], "main_refactor");
 
         SMPLWrapper* smpl = extractor.runExtraction();
 
