@@ -1,5 +1,10 @@
 #include "PoseShapeExtractor.h"
 
+// init statics
+int PoseShapeExtractor::iteration_viewer_counter_;
+std::shared_ptr <VertsVector> PoseShapeExtractor::iteration_outputs_to_viz_;
+std::shared_ptr <SMPLWrapper> PoseShapeExtractor::smpl_to_viz_;
+std::shared_ptr <GeneralMesh> PoseShapeExtractor::input_to_viz_;
 
 PoseShapeExtractor::PoseShapeExtractor(const std::string& smpl_model_path,
     const std::string& open_pose_path,
@@ -19,48 +24,24 @@ PoseShapeExtractor::PoseShapeExtractor(const std::string& smpl_model_path,
 }
 
 PoseShapeExtractor::~PoseShapeExtractor()
-{
-    if (smpl_ != nullptr)
-        delete smpl_;
-    if (optimizer_ != nullptr)
-        delete optimizer_;
-    if (openpose_ != nullptr)
-        delete openpose_;
-    if (logger_ != nullptr)
-        delete logger_;
-}
+{}
 
-void PoseShapeExtractor::setupNewExperiment(GeneralMesh * input, const std::string experiment_name)
+void PoseShapeExtractor::setupNewExperiment(std::shared_ptr<GeneralMesh> input, const std::string experiment_name)
 {
-    input_ = input;
-    if (logger_ != nullptr)
-        delete logger_;
-
-    logger_ = new CustomLogger(logging_base_path_, experiment_name + "_" + input_->getName());
+    input_ = std::move(input);
+    logger_ = std::make_shared<CustomLogger>(logging_base_path_, experiment_name + "_" + input_->getName());
 
     // for convenience
-    input->saveNormalizedMesh(logger_->getLogFolderPath());
+    std::cout << logger_->getLogFolderPath() + "blabla" << std::endl;
+    input_->saveNormalizedMesh(logger_->getLogFolderPath());
 
     // update tools
-    if (openpose_ != nullptr)
-    {
-        delete openpose_;
-        openpose_ = nullptr;
-    }
-
-    char input_gender = convertInputGenderToChar_(input);
-    if (smpl_ != nullptr && smpl_->getGender() != input_gender)
-    {
-        delete smpl_;
-        smpl_ = new SMPLWrapper(input_gender, smpl_model_path_);
-    }
-    else if (smpl_ == nullptr)
-    {
-        smpl_ = new SMPLWrapper(input_gender, smpl_model_path_);
-    }
+    openpose_ = nullptr;
+    char input_gender = convertInputGenderToChar_(*input_.get());
+    smpl_ = std::make_shared<SMPLWrapper>(input_gender, smpl_model_path_);
 }
 
-SMPLWrapper* PoseShapeExtractor::runExtraction()
+std::shared_ptr<SMPLWrapper> PoseShapeExtractor::runExtraction()
 {
     if (input_ == nullptr)
         throw std::exception("PoseShapeExtractor: ERROR: You asked to run extraction before setting up the experiment.");
@@ -76,7 +57,7 @@ SMPLWrapper* PoseShapeExtractor::runExtraction()
     // 4.
     logger_->saveFinalModel(*smpl_);
     if (save_iteration_results_)
-        logger_->saveIterationsSMPLObjects(*smpl_, iteration_outputs);
+        logger_->saveIterationsSMPLObjects(*smpl_, iteration_outputs_);
 
     return smpl_;
 }
@@ -88,7 +69,7 @@ void PoseShapeExtractor::viewCameraSetupForPhotos()
         throw std::exception("PoseShapeExtractor: need some input specified to show the cameras scene. Sorry 0:)");
     }
 
-    Photographer photographer(input_);
+    Photographer photographer(input_.get());
 
     photoSetUp_(photographer);
     
@@ -122,15 +103,20 @@ void PoseShapeExtractor::viewFinalResult(bool withOpenPoseKeypoints)
 
 void PoseShapeExtractor::viewIteratoinProcess()
 {
-    if (iteration_outputs.size() > 0)
+    if (iteration_outputs_.size() > 0)
     {
+        // fill satic vars to be used in visualization
+        iteration_outputs_to_viz_ = std::shared_ptr<VertsVector> (&iteration_outputs_);
+        smpl_to_viz_ = smpl_;
+        input_to_viz_ = input_;
+
         igl::opengl::glfw::Viewer viewer;
         igl::opengl::glfw::imgui::ImGuiMenu menu;
         viewer.plugins.push_back(&menu);
 
         iteration_viewer_counter_ = 0;
-        /*viewer.callback_key_down = &visualizeIterationKeyDown_;
-        viewer.callback_pre_draw = &visualizeIterationPreDraw_;*/
+        viewer.callback_key_down = &visualizeIterationKeyDown_;
+        viewer.callback_pre_draw = &visualizeIterationPreDraw_;
         viewer.core.is_animating = false;
         viewer.core.animation_max_fps = 24.;
         std::cout << "Press [space] to toggle animation or [Shift+F] to see the final result." << std::endl;
@@ -142,6 +128,8 @@ void PoseShapeExtractor::viewIteratoinProcess()
             << "I skipped visualization since iteration results were not collected." << std::endl;
     }
 }
+
+/// Private: ///
 
 int PoseShapeExtractor::photoSetUp_(Photographer& photographer)
 {
@@ -156,7 +144,7 @@ int PoseShapeExtractor::takePhotos_()
 {
     std::cout << "PoseShapeExtractor: I'm taking photos of the input!" << std::endl;
 
-    Photographer photographer(input_);
+    Photographer photographer(input_.get());
 
     int num_cameras = photoSetUp_(photographer);
 
@@ -171,7 +159,7 @@ void PoseShapeExtractor::estimateInitialPoseWithOP_(int num_pictures)
     std::cout << "PoseShapeExtractor: I'm estimating the pose with OpenPose!" << std::endl;
     if (openpose_ == nullptr)
     {
-        openpose_ = new OpenPoseWrapper(logger_->getPhotosFolderPath(),
+        openpose_ = std::make_shared<OpenPoseWrapper>(logger_->getPhotosFolderPath(),
             logger_->getPhotosFolderPath(), num_pictures,
             logger_->getOpenPoseGuessesPath(),
             openpose_model_path_);
@@ -202,8 +190,8 @@ void PoseShapeExtractor::runPoseShapeOptimization_()
     //    std::cout << "Input file: " << input_name << std::endl;
 
     //    // collect the meshes from each iteration
-    //    iteration_outputs.clear();
-    //    //optimizer.findOptimalParameters(&iteration_outputs, outside_shape_param);
+    //    iteration_outputs_.clear();
+    //    //optimizer.findOptimalParameters(&iteration_outputs_, outside_shape_param);
     //    optimizer->findOptimalParameters(nullptr, gm_params[i]);
 
     //    gm_logger.endRedirectCoutToFile();
@@ -215,10 +203,10 @@ void PoseShapeExtractor::runPoseShapeOptimization_()
     //}
 }
 
-char PoseShapeExtractor::convertInputGenderToChar_(GeneralMesh * input)
+char PoseShapeExtractor::convertInputGenderToChar_(const GeneralMesh& input)
 {
     char gender;
-    switch (input_->getGender())
+    switch (input.getGender())
     {
     case GeneralMesh::FEMALE:
         gender = 'f';
@@ -233,86 +221,66 @@ char PoseShapeExtractor::convertInputGenderToChar_(GeneralMesh * input)
     return gender;
 }
 
-//bool PoseShapeExtractor::visualizeIterationPreDraw_(igl::opengl::glfw::Viewer & viewer)
-//{
-//    if (viewer.core.is_animating && iteration_viewer_counter_ < iteration_outputs.size())
-//    {
-//        viewer.data().clear();
-//        Eigen::MatrixXi faces = smpl_->getFaces();
-//
-//        viewer.data().set_mesh(iteration_outputs[iteration_viewer_counter_], faces);
-//        viewer.core.align_camera_center(iteration_outputs[iteration_viewer_counter_], faces);
-//
-//        // calculating point-to-surface closest points is too slow
-//        // add key points for the reference
-//        if (input_->getKeyPoints().size() > 0)
-//        {
-//            Eigen::MatrixXd input_key_points(input_->getKeyPoints().size(), 3);
-//            Eigen::MatrixXd smpl_key_points(input_->getKeyPoints().size(), 3);
-//
-//            CoordsDictionary inputKeyPoints = input_->getKeyPoints();
-//            DictionaryInt smplKeyVerts = smpl_->getKeyVertices();
-//            int res_id = 0;
-//            for (auto const& keyIterator : inputKeyPoints)
-//            {
-//                input_key_points.block(res_id, 0, 1, 3) = keyIterator.second;
-//                smpl_key_points.block(res_id, 0, 1, 3) =
-//                    iteration_outputs[iteration_viewer_counter_].row(smplKeyVerts[keyIterator.first]);
-//                res_id++;
-//            }
-//            viewer.data().add_points(input_key_points, Eigen::RowVector3d(1., 1., 0.));
-//            viewer.data().add_edges(smpl_key_points, input_key_points, Eigen::RowVector3d(1., 0., 0.));
-//        }
-//
-//        iteration_viewer_counter_++;
-//    }
-//    else if (viewer.core.is_animating && iteration_viewer_counter_ >= iteration_outputs.size())
-//    {
-//        viewer.core.is_animating = false;
-//        iteration_viewer_counter_ = 0;
-//        std::cout << "You can start the animation again by pressing [space]" << std::endl;
-//    }
-//    return false;
-//}
+bool PoseShapeExtractor::visualizeIterationPreDraw_(igl::opengl::glfw::Viewer & viewer)
+{
+    if (viewer.core.is_animating && iteration_viewer_counter_ < iteration_outputs_to_viz_->size())
+    {
+        viewer.data().clear();
+        Eigen::MatrixXi faces = smpl_to_viz_->getFaces();
 
-//bool PoseShapeExtractor::visualizeIterationKeyDown_(igl::opengl::glfw::Viewer & viewer, unsigned char key, int modifier)
-//{
-//    if (key == ' ')
-//    {
-//        viewer.core.is_animating = !viewer.core.is_animating;
-//    }
-//    else if (key == 'F')
-//    {
-//        std::cout << "[Shift+F] pressed: Showing the final result."
-//            << "Press [space] to go back to animation mode." << std::endl;
-//
-//        viewer.core.is_animating = false;
-//
-//        // visualizing the final result only
-//        viewer.data().clear();
-//        Eigen::MatrixXi faces = smpl_->getFaces();
-//        Eigen::MatrixXd verts = iteration_outputs[iteration_outputs.size() - 1];
-//
-//        Eigen::VectorXd sqrD;
-//        Eigen::MatrixXd closest_points;
-//        Eigen::VectorXi closest_face_ids;
-//        igl::point_mesh_squared_distance(verts,
-//            input_->getVertices(), input_->getFaces(), sqrD,
-//            closest_face_ids, closest_points);
-//
-//        viewer.data().set_mesh(verts, faces);
-//        viewer.data().add_edges(verts, closest_points, Eigen::RowVector3d(1., 0., 0.));
-//
-//        // visualize joint locations
-//        Eigen::MatrixXd finJointLocations = smpl_->calcJointLocations();
-//        for (int i = 0; i < finJointLocations.rows(); ++i)
-//        {
-//            for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)
-//            {
-//                finJointLocations(i, j) += optimizer_->getEstimatesTranslationParams()[j];
-//            }
-//        }
-//        viewer.data().add_points(finJointLocations, Eigen::RowVector3d(1., 1., 0.));
-//    }
-//    return false;
-//}
+        viewer.data().set_mesh((*iteration_outputs_to_viz_)[iteration_viewer_counter_], faces);
+        viewer.core.align_camera_center((*iteration_outputs_to_viz_)[iteration_viewer_counter_], faces);
+
+        iteration_viewer_counter_++;
+    }
+    else if (viewer.core.is_animating && iteration_viewer_counter_ >= iteration_outputs_to_viz_->size())
+    {
+        viewer.core.is_animating = false;
+        iteration_viewer_counter_ = 0;
+        std::cout << "You can start the animation again by pressing [space]" << std::endl;
+    }
+    return false;
+}
+
+bool PoseShapeExtractor::visualizeIterationKeyDown_(igl::opengl::glfw::Viewer & viewer, unsigned char key, int modifier)
+{
+    if (key == ' ')
+    {
+        viewer.core.is_animating = !viewer.core.is_animating;
+    }
+    else if (key == 'F')
+    {
+        std::cout << "[Shift+F] pressed: Showing the final result."
+            << "Press [space] to go back to animation mode." << std::endl;
+
+        viewer.core.is_animating = false;
+
+        // visualizing the final result only
+        viewer.data().clear();
+        Eigen::MatrixXi faces = smpl_to_viz_->getFaces();
+        Eigen::MatrixXd verts = (*iteration_outputs_to_viz_)[iteration_outputs_to_viz_->size() - 1];
+        viewer.data().set_mesh(verts, faces);
+
+
+        Eigen::VectorXd sqrD;
+        Eigen::MatrixXd closest_points;
+        Eigen::VectorXi closest_face_ids;
+        igl::point_mesh_squared_distance(verts,
+            input_to_viz_->getVertices(), input_to_viz_->getFaces(), sqrD,
+            closest_face_ids, closest_points);
+
+        viewer.data().add_edges(verts, closest_points, Eigen::RowVector3d(1., 0., 0.));
+
+        // visualize joint locations
+        Eigen::MatrixXd finJointLocations = smpl_to_viz_->calcJointLocations();
+        for (int i = 0; i < finJointLocations.rows(); ++i)
+        {
+            for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)
+            {
+                finJointLocations(i, j) += smpl_to_viz_->getStatePointers().translation[j];
+            }
+        }
+        viewer.data().add_points(finJointLocations, Eigen::RowVector3d(1., 1., 0.));
+    }
+    return false;
+}

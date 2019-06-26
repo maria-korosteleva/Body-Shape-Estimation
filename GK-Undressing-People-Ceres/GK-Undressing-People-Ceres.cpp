@@ -42,13 +42,13 @@ void generateSMPLoutput()
 int main()
 {
     try {
-        std::vector<GeneralMesh> inputs;
-        //inputs.push_back(GeneralMesh("D:/Data/DYNA/50004_jumping_jacks/00000.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(GeneralMesh("D:/Data/DYNA/50004_punching/00053.obj", GeneralMesh::FEMALE));
-        inputs.push_back(GeneralMesh("D:/Data/SketchFab/Sexy Girl.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(GeneralMesh("D:/Data/SketchFab/shan.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(GeneralMesh("D:/Data/SketchFab/Web.obj", GeneralMesh::MALE));
-        //inputs.push_back(GeneralMesh("D:/Data/SketchFab/casual-man.obj", GeneralMesh::MALE));
+        std::vector<std::shared_ptr<GeneralMesh>> inputs;
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_jumping_jacks/00000.obj", GeneralMesh::FEMALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_punching/00053.obj", GeneralMesh::FEMALE));
+        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Sexy Girl.obj", GeneralMesh::FEMALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/shan.obj", GeneralMesh::FEMALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Web.obj", GeneralMesh::MALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/casual-man.obj", GeneralMesh::MALE));
 
         std::cout << "Inputs are loaded! " << std::endl;
 
@@ -57,9 +57,9 @@ int main()
             "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources",
             output_path);
         
-        extractor.setupNewExperiment(&inputs[0], "main_refactor");
+        extractor.setupNewExperiment(inputs[0], "main_refactor");
 
-        SMPLWrapper* smpl = extractor.runExtraction();
+        std::shared_ptr<SMPLWrapper> smpl = extractor.runExtraction();
 
         extractor.viewFinalResult(true);
 
