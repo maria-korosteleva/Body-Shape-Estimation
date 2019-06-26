@@ -64,7 +64,7 @@ public:
     State getStatePointers() const { return state_; }
 
     // Methods can only be used with SPACE_DIM==3
-    void rotateJointToDirection(const std::string joint_name, const E::Vector3d& direction);
+    void rotateLimbToDirection(const std::string joint_name, const E::Vector3d& direction);
     // Matching both directions exaclty is not guaranteed -- 
     // vertical direction will be matched approximately
     void rotateRoot(const E::Vector3d& body_up, const E::Vector3d& body_right_to_left);

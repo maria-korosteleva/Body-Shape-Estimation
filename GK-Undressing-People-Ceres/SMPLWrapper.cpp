@@ -32,38 +32,34 @@ SMPLWrapper::~SMPLWrapper()
 {
 }
 
-void SMPLWrapper::rotateJointToDirection(const std::string joint_name, const E::Vector3d& direction)
+void SMPLWrapper::rotateLimbToDirection(const std::string joint_name, const E::Vector3d& direction)
 {
-    assert(SMPLWrapper::SPACE_DIM == 3 && "rotateJointToDirection() can only be used in 3D world");
-    assert(joint_name != "Root" && "use rotateRoot() function to setup root rotation");
+    assert(SMPLWrapper::SPACE_DIM == 3 && "rotateLimbToDirection() can only be used in 3D world");
 
-    std::cout << "Setting Bone Direction for joint " << joint_name << std::endl
+    std::cout << "----- Setting Bone Direction for joint " << joint_name << " -----" << std::endl
         << "To direction \n" << direction << std::endl;
     
-    // find id
     int joint_id;
-    try { joint_id = joint_names_.at(joint_name); }
+    try { 
+        joint_id = joint_names_.at(joint_name); 
+        if (joint_id == 0) // root
+            throw "SMPLWrapper::ERROR::use specialized method to set up root";
+        if (joint_name == "LowBack" || joint_name == "MiddleBack" || joint_name == "TopBack")
+            throw "SMPLWrapper::ERROR::use specialized method to set up back twist";
+    }
     catch (std::out_of_range& e)
     {
-        std::cout << "SMPLWRapper::setBoneConnection was supplied with unknown joint" << std::endl;
+        std::cout << "SMPLWRapper::rotateLimbToDirection was supplied with incorrect joint" << std::endl;
         throw e;
     }
 
-    // find child
     int child_id;
-    if (joint_id == 0) // Root
+    for (int i = 0; i < JOINTS_NUM; i++)
     {
-        child_id = 3;
-    }
-    else
-    {
-        for (int i = 0; i < JOINTS_NUM; i++)
+        if (joints_parents_[i] == joint_id)
         {
-            if (joints_parents_[i] == joint_id)
-            {
-                child_id = i;
-                break;
-            }
+            child_id = i;
+            break;
         }
     }
     
@@ -97,40 +93,41 @@ void SMPLWrapper::rotateRoot(const E::Vector3d& body_up, const E::Vector3d& body
 {
     assert(SMPLWrapper::SPACE_DIM == 3 && "rotateRoot() can only be used in 3D world");
 
-    std::cout << "Setting Root Rotation" << std::endl
+    std::cout << "----- Setting Root Rotation -----" << std::endl
         << "With UP (Y) to \n" << body_up << std::endl
         << "With Right (X) to \n" << body_right_to_left << std::endl;
 
-    // rotate to match Y and body_up
-    E::Vector3d default_up(0., 1., 0.);
-    E::Vector3d axis_for_up = angle_axis_(default_up, body_up);
+    E::Vector3d default_Y(0., 1., 0.);
+    E::Vector3d rotation_match_body_up = angle_axis_(default_Y, body_up);
 
-    std::cout << "Vertical Angle-axis rotation with angle_for_up " << axis_for_up.norm() * 180 / 3.1415
-        << "\n" << axis_for_up << std::endl;
+    std::cout << "Vertical Angle-axis rotation with angle_for_up " << rotation_match_body_up.norm() * 180 / 3.1415
+        << "\n" << rotation_match_body_up << std::endl;
     
-    // get new x vector
-    E::Vector3d new_x = rotate_by_angle_axis_(E::Vector3d(1., 0., 0), axis_for_up);
-    E::Vector3d axis_for_right = angle_axis_(new_x, body_right_to_left);
+    E::Vector3d X_updated = rotate_by_angle_axis_(E::Vector3d(1., 0., 0), rotation_match_body_up);
+    E::Vector3d Y_matched = rotate_by_angle_axis_(default_Y, rotation_match_body_up);
+    
+    // use rotation around Y + projection instead of the full vector
+    // to gurantee the Y stays where it is and hips are matched as close as possible
+    E::Vector3d right_to_left_projected = body_right_to_left - body_right_to_left.dot(Y_matched) * Y_matched;
+    double angle = atan2(
+        X_updated.cross(right_to_left_projected).norm(), 
+        X_updated.dot(right_to_left_projected));
 
-    std::cout << "Horisontal Angle-axis rotation with angle_for_right " << axis_for_right.norm() * 180 / 3.1415
-        << "\n" << axis_for_right << std::endl;
+    E::Vector3d rotation_match_hips = angle * Y_matched;
 
-    // Combine rotations
-    // the initial vertical rotation might be spoliled, if the requested directions are not perpendicular 
-    E::Vector3d combined_axis = combine_two_angle_axis_(axis_for_up, axis_for_right);
+    E::Vector3d combined_rotation = combine_two_angle_axis_(rotation_match_body_up, rotation_match_hips);
 
-    std::cout << "Combined rotation with angle " << combined_axis.norm() * 180 / 3.1415
-        << "\n" << combined_axis << std::endl;
+    std::cout << "Combined rotation with angle " << combined_rotation.norm() * 180 / 3.1415
+        << "\n" << combined_rotation << std::endl;
 
-    // set the result : root is a joint N 0
-    assignJointGlobalRotation_(0, combined_axis);
+    assignJointGlobalRotation_(0, combined_rotation);
 }
 
 void SMPLWrapper::twistBack(const E::Vector3d& shoulder_dir)
 {
     assert(SMPLWrapper::SPACE_DIM == 3 && "rotateRoot() can only be used in 3D world");
 
-    std::cout << "Setting shoulders " << std::endl
+    std::cout << "----- Setting shoulders -----" << std::endl
         << "To direction \n" << shoulder_dir << std::endl;
 
     // get default bone direction; it also updates joint_global_transform_

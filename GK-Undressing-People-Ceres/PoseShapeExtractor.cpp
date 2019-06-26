@@ -32,7 +32,6 @@ void PoseShapeExtractor::setupNewExperiment(std::shared_ptr<GeneralMesh> input, 
     logger_ = std::make_shared<CustomLogger>(logging_base_path_, experiment_name + "_" + input_->getName());
 
     // for convenience
-    std::cout << logger_->getLogFolderPath() + "blabla" << std::endl;
     input_->saveNormalizedMesh(logger_->getLogFolderPath());
 
     // update tools

@@ -15,9 +15,6 @@
     TODO use normalized General Mesh vertices for optimization 
     TODO Shape regularization 
     TODO directional pose estimation -- idea: add it to the main objective as additional resudual
-    TODO move (important) parameters outside
-    TODO Idea: allow start optimization from the last results
-    TODO libigl as static library
     TODO SMPL wrapper avalible for everyone
 */
 
@@ -45,10 +42,10 @@ int main()
         std::vector<std::shared_ptr<GeneralMesh>> inputs;
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_jumping_jacks/00000.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_punching/00053.obj", GeneralMesh::FEMALE));
-        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Sexy Girl.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/shan.obj", GeneralMesh::FEMALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Sexy Girl.obj", GeneralMesh::FEMALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/jenya4.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Web.obj", GeneralMesh::MALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/casual-man.obj", GeneralMesh::MALE));
+        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/JonOBJ.obj", GeneralMesh::MALE));
 
         std::cout << "Inputs are loaded! " << std::endl;
 
@@ -57,7 +54,7 @@ int main()
             "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources",
             output_path);
         
-        extractor.setupNewExperiment(inputs[0], "main_refactor");
+        extractor.setupNewExperiment(inputs[0], "root_rotation");
 
         std::shared_ptr<SMPLWrapper> smpl = extractor.runExtraction();
 

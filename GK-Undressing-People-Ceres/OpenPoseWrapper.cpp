@@ -266,6 +266,6 @@ void OpenPoseWrapper::sendLimbsRotationToSMPL_(SMPLWrapper & smpl)
         Eigen::Vector3d dir = (last_pose_.row(child) - last_pose_.row(keypoint)).transpose();
 
         // keypoint names are the same as smpl joints names
-        smpl.rotateJointToDirection(keypoints_names.at(keypoint), dir);
+        smpl.rotateLimbToDirection(keypoints_names.at(keypoint), dir);
     }
 }
