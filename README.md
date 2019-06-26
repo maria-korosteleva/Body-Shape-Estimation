@@ -14,6 +14,12 @@ Reimplementation of the Zhang et al"Detailed, accurate, human shape estimation f
 * Uses Windows-specific functionality to work with the filesystem. If you are using other OS, you'd need to modify the CustomLogger
 
 ## Dependecies
+
+#### External modules:
+1. GeneralMesh (https://motionlab.kaist.ac.kr/git/mariako/GeneralMesh)
+1. Photographer (https://motionlab.kaist.ac.kr/git/mariako/Photographer)
+
+#### Libraries	
 1. Eigen (http://eigen.tuxfamily.org/index.php?title=Main_Page)
 1. libigl (https://libigl.github.io/)
 *NOTE*: if compilation produces POSIX errors, add the following before including igl headersflags
@@ -26,9 +32,9 @@ Reimplementation of the Zhang et al"Detailed, accurate, human shape estimation f
 1. OpenPose (https://github.com/CMU-Perceptual-Computing-Lab/openpose/). 
 	1. *Important* The path to the OpenPose models should be set inside the program
 
-All needed dependencies (and their dependencies) could be found here: https://motionlab.kaist.ac.kr/git/mariako/Installed_libs
+All needed libraries (and their dependencies) could be found here: https://motionlab.kaist.ac.kr/git/mariako/Installed_libs
 
-VS property sheets to work with the latter two libraries are provided for your reference.
+VS property sheets to work with the libraries are provided for your reference.
 
 ## Tips for installing Ceres
 1. Make sure to use x64 compiler for all installations.
