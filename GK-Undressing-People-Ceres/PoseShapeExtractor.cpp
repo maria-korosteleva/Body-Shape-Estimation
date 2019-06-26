@@ -19,6 +19,10 @@ PoseShapeExtractor::PoseShapeExtractor(const std::string& smpl_model_path,
     logger_ = nullptr;
     openpose_ = nullptr;
 
+    cameras_distance_ = 4.0f;
+    num_cameras_ = 3;
+    cameras_elevation_ = 0.0;
+
     // as glog is used by class members
     google::InitGoogleLogging("PoseShapeExtractor");
 }
@@ -40,15 +44,27 @@ void PoseShapeExtractor::setupNewExperiment(std::shared_ptr<GeneralMesh> input, 
     smpl_ = std::make_shared<SMPLWrapper>(input_gender, smpl_model_path_);
 }
 
+void PoseShapeExtractor::setupNewCameraExperiment(std::shared_ptr<GeneralMesh> input, 
+    double distance, int n_cameras, double elevation, const std::string experiment_name)
+{
+    cameras_distance_ = distance;
+    num_cameras_ = n_cameras;
+    cameras_elevation_ = elevation;
+    setupNewExperiment(std::move(input),
+        experiment_name + "_n_" + std::to_string(n_cameras) 
+        + "_dist_" + std::to_string((int)(distance*10)) 
+        + "_Y_" + std::to_string((int)(elevation * 10)));
+}
+
 std::shared_ptr<SMPLWrapper> PoseShapeExtractor::runExtraction()
 {
     if (input_ == nullptr)
         throw std::exception("PoseShapeExtractor: ERROR: You asked to run extraction before setting up the experiment.");
     // 1.
-    int num_cameras = takePhotos_();
+    takePhotos_();
     
     // 2.
-    estimateInitialPoseWithOP_(num_cameras);
+    estimateInitialPoseWithOP_();
 
     // 3.
     runPoseShapeOptimization_();
@@ -130,36 +146,44 @@ void PoseShapeExtractor::viewIteratoinProcess()
 
 /// Private: ///
 
-int PoseShapeExtractor::photoSetUp_(Photographer& photographer)
+void PoseShapeExtractor::photoSetUp_(Photographer& photographer)
 {
-    photographer.addCameraToPosition(0.0f, 1.0f, 3.0f, 4.0f);
-    photographer.addCameraToPosition(1.0f, -0.5f, 2.0f, 4.0f);
-    photographer.addCameraToPosition(-1.0f, 0.0f, 1.0f, 4.0f);
+    const double pi = 3.141592653589793238463;
 
-    return 3;
+    // put cameras all around the target
+    double circle_segment = 2. * pi / num_cameras_;
+
+    for (int i = 0; i < num_cameras_; i++)
+    {
+        photographer.addCameraToPosition(
+            cos(circle_segment * i), cameras_elevation_, sin(circle_segment * i), 
+            cameras_distance_);
+    }
+
+    //photographer.addCameraToPosition(0.0f, 1.0f, 3.0f, 4.0f);
+    //photographer.addCameraToPosition(1.0f, -0.5f, 2.0f, 4.0f);
+    //photographer.addCameraToPosition(-1.0f, 0.0f, 1.0f, 4.0f);
 }
 
-int PoseShapeExtractor::takePhotos_()
+void PoseShapeExtractor::takePhotos_()
 {
     std::cout << "PoseShapeExtractor: I'm taking photos of the input!" << std::endl;
 
     Photographer photographer(input_.get());
 
-    int num_cameras = photoSetUp_(photographer);
+    photoSetUp_(photographer);
 
     photographer.renderToImages(logger_->getPhotosFolderPath());
     photographer.saveImageCamerasParamsCV(logger_->getPhotosFolderPath());
-
-    return num_cameras;
 }
 
-void PoseShapeExtractor::estimateInitialPoseWithOP_(int num_pictures)
+void PoseShapeExtractor::estimateInitialPoseWithOP_()
 {
     std::cout << "PoseShapeExtractor: I'm estimating the pose with OpenPose!" << std::endl;
     if (openpose_ == nullptr)
     {
         openpose_ = std::make_shared<OpenPoseWrapper>(logger_->getPhotosFolderPath(),
-            logger_->getPhotosFolderPath(), num_pictures,
+            logger_->getPhotosFolderPath(), num_cameras_,
             logger_->getOpenPoseGuessesPath(),
             openpose_model_path_);
     }

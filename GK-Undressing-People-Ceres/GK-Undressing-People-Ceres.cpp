@@ -38,14 +38,26 @@ void generateSMPLoutput()
 
 int main()
 {
-    try {
+    try
+    {
         std::vector<std::shared_ptr<GeneralMesh>> inputs;
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_jumping_jacks/00000.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_punching/00053.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Sexy Girl.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/jenya4.obj", GeneralMesh::FEMALE));
+        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_jiggle_on_toes/00048.obj", GeneralMesh::FEMALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_chicken_wings-00091.obj", GeneralMesh::FEMALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_knees/00070.obj", GeneralMesh::FEMALE));
+        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_knees/00130.obj", GeneralMesh::FEMALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_knees/000270.obj", GeneralMesh::FEMALE));
+        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_punching/00053.obj", GeneralMesh::FEMALE));
+        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Sexy Girl.obj", GeneralMesh::FEMALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/casual-woman-walking.obj", GeneralMesh::FEMALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/girl_nasi_pants.obj", GeneralMesh::FEMALE));
+        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/jenya4.obj", GeneralMesh::FEMALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/shan.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Web.obj", GeneralMesh::MALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/reilly.obj", GeneralMesh::MALE));
         inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/JonOBJ.obj", GeneralMesh::MALE));
+        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Ivan Komarov.obj", GeneralMesh::MALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/casual-man.obj", GeneralMesh::MALE));
 
         std::cout << "Inputs are loaded! " << std::endl;
 
@@ -53,18 +65,32 @@ int main()
             "C:/Users/Maria/MyDocs/libs/Installed_libs/ml_models/openpose",
             "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources",
             output_path);
-        
-        extractor.setupNewExperiment(inputs[0], "root_rotation");
 
-        std::shared_ptr<SMPLWrapper> smpl = extractor.runExtraction();
+        extractor.setupNewCameraExperiment(inputs[0], 4.5, 5, 0., "cams");
+        extractor.viewCameraSetupForPhotos();
 
-        extractor.viewFinalResult(true);
+        extractor.runExtraction();
 
+        //for (auto&& input : inputs)
+        //{
+        //    try 
+        //    {
+        //        extractor.setupNewExperiment(input, "more_cameras_1");
+
+        //        std::shared_ptr<SMPLWrapper> smpl = extractor.runExtraction();
+
+        //        //extractor.viewFinalResult(true);
+        //    }
+        //    catch (std::exception& e)
+        //    {
+        //        std::cout << "Exception encountered: " << e.what() << std::endl;
+        //    }
+        //}
     }
     catch (std::exception& e)
     {
         std::cout << "Exception encountered: " << e.what() << std::endl
-            << "Terminating." << std::endl;
+            << "Terminating" << std::endl;
     }
 }
 

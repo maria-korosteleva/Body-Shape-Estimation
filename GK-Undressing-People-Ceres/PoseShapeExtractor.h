@@ -32,6 +32,8 @@ public:
     ~PoseShapeExtractor();
 
     void setupNewExperiment(std::shared_ptr<GeneralMesh> input, const std::string experiment_name = "");
+    void setupNewCameraExperiment(std::shared_ptr<GeneralMesh> input, 
+        double distance, int n_cameras, double elevation, const std::string experiment_name = "");
 
     std::shared_ptr<SMPLWrapper> getEstimatedModel() { return smpl_; }
     std::shared_ptr<SMPLWrapper> runExtraction();
@@ -45,10 +47,10 @@ public:
 
 private:
     // returns number of pictures taken
-    int photoSetUp_(Photographer& photographer);
-    int takePhotos_();
+    void photoSetUp_(Photographer& photographer);
+    void takePhotos_();
     
-    void estimateInitialPoseWithOP_(int num_pictures);
+    void estimateInitialPoseWithOP_();
     void runPoseShapeOptimization_();
 
     char convertInputGenderToChar_(const GeneralMesh& input);
@@ -61,6 +63,11 @@ private:
     std::shared_ptr<GeneralMesh> input_;
     std::shared_ptr<SMPLWrapper> smpl_;
     const std::string smpl_model_path_;
+
+    // for photographer
+    double cameras_distance_;
+    double cameras_elevation_;
+    int num_cameras_;
 
     // tools
     std::shared_ptr<OpenPoseWrapper> openpose_;
