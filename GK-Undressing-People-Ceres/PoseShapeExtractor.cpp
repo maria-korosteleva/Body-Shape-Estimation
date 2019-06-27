@@ -152,11 +152,12 @@ void PoseShapeExtractor::photoSetUp_(Photographer& photographer)
 
     // put cameras all around the target
     double circle_segment = 2. * pi / num_cameras_;
+    double shift = 0.2;     // for fun. On a particular input, 5 cam + zero shift openpose faled miserably
 
     for (int i = 0; i < num_cameras_; i++)
     {
         photographer.addCameraToPosition(
-            cos(circle_segment * i), cameras_elevation_, sin(circle_segment * i), 
+            cos(shift + circle_segment * i), cameras_elevation_, sin(shift + circle_segment * i),
             cameras_distance_);
     }
 
