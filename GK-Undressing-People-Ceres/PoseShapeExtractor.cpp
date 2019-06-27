@@ -19,8 +19,8 @@ PoseShapeExtractor::PoseShapeExtractor(const std::string& smpl_model_path,
     logger_ = nullptr;
     openpose_ = nullptr;
 
-    cameras_distance_ = 4.0f;
-    num_cameras_ = 3;
+    cameras_distance_ = 4.5f;
+    num_cameras_ = 7;
     cameras_elevation_ = 0.0;
 
     // as glog is used by class members
@@ -160,10 +160,6 @@ void PoseShapeExtractor::photoSetUp_(Photographer& photographer)
             cos(shift + circle_segment * i), cameras_elevation_, sin(shift + circle_segment * i),
             cameras_distance_);
     }
-
-    //photographer.addCameraToPosition(0.0f, 1.0f, 3.0f, 4.0f);
-    //photographer.addCameraToPosition(1.0f, -0.5f, 2.0f, 4.0f);
-    //photographer.addCameraToPosition(-1.0f, 0.0f, 1.0f, 4.0f);
 }
 
 void PoseShapeExtractor::takePhotos_()
