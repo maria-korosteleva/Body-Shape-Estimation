@@ -29,20 +29,11 @@ bool AbsoluteDistanceForShape::Evaluate(double const * const * parameters, doubl
     Eigen::MatrixXd verts;
     if (jacobians != NULL && jacobians[0] != NULL)
     {
-        verts = smpl_->calcModel(smpl_->getStatePointers().pose, parameters[0], nullptr, shape_jac);
+        verts = smpl_->calcModel(parameters[1], smpl_->getStatePointers().pose, parameters[0], nullptr, shape_jac);
     }
     else
     {
-        verts = smpl_->calcModel(smpl_->getStatePointers().pose, parameters[0]);
-    }
-
-    // translate
-    for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
-    {
-        for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
-        {
-            verts(i, j) += parameters[1][j];
-        }
+        verts = smpl_->calcModel(parameters[1], smpl_->getStatePointers().pose, parameters[0]);
     }
 
     //Eigen::VectorXd sqrD;

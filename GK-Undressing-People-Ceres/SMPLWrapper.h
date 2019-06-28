@@ -6,8 +6,7 @@ Careful with describing the joint names -- they are used in OpenPoseWrapper.
 Current naming follows (as close as possible) the BODY_25
 https://github.com/CMU-Perceptual-Computing-Lab/openpose/blob/master/doc/output.md#reading-saved-results
 
-TODO: 
-    - Add pose blendshape 
+TODO: - Add pose blendshape 
 */
 
 //#define DEBUG
@@ -73,7 +72,7 @@ public:
 
     // When initialized pose_jac is expected to have space for POSE_SIZE Matrices, 
     // shape_jac is expected to have space for SHAPE_SIZE Matrices
-    E::MatrixXd calcModel(const double * const pose, const double * const shape, 
+    E::MatrixXd calcModel(const double * const translation, const double * const pose, const double * const shape,
         E::MatrixXd * pose_jac = nullptr, E::MatrixXd * shape_jac = nullptr);
     // using current SMPLWrapper state
     E::MatrixXd calcModel(E::MatrixXd * pose_jac = nullptr, E::MatrixXd * shape_jac = nullptr);
@@ -106,14 +105,16 @@ private:
     // make sure that joint_transform is updated before calling this function
     void assignJointGlobalRotation_(int joint_id, E::VectorXd rotation);
 
-    // for evaluation uses vertex info from the last parameter and uses last parameter for output
+   
     // if not nullptr, shape_jac is expected to be an array of SHAPE_SIZE of MatrixXd, one matrix for each shape parameter
     void shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::MatrixXd* shape_jac = nullptr);
-    // for evaluation uses vertex info from the last parameter and uses last parameter for output
     // if not nullptr, pose_jac is expected to be an array of POSE_SIZE of MatrixXd, one matrix for each pose parameter
     void poseSMPL_(const double * const pose, E::MatrixXd & verts, E::MatrixXd * pose_jac = nullptr);
+    // Jacovian is not provided because it's always an identity: dv_i / d_tj == 1 => don't want to waste memory on it
+    void translate_(const double * const translation, E::MatrixXd & verts);
 
-    E::MatrixXd calcJointLocations_(const double * shape = nullptr, const double * pose = nullptr);
+    E::MatrixXd calcJointLocations_(const double * translation = nullptr, 
+        const double * shape = nullptr, const double * pose = nullptr);
 
     // Assumes that SPACE_DIM == 3
     // Assumes the default joint angles to be all zeros

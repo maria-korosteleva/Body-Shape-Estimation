@@ -26,20 +26,11 @@ bool AbsoluteDistanceForPose::Evaluate(double const * const * parameters, double
     Eigen::MatrixXd verts;
     if (jacobians != NULL && jacobians[0] != NULL)
     {
-        verts = smpl_->calcModel(parameters[0], smpl_->getStatePointers().shape, pose_jac, nullptr);
+        verts = smpl_->calcModel(parameters[1], parameters[0], smpl_->getStatePointers().shape, pose_jac, nullptr);
     }
     else
     {
-        verts = smpl_->calcModel(parameters[0], smpl_->getStatePointers().shape);
-    }
-
-    // translate
-    for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
-    {
-        for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
-        {
-            verts(i, j) += parameters[1][j];
-        }
+        verts = smpl_->calcModel(parameters[1], parameters[0], smpl_->getStatePointers().shape);
     }
 
     Eigen::VectorXd signedDists;

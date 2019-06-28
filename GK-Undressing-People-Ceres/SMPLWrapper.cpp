@@ -66,7 +66,7 @@ void SMPLWrapper::rotateLimbToDirection(const std::string joint_name, const E::V
     std::cout << "SMPL Joint pair " << joint_id << " -> " << child_id << std::endl;
 
     // get default bone direction; it also updates joint_global_transform_
-    E::MatrixXd joint_locations = calcJointLocations_(nullptr, state_.pose);
+    E::MatrixXd joint_locations = calcJointLocations_(nullptr, nullptr, state_.pose);
     E::Vector3d default_dir =
         (joint_locations.row(child_id) - joint_locations.row(joint_id)).transpose();
 
@@ -80,7 +80,8 @@ void SMPLWrapper::rotateLimbToDirection(const std::string joint_name, const E::V
     }
 
     // sanity check
-    E::MatrixXd new_joint_locations = calcJointLocations_(nullptr, state_.pose);
+    // TODO add efficiency flag
+    E::MatrixXd new_joint_locations = calcJointLocations_(nullptr, nullptr, state_.pose);
     E::Vector3d new_dir = (new_joint_locations.row(child_id) - new_joint_locations.row(joint_id)).transpose();
     std::cout << "Difference with the target " << std::endl
         << new_dir.normalized() - direction.normalized() << std::endl;
@@ -131,7 +132,7 @@ void SMPLWrapper::twistBack(const E::Vector3d& shoulder_dir)
         << "To direction \n" << shoulder_dir << std::endl;
 
     // get default bone direction; it also updates joint_global_transform_
-    E::MatrixXd joint_locations = calcJointLocations_(nullptr, state_.pose);
+    E::MatrixXd joint_locations = calcJointLocations_(nullptr, nullptr, state_.pose);
 
     int Rshoulder_id = joint_names_.at("RShoulder");
     int Lshoulder_id = joint_names_.at("LShoulder");
@@ -159,7 +160,7 @@ void SMPLWrapper::twistBack(const E::Vector3d& shoulder_dir)
     updateJointsGlobalTransformation_();
 }
 
-E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * const shape, 
+E::MatrixXd SMPLWrapper::calcModel(const double * const translation, const double * const pose, const double * const shape,
     E::MatrixXd * pose_jac, E::MatrixXd * shape_jac)
 {
     // assignment won't work without cast
@@ -169,13 +170,11 @@ E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * con
 #endif // DEBUG
 
     if (shape != nullptr)
-    {
-        this->shapeSMPL_(shape, verts, shape_jac);
-    }
+        shapeSMPL_(shape, verts, shape_jac);
 
     if (pose != nullptr)
     {
-        this->poseSMPL_(pose, verts, pose_jac);
+        poseSMPL_(pose, verts, pose_jac);
 
         if (shape_jac != nullptr)
         {
@@ -191,6 +190,10 @@ E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * con
         std::cout << "Fin posing " << verts.rows() << " x " << verts.cols() << std::endl;
 #endif // DEBUG
     }
+
+    if (translation != nullptr)
+        translate_(translation, verts);
+
 
 #ifdef DEBUG
     std::cout << "Fin calculating" << std::endl;
@@ -212,68 +215,20 @@ E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * con
 
 E::MatrixXd SMPLWrapper::calcModel(E::MatrixXd * pose_jac, E::MatrixXd * shape_jac)
 {
-    E::MatrixXd verts = calcModel(state_.pose, state_.shape, pose_jac, shape_jac);
-    
-    // translate
-    for (int i = 0; i < SMPLWrapper::VERTICES_NUM; ++i)
-        for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)
-            verts(i, j) += state_.translation[j];
-
-    return verts;
-}
-
-E::MatrixXd SMPLWrapper::calcJointLocations_(const double * shape, const double * pose)
-{
- 
-    if (shape == nullptr)
-    {
-        if (pose == nullptr)
-            return joint_locations_template_;
-        else
-        {
-            E::MatrixXd posedJointLocations(SMPLWrapper::JOINTS_NUM, SMPLWrapper::SPACE_DIM);
-            updateJointsGlobalTransformation_(pose, joint_locations_template_, nullptr, &posedJointLocations);
-            return posedJointLocations;
-        }
-    }
-    else
-    {
-        E::MatrixXd verts = this->calcModel(nullptr, shape);
-        E::MatrixXd baseJointLocations = this->jointRegressorMat_ * verts;
-
-        if (pose == nullptr)
-            return baseJointLocations;
-        else
-        {
-            E::MatrixXd posedJointLocations(SMPLWrapper::JOINTS_NUM, SMPLWrapper::SPACE_DIM);
-            updateJointsGlobalTransformation_(pose, baseJointLocations, nullptr, &posedJointLocations);
-            return posedJointLocations;
-        }
-    }
+    return calcModel(state_.translation, state_.pose, state_.shape, pose_jac, shape_jac);;
 }
 
 E::MatrixXd SMPLWrapper::calcJointLocations()
 {
-    return calcJointLocations_(state_.shape, state_.pose);
+    return calcJointLocations_(state_.translation, state_.shape, state_.pose);
 }
 
 void SMPLWrapper::saveToObj(const double* translation, const double* pose, const double* shape, 
     const std::string path)
 {
-    E::MatrixXd verts = calcModel(pose, shape);
-    
-    if (translation != nullptr)
-    {
-        for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
-        {
-            for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)
-            {
-                verts(i, j) += translation[j];
-            }
-        }
-    }
+    E::MatrixXd verts = calcModel(translation, pose, shape);
 
-    igl::writeOBJ(path, verts, this->faces_);
+    igl::writeOBJ(path, verts, faces_);
 }
 
 void SMPLWrapper::saveToObj(const std::string path) 
@@ -317,16 +272,9 @@ void SMPLWrapper::logParameters(const std::string path)
     out << std::endl << "]" << std::endl;
 
     out << std::endl << "Joints locations for posed and shaped model [\n";
-    Eigen::MatrixXd translatedJointLoc(calcJointLocations());
-    // translate
-    for (int i = 0; i < translatedJointLoc.rows(); ++i)
-    {
-        for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)
-        {
-            translatedJointLoc(i, j) += state_.translation[j];
-        }
-    }
-    out << translatedJointLoc << std::endl;
+
+    out << calcJointLocations() << std::endl;
+
     out << "]" << std::endl;
 
     out.close();
@@ -656,6 +604,54 @@ void SMPLWrapper::poseSMPL_(const double * const pose, E::MatrixXd & verts, E::M
     }
 }
 
+void SMPLWrapper::translate_(const double * const translation, E::MatrixXd & verts)
+{
+    for (int i = 0; i < verts.rows(); ++i)
+        for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)
+            verts(i, j) += translation[j];
+
+    // Jac w.r.t. translation is identity: dv_i / d_tj == 1 
+}
+
+E::MatrixXd SMPLWrapper::calcJointLocations_(const double * translation, 
+    const double * shape, const double * pose)
+{
+    E::MatrixXd joint_locations;
+
+    if (joint_locations_template_.size() > 0)
+    {
+        joint_locations = joint_locations_template_;
+    }
+    else
+    {
+        joint_locations = jointRegressorMat_ * verts_template_normalized_;
+    }
+
+    if (shape != nullptr)
+    {
+        std::cout << "Shape!" << std::endl;
+        E::MatrixXd verts = verts_template_normalized_;
+        shapeSMPL_(shape, verts);
+        joint_locations = jointRegressorMat_ * verts;
+    }
+
+    if (pose != nullptr)
+    {
+        // TODO disentangle to pass the joint_locations variable as last parameter (or separately)
+        E::MatrixXd posedJointLocations(SMPLWrapper::JOINTS_NUM, SMPLWrapper::SPACE_DIM);
+        updateJointsGlobalTransformation_(pose, joint_locations, nullptr, &posedJointLocations);
+
+        joint_locations = posedJointLocations;
+    }
+
+    if (translation != nullptr)
+    {
+        translate_(translation, joint_locations);
+    }
+
+    return joint_locations;
+}
+
 void SMPLWrapper::updateJointsGlobalTransformation_(
     const double * const pose,
     const E::MatrixXd & jointLocations,
@@ -787,6 +783,7 @@ void SMPLWrapper::updateJointsGlobalTransformation_(
 
 void SMPLWrapper::updateJointsGlobalTransformation_()
 {
+    // TODO use shaped locations
     updateJointsGlobalTransformation_(state_.pose, joint_locations_template_);
 }
 
