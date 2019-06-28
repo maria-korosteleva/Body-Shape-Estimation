@@ -97,7 +97,7 @@ void ShapeUnderClothOptimizer::generalPoseEstimation_(Solver::Options& options, 
     Problem problem;
 
     // Main cost
-    CostFunction* cost_function = new AbsoluteDistanceForPose(smpl_, input_, parameter, smpl_->getStatePointers().shape);
+    CostFunction* cost_function = new AbsoluteDistanceForPose(smpl_, input_, parameter);
     problem.AddResidualBlock(cost_function, nullptr, 
         smpl_->getStatePointers().pose,
         smpl_->getStatePointers().translation);
@@ -150,7 +150,7 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
 
     Problem problem;
 
-    CostFunction* cost_function = new AbsoluteDistanceForShape(smpl_, input_, parameter, smpl_->getStatePointers().pose);
+    CostFunction* cost_function = new AbsoluteDistanceForShape(smpl_, input_, parameter);
     problem.AddResidualBlock(cost_function, nullptr, 
         smpl_->getStatePointers().shape, 
         smpl_->getStatePointers().translation);

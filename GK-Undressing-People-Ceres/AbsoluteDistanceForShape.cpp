@@ -1,8 +1,8 @@
 #include "AbsoluteDistanceForShape.h"
 
 
-AbsoluteDistanceForShape::AbsoluteDistanceForShape(SMPLWrapper* smpl, GeneralMesh * toMesh, const double param = 1., double * pose)
-    : toMesh_(toMesh), smpl_(smpl), pose_(pose), inside_coef_(param)
+AbsoluteDistanceForShape::AbsoluteDistanceForShape(SMPLWrapper* smpl, GeneralMesh * toMesh, const double param = 1.)
+    : toMesh_(toMesh), smpl_(smpl), inside_coef_(param)
 {
     this->set_num_residuals(SMPLWrapper::VERTICES_NUM);
 
@@ -24,15 +24,16 @@ bool AbsoluteDistanceForShape::Evaluate(double const * const * parameters, doubl
     assert(this->parameter_block_sizes()[0] == SMPLWrapper::SHAPE_SIZE && "Shape parameter size is set as expected");
     assert(this->parameter_block_sizes()[1] == SMPLWrapper::SPACE_DIM && "Translation parameter size is set as expected");
 
+    // params inside the smpl_ object ARE NOT the same as the oned passed through parameters argument
     Eigen::MatrixXd shape_jac[SMPLWrapper::SHAPE_SIZE];
     Eigen::MatrixXd verts;
     if (jacobians != NULL && jacobians[0] != NULL)
     {
-        verts = this->smpl_->calcModel(this->pose_, parameters[0], nullptr, shape_jac);
+        verts = smpl_->calcModel(smpl_->getStatePointers().pose, parameters[0], nullptr, shape_jac);
     }
     else
     {
-        verts = this->smpl_->calcModel(this->pose_, parameters[0]);
+        verts = smpl_->calcModel(smpl_->getStatePointers().pose, parameters[0]);
     }
 
     // translate
