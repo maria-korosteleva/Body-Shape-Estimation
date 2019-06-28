@@ -38,7 +38,8 @@ public:
     std::shared_ptr<SMPLWrapper> getEstimatedModel() { return smpl_; }
     std::shared_ptr<SMPLWrapper> runExtraction();
 
-    void setSaveIntermediateResults(bool save) { save_iteration_results_ = save; };
+    void setSaveIntermediateResults(bool save) { save_iteration_results_ = collect_iteration_results_ = save; };
+    void setCollectIntermediateResults(bool collect);
 
     void viewCameraSetupForPhotos();
     void viewFinalResult(bool withOpenPoseKeypoints = false);
@@ -79,6 +80,7 @@ private:
     // for visulaization
     VertsVector iteration_outputs_;
     bool save_iteration_results_ = false;
+    bool collect_iteration_results_ = false;
 
     static int iteration_viewer_counter_;
     static VertsVector* iteration_outputs_to_viz_;

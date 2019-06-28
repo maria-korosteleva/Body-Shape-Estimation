@@ -78,6 +78,15 @@ std::shared_ptr<SMPLWrapper> PoseShapeExtractor::runExtraction()
     return smpl_;
 }
 
+void PoseShapeExtractor::setCollectIntermediateResults(bool collect)
+{
+    collect_iteration_results_ = collect;
+
+    // enforce true if the save flag is on 
+    if (save_iteration_results_)
+        collect_iteration_results_ = save_iteration_results_;
+}
+
 void PoseShapeExtractor::viewCameraSetupForPhotos()
 {
     if (input_ == nullptr)
@@ -118,7 +127,7 @@ void PoseShapeExtractor::viewFinalResult(bool withOpenPoseKeypoints)
 
 void PoseShapeExtractor::viewIteratoinProcess()
 {
-    if (iteration_outputs_.size() > 0)
+    if (collect_iteration_results_ && iteration_outputs_.size() > 0)
     {
         // fill satic vars to be used in visualization
         iteration_outputs_to_viz_ = &iteration_outputs_;
@@ -207,7 +216,7 @@ void PoseShapeExtractor::runPoseShapeOptimization_()
     std::cout << "Input file: " << input_->getName() << std::endl;
 
     iteration_outputs_.clear();
-    if (save_iteration_results_)
+    if (collect_iteration_results_)
     {
         optimizer_->findOptimalSMPLParameters(&iteration_outputs_, expetiment_param);
     }

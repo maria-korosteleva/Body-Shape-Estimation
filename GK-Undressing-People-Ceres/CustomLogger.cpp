@@ -28,7 +28,7 @@ void CustomLogger::saveIterationsSMPLObjects(const SMPLWrapper & smpl, const std
     std::string subfilename = log_folder_name_ + iterations_3D_subfolder_ + "/it_";
     for (int i = 0; i < vertices_vector.size(); ++i)
     {
-        igl::writeOBJ(subfilename + std::to_string(i), vertices_vector[i], smpl.getFaces());
+        igl::writeOBJ(subfilename + std::to_string(i) + ".obj", vertices_vector[i], smpl.getFaces());
     }
 
 }
