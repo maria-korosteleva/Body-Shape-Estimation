@@ -40,7 +40,6 @@ public:
 
     void setSaveIntermediateResults(bool save) { save_iteration_results_ = save; };
 
-    // TODO visualize
     void viewCameraSetupForPhotos();
     void viewFinalResult(bool withOpenPoseKeypoints = false);
     void viewIteratoinProcess();

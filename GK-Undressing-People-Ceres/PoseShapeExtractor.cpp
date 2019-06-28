@@ -94,12 +94,11 @@ void PoseShapeExtractor::viewCameraSetupForPhotos()
 void PoseShapeExtractor::viewFinalResult(bool withOpenPoseKeypoints)
 {
     igl::opengl::glfw::Viewer viewer;
-    // TODO fix imgui bug
-    //igl::opengl::glfw::imgui::ImGuiMenu menu;
-    //viewer.plugins.push_back(&menu);
+    igl::opengl::glfw::imgui::ImGuiMenu menu;
+    viewer.plugins.push_back(&menu);
 
     viewer.data().set_mesh(smpl_->calcModel(), smpl_->getFaces());
-    
+
     if (withOpenPoseKeypoints)
     {
         if (openpose_ == nullptr)
@@ -132,8 +131,8 @@ void PoseShapeExtractor::viewIteratoinProcess()
         iteration_viewer_counter_ = 0;
         viewer.callback_key_down = &visualizeIterationKeyDown_;
         viewer.callback_pre_draw = &visualizeIterationPreDraw_;
-        viewer.core.is_animating = false;
-        viewer.core.animation_max_fps = 24.;
+        viewer.core().is_animating = false;
+        viewer.core().animation_max_fps = 24.;
         std::cout << "Press [space] to toggle animation or [Shift+F] to see the final result." << std::endl;
         viewer.launch();
     }
@@ -243,19 +242,19 @@ char PoseShapeExtractor::convertInputGenderToChar_(const GeneralMesh& input)
 
 bool PoseShapeExtractor::visualizeIterationPreDraw_(igl::opengl::glfw::Viewer & viewer)
 {
-    if (viewer.core.is_animating && iteration_viewer_counter_ < iteration_outputs_to_viz_->size())
+    if (viewer.core().is_animating && iteration_viewer_counter_ < iteration_outputs_to_viz_->size())
     {
         viewer.data().clear();
         Eigen::MatrixXi faces = smpl_to_viz_->getFaces();
 
         viewer.data().set_mesh((*iteration_outputs_to_viz_)[iteration_viewer_counter_], faces);
-        viewer.core.align_camera_center((*iteration_outputs_to_viz_)[iteration_viewer_counter_], faces);
+        viewer.core().align_camera_center((*iteration_outputs_to_viz_)[iteration_viewer_counter_], faces);
 
         iteration_viewer_counter_++;
     }
-    else if (viewer.core.is_animating && iteration_viewer_counter_ >= iteration_outputs_to_viz_->size())
+    else if (viewer.core().is_animating && iteration_viewer_counter_ >= iteration_outputs_to_viz_->size())
     {
-        viewer.core.is_animating = false;
+        viewer.core().is_animating = false;
         iteration_viewer_counter_ = 0;
         std::cout << "You can start the animation again by pressing [space]" << std::endl;
     }
@@ -266,14 +265,14 @@ bool PoseShapeExtractor::visualizeIterationKeyDown_(igl::opengl::glfw::Viewer & 
 {
     if (key == ' ')
     {
-        viewer.core.is_animating = !viewer.core.is_animating;
+        viewer.core().is_animating = !viewer.core().is_animating;
     }
     else if (key == 'F')
     {
         std::cout << "[Shift+F] pressed: Showing the final result."
             << "Press [space] to go back to animation mode." << std::endl;
 
-        viewer.core.is_animating = false;
+        viewer.core().is_animating = false;
 
         // visualizing the final result only
         viewer.data().clear();

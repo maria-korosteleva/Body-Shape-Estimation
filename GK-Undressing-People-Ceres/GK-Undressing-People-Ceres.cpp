@@ -6,6 +6,7 @@
 //#define EIGEN_STACK_ALLOCATION_LIMIT 0
 
 // need to include first, because it uses Windows.h
+
 #include "PoseShapeExtractor.h"
 #include <GeneralMesh/GeneralMesh.h>
 #include "SMPLWrapper.h"
@@ -66,9 +67,11 @@ int main()
             "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources",
             output_path);
 
-        extractor.setupNewCameraExperiment(inputs[0], 4.5, 7, 0.5, "demo");
-        extractor.viewCameraSetupForPhotos();
+        extractor.setupNewExperiment(inputs[0], "imgui");
+        //extractor.viewCameraSetupForPhotos();
         extractor.runExtraction();
+        extractor.viewFinalResult();
+
 
         //for (auto&& input : inputs)
         //{

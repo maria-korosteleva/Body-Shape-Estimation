@@ -65,9 +65,6 @@
     <ClCompile Include="AbsoluteDistanceForShape.cpp">
       <Filter>Source Files\Optimization</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\libs\Installed_libs\src\imgui_impl_glfw_gl3.cpp">
-      <Filter>External source code</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\my_modules\GeneralMesh\GeneralMesh.cpp">
       <Filter>External source code</Filter>
     </ClCompile>
