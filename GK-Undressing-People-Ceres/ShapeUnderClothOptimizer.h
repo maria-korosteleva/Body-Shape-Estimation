@@ -27,7 +27,7 @@ using ceres::ScaledLoss;
 class ShapeUnderClothOptimizer
 {
 public:
-    ShapeUnderClothOptimizer(SMPLWrapper* smpl, GeneralMesh* input, const char* path_to_prior);
+    ShapeUnderClothOptimizer(SMPLWrapper* smpl, GeneralMesh* input, const std::string path_to_prior);
     ~ShapeUnderClothOptimizer();
     
     void setNewSMPLModel(SMPLWrapper*);

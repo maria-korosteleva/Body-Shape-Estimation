@@ -67,11 +67,12 @@ int main()
             "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources",
             output_path);
 
-        extractor.setupNewExperiment(inputs[0], "imgui");
+        extractor.setupNewExperiment(inputs[0], "optmization");
         //extractor.viewCameraSetupForPhotos();
         extractor.runExtraction();
         extractor.viewFinalResult();
 
+        //int gm_params[] = { 0, 10, 50 };
 
         //for (auto&& input : inputs)
         //{

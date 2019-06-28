@@ -1,52 +1,50 @@
 #include "ShapeUnderClothOptimizer.h"
 
 
-ShapeUnderClothOptimizer::ShapeUnderClothOptimizer(SMPLWrapper* smpl, GeneralMesh* input, const char* path_to_prior)
+ShapeUnderClothOptimizer::ShapeUnderClothOptimizer(SMPLWrapper* smpl, GeneralMesh* input, const std::string path_to_prior)
 {
-    this->smpl_ = smpl;
-    this->input_ = input;
+    smpl_ = smpl;
+    input_ = input;
 
     assert(input->getVertices().cols() == SMPLWrapper::SPACE_DIM && "World dimentions should be equal for SMPL and input mesh");
 
     // read prior info
     std::string path(path_to_prior);
     path += '/';
-    this->readAttractivePose_(path);
-    this->readStiffness_(path);
-
-    google::InitGoogleLogging("ShapeUnderClothing");
+    readAttractivePose_(path);
+    readStiffness_(path);
 }
 
 
 ShapeUnderClothOptimizer::~ShapeUnderClothOptimizer()
 {
-    this->erase_params_();
+    erase_params_();
 }
 
 
 void ShapeUnderClothOptimizer::setNewSMPLModel(SMPLWrapper* smpl)
 {
-    this->smpl_ = smpl;
+    smpl_ = smpl;
 }
 
 
 void ShapeUnderClothOptimizer::setNewInput(GeneralMesh * input)
 {
-    this->input_ = input;
+    input_ = input;
 }
 
 
 void ShapeUnderClothOptimizer::setNewPriorPath(const char * prior_path)
 {
     std::string path(prior_path);
-    this->readAttractivePose_(path);
-    this->readStiffness_(path);
+    readAttractivePose_(path);
+    readStiffness_(path);
 }
 
 void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd>* iteration_results, const double parameter)
 {
     // Get some space
-    this->erase_params_();
+    erase_params_();
     this->translation_ = new double[SMPLWrapper::SPACE_DIM];
     this->pose_ = new double[SMPLWrapper::POSE_SIZE];
     this->shape_ = new double[SMPLWrapper::SHAPE_SIZE];

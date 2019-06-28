@@ -14,7 +14,6 @@ PoseShapeExtractor::PoseShapeExtractor(const std::string& smpl_model_path,
     pose_prior_path_(pose_prior_path), logging_base_path_(logging_path)
 {
     smpl_ = nullptr;
-    optimizer_ = nullptr;
     input_ = nullptr;
     logger_ = nullptr;
     openpose_ = nullptr;
@@ -22,6 +21,8 @@ PoseShapeExtractor::PoseShapeExtractor(const std::string& smpl_model_path,
     cameras_distance_ = 4.5f;
     num_cameras_ = 7;
     cameras_elevation_ = 0.0;
+
+    optimizer_ = std::make_shared<ShapeUnderClothOptimizer>(nullptr, nullptr, pose_prior_path_);
 
     // as glog is used by class members
     google::InitGoogleLogging("PoseShapeExtractor");
@@ -194,32 +195,29 @@ void PoseShapeExtractor::estimateInitialPoseWithOP_()
 
 void PoseShapeExtractor::runPoseShapeOptimization_()
 {
-    // TODO Update with the SMPLWrapper changes
-    // for experiments
-    //int gm_params[] = { 0, 10, 50 };
+    // update the data in the oprimizer in case it changed
+    optimizer_->setNewInput(input_.get());
+    optimizer_->setNewSMPLModel(smpl_.get());
 
-    //for (int i = 0; i < 5; i++)
-    //{
-    //    CustomLogger gm_logger(output_path, "in_shape_gem_mc_" + std::to_string(gm_params[i]) + input->getName());
-    //    // save input for convenience
-    //    igl::writeOBJ(gm_logger.getLogFolderPath() + input->getName() + ".obj", 
-    //      input->getVertices(), input->getFaces());
+    std::cout << "Starting optimization...\n";
 
-    //    gm_logger.startRedirectCoutToFile("optimization.txt");
-    //    std::cout << "Input file: " << input_name << std::endl;
+    double expetiment_param = 0.;
+    
+    logger_->startRedirectCoutToFile("optimization.txt");
+    std::cout << "Input file: " << input_->getName() << std::endl;
 
-    //    // collect the meshes from each iteration
-    //    iteration_outputs_.clear();
-    //    //optimizer.findOptimalParameters(&iteration_outputs_, outside_shape_param);
-    //    optimizer->findOptimalParameters(nullptr, gm_params[i]);
-
-    //    gm_logger.endRedirectCoutToFile();
-    //    std::cout << "Optimization finished!\n";
-
-    //    // Save the results
-    //    gm_logger.logSMPLParams(*smpl, *optimizer);
-    //    gm_logger.saveFinalSMPLObject(*smpl, *optimizer);
-    //}
+    iteration_outputs_.clear();
+    if (save_iteration_results_)
+    {
+        optimizer_->findOptimalParameters(&iteration_outputs_, expetiment_param);
+    }
+    else
+    {
+        optimizer_->findOptimalParameters(nullptr, expetiment_param);
+    }
+    
+    logger_->endRedirectCoutToFile();
+    std::cout << "Optimization finished!\n";
 }
 
 char PoseShapeExtractor::convertInputGenderToChar_(const GeneralMesh& input)
