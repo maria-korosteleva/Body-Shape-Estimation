@@ -53,7 +53,10 @@ bool AbsoluteDistanceForShape::Evaluate(double const * const * parameters, doubl
 
     //igl::point_mesh_squared_distance(verts, this->toMesh_->getVertices(), this->toMesh_->getFaces(), sqrD, closest_face_ids, closest_points);
     igl::SignedDistanceType type = igl::SIGNED_DISTANCE_TYPE_PSEUDONORMAL;
-    igl::signed_distance(verts, this->toMesh_->getVertices(), this->toMesh_->getFaces(), type, signedDists, closest_face_ids, closest_points, normals);
+    igl::signed_distance(verts, 
+        toMesh_->getNormalizedVertices(), 
+        toMesh_->getFaces(),
+        type, signedDists, closest_face_ids, closest_points, normals);
 
     assert(signedDists.size() == SMPLWrapper::VERTICES_NUM && "Size of the set of distances should equal main parameters");
     assert(closest_points.rows() == SMPLWrapper::VERTICES_NUM && "Size of the set of distances should equal main parameters");
