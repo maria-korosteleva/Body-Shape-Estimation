@@ -1,10 +1,11 @@
 #include "ShapeUnderClothOptimizer.h"
 
 
-ShapeUnderClothOptimizer::ShapeUnderClothOptimizer(SMPLWrapper* smpl, GeneralMesh* input, const std::string path_to_prior)
+ShapeUnderClothOptimizer::ShapeUnderClothOptimizer(std::shared_ptr<SMPLWrapper> smpl, 
+    std::shared_ptr<GeneralMesh> input, const std::string path_to_prior)
 {
-    smpl_ = smpl;
-    input_ = input;
+    smpl_ = std::move(smpl);
+    input_ = std::move(input);
 
     assert(input->getVertices().cols() == SMPLWrapper::SPACE_DIM && "World dimentions should be equal for SMPL and input mesh");
 
@@ -18,14 +19,14 @@ ShapeUnderClothOptimizer::ShapeUnderClothOptimizer(SMPLWrapper* smpl, GeneralMes
 ShapeUnderClothOptimizer::~ShapeUnderClothOptimizer()
 {}
 
-void ShapeUnderClothOptimizer::setNewSMPLModel(SMPLWrapper* smpl)
+void ShapeUnderClothOptimizer::setNewSMPLModel(std::shared_ptr<SMPLWrapper> smpl)
 {
-    smpl_ = smpl;
+    smpl_ = std::move(smpl);
 }
 
-void ShapeUnderClothOptimizer::setNewInput(GeneralMesh * input)
+void ShapeUnderClothOptimizer::setNewInput(std::shared_ptr<GeneralMesh> input)
 {
-    input_ = input;
+    input_ = std::move(input);
 }
 
 void ShapeUnderClothOptimizer::setNewPriorPath(const char * prior_path)
@@ -97,7 +98,8 @@ void ShapeUnderClothOptimizer::generalPoseEstimation_(Solver::Options& options, 
     Problem problem;
 
     // Main cost
-    CostFunction* cost_function = new AbsoluteDistanceForPose(smpl_, input_, parameter);
+    // send raw pointers because inner class were not refactored
+    CostFunction* cost_function = new AbsoluteDistanceForPose(smpl_.get(), input_.get(), parameter);
     problem.AddResidualBlock(cost_function, nullptr, 
         smpl_->getStatePointers().pose,
         smpl_->getStatePointers().translation);
@@ -150,7 +152,7 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
 
     Problem problem;
 
-    CostFunction* cost_function = new AbsoluteDistanceForShape(smpl_, input_, parameter);
+    CostFunction* cost_function = new AbsoluteDistanceForShape(smpl_.get(), input_.get(), parameter);
     problem.AddResidualBlock(cost_function, nullptr, 
         smpl_->getStatePointers().shape, 
         smpl_->getStatePointers().translation);
@@ -287,7 +289,6 @@ void ShapeUnderClothOptimizer::printArray_(double * arr, std::size_t size)
 
 ceres::CallbackReturnType ShapeUnderClothOptimizer::SMPLVertsLoggingCallBack::operator()(const ceres::IterationSummary & summary)
 {
-    // TODO get last calculated vertices
     Eigen::MatrixXd verts = smpl_->calcModel();
     smpl_verts_results_->push_back(verts);
 

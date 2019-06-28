@@ -27,14 +27,14 @@ using ceres::ScaledLoss;
 class ShapeUnderClothOptimizer
 {
 public:
-    ShapeUnderClothOptimizer(SMPLWrapper* smpl, GeneralMesh* input, const std::string path_to_prior);
+    ShapeUnderClothOptimizer(std::shared_ptr<SMPLWrapper> smpl, std::shared_ptr<GeneralMesh> input, const std::string path_to_prior);
     ~ShapeUnderClothOptimizer();
     
-    void setNewSMPLModel(SMPLWrapper*);
-    void setNewInput(GeneralMesh*);
+    void setNewSMPLModel(std::shared_ptr<SMPLWrapper>);
+    void setNewInput(std::shared_ptr<GeneralMesh>);
     void setNewPriorPath(const char*);
 
-    SMPLWrapper* getLastSMPL() const { return smpl_; }
+    std::shared_ptr<SMPLWrapper> getLastSMPL() const { return smpl_; }
 
     // parameter is some parameter of the underlying procedures; used for experiments; the semantics should be controlled by the programmer
     void findOptimalSMPLParameters(std::vector<Eigen::MatrixXd>* iteration_results = nullptr, const double parameter = 1.);
@@ -52,8 +52,9 @@ private:
     static void printArray_(double*, std::size_t);
 
     // data
-    SMPLWrapper * smpl_ = nullptr;
-    GeneralMesh * input_ = nullptr;
+    // use the shared_ptr to make sure objects won't dissapear in-between calls to this class
+    std::shared_ptr<SMPLWrapper> smpl_ = nullptr;
+    std::shared_ptr<GeneralMesh> input_ = nullptr;
     ceres::Matrix stiffness_;
     ceres::Vector attractive_pose_;
 
@@ -61,16 +62,17 @@ private:
     class SMPLVertsLoggingCallBack : public ceres::IterationCallback
     {
     public:
-        explicit SMPLVertsLoggingCallBack(SMPLWrapper* smpl, 
+        explicit SMPLVertsLoggingCallBack(std::shared_ptr<SMPLWrapper> smpl,
             std::vector<Eigen::MatrixXd>* smpl_verts_iteration_results)
-            : smpl_(smpl), 
-            smpl_verts_results_(smpl_verts_iteration_results) {}
+            : smpl_verts_results_(smpl_verts_iteration_results) {
+            smpl_ = std::move(smpl);
+        }
 
         ~SMPLVertsLoggingCallBack() {}
 
         ceres::CallbackReturnType operator()(const ceres::IterationSummary& summary);
     private:
-        SMPLWrapper* smpl_;
+        std::shared_ptr<SMPLWrapper> smpl_;
         std::vector<Eigen::MatrixXd>* smpl_verts_results_;
     };
 };

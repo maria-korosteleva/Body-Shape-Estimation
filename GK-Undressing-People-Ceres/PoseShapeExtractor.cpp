@@ -205,8 +205,8 @@ void PoseShapeExtractor::estimateInitialPoseWithOP_()
 void PoseShapeExtractor::runPoseShapeOptimization_()
 {
     // update the data in the oprimizer in case it changed
-    optimizer_->setNewInput(input_.get());
-    optimizer_->setNewSMPLModel(smpl_.get());
+    optimizer_->setNewInput(input_);
+    optimizer_->setNewSMPLModel(smpl_);
 
     std::cout << "Starting optimization...\n";
 
