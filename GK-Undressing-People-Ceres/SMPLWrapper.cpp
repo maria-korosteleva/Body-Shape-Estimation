@@ -212,7 +212,14 @@ E::MatrixXd SMPLWrapper::calcModel(const double * const pose, const double * con
 
 E::MatrixXd SMPLWrapper::calcModel(E::MatrixXd * pose_jac, E::MatrixXd * shape_jac)
 {
-    return calcModel(state_.pose, state_.shape, pose_jac, shape_jac);
+    E::MatrixXd verts = calcModel(state_.pose, state_.shape, pose_jac, shape_jac);
+    
+    // translate
+    for (int i = 0; i < SMPLWrapper::VERTICES_NUM; ++i)
+        for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)
+            verts(i, j) += state_.translation[j];
+
+    return verts;
 }
 
 E::MatrixXd SMPLWrapper::calcJointLocations_(const double * shape, const double * pose)

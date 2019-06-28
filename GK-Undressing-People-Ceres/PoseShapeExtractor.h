@@ -81,7 +81,7 @@ private:
     bool save_iteration_results_ = false;
 
     static int iteration_viewer_counter_;
-    static std::shared_ptr <VertsVector> iteration_outputs_to_viz_;
+    static VertsVector* iteration_outputs_to_viz_;
     static std::shared_ptr <SMPLWrapper> smpl_to_viz_;
     static std::shared_ptr <GeneralMesh> input_to_viz_;
 };

@@ -2,7 +2,7 @@
 
 // init statics
 int PoseShapeExtractor::iteration_viewer_counter_;
-std::shared_ptr <VertsVector> PoseShapeExtractor::iteration_outputs_to_viz_;
+VertsVector* PoseShapeExtractor::iteration_outputs_to_viz_;
 std::shared_ptr <SMPLWrapper> PoseShapeExtractor::smpl_to_viz_;
 std::shared_ptr <GeneralMesh> PoseShapeExtractor::input_to_viz_;
 
@@ -121,7 +121,7 @@ void PoseShapeExtractor::viewIteratoinProcess()
     if (iteration_outputs_.size() > 0)
     {
         // fill satic vars to be used in visualization
-        iteration_outputs_to_viz_ = std::shared_ptr<VertsVector> (&iteration_outputs_);
+        iteration_outputs_to_viz_ = &iteration_outputs_;
         smpl_to_viz_ = smpl_;
         input_to_viz_ = input_;
 
@@ -209,14 +209,16 @@ void PoseShapeExtractor::runPoseShapeOptimization_()
     iteration_outputs_.clear();
     if (save_iteration_results_)
     {
-        optimizer_->findOptimalParameters(&iteration_outputs_, expetiment_param);
+        optimizer_->findOptimalSMPLParameters(&iteration_outputs_, expetiment_param);
     }
     else
     {
-        optimizer_->findOptimalParameters(nullptr, expetiment_param);
+        optimizer_->findOptimalSMPLParameters(nullptr, expetiment_param);
     }
     
     logger_->endRedirectCoutToFile();
+
+    // by this time, SMPLWrapper should have optimized model  
     std::cout << "Optimization finished!\n";
 }
 
@@ -274,10 +276,9 @@ bool PoseShapeExtractor::visualizeIterationKeyDown_(igl::opengl::glfw::Viewer & 
 
         // visualizing the final result only
         viewer.data().clear();
-        Eigen::MatrixXi faces = smpl_to_viz_->getFaces();
-        Eigen::MatrixXd verts = (*iteration_outputs_to_viz_)[iteration_outputs_to_viz_->size() - 1];
+        const Eigen::MatrixXi& faces = smpl_to_viz_->getFaces();
+        Eigen::MatrixXd& verts = (*iteration_outputs_to_viz_)[iteration_outputs_to_viz_->size() - 1];
         viewer.data().set_mesh(verts, faces);
-
 
         Eigen::VectorXd sqrD;
         Eigen::MatrixXd closest_points;

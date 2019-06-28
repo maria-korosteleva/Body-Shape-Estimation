@@ -34,50 +34,36 @@ public:
     void setNewInput(GeneralMesh*);
     void setNewPriorPath(const char*);
 
-    // The getters below return a pointer to the corresponding parameters
-    // They will be re-written with each findOptimalParameters() call
-    double * getEstimatesTranslationParams() const { return translation_;  };
-    double * getEstimatesPoseParams() const { return pose_; };
-    double * getEstimatesShapeParams() const { return shape_; };
+    SMPLWrapper* getLastSMPL() const { return smpl_; }
 
     // parameter is some parameter of the underlying procedures; used for experiments; the semantics should be controlled by the programmer
-    void findOptimalParameters(std::vector<Eigen::MatrixXd>* iteration_results = nullptr, const double parameter = 1.);
+    void findOptimalSMPLParameters(std::vector<Eigen::MatrixXd>* iteration_results = nullptr, const double parameter = 1.);
 
 private:
-    // fixed
-    SMPLWrapper * smpl_ = nullptr;
-    GeneralMesh * input_ = nullptr;
-    ceres::Matrix stiffness_;
-    ceres::Vector attractive_pose_;
-
-    // last params
-    double * translation_ = nullptr;
-    double * pose_ = nullptr;
-    double * shape_ = nullptr;
-
     // inidividual optimizers
     // expect the params to be initialized outside
     void generalPoseEstimation_(Solver::Options& options, const double parameter = 1.);
     void shapeEstimation_(Solver::Options& options, const double parameter = 1.);
 
     // utils
-    void erase_params_();
     void readAttractivePose_(const std::string);
     void readStiffness_(const std::string);
     static void zeros_(double *, std::size_t);
     static void printArray_(double*, std::size_t);
 
+    // data
+    SMPLWrapper * smpl_ = nullptr;
+    GeneralMesh * input_ = nullptr;
+    ceres::Matrix stiffness_;
+    ceres::Vector attractive_pose_;
+
     // inner classes
     class SMPLVertsLoggingCallBack : public ceres::IterationCallback
     {
     public:
-        explicit SMPLVertsLoggingCallBack(SMPLWrapper* smpl,
-            const double const * pose, const double const * shape, const double const * translation, 
+        explicit SMPLVertsLoggingCallBack(SMPLWrapper* smpl, 
             std::vector<Eigen::MatrixXd>* smpl_verts_iteration_results)
             : smpl_(smpl), 
-            pose_(pose), 
-            shape_(shape), 
-            translation_(translation), 
             smpl_verts_results_(smpl_verts_iteration_results) {}
 
         ~SMPLVertsLoggingCallBack() {}
@@ -86,11 +72,6 @@ private:
     private:
         SMPLWrapper* smpl_;
         std::vector<Eigen::MatrixXd>* smpl_verts_results_;
-        // parameter trackers
-        const double const * pose_; 
-        const double const * shape_;
-        const double const * translation_;
-
     };
 };
 

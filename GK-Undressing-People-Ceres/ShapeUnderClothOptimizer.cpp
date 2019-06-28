@@ -15,24 +15,18 @@ ShapeUnderClothOptimizer::ShapeUnderClothOptimizer(SMPLWrapper* smpl, GeneralMes
     readStiffness_(path);
 }
 
-
 ShapeUnderClothOptimizer::~ShapeUnderClothOptimizer()
-{
-    erase_params_();
-}
-
+{}
 
 void ShapeUnderClothOptimizer::setNewSMPLModel(SMPLWrapper* smpl)
 {
     smpl_ = smpl;
 }
 
-
 void ShapeUnderClothOptimizer::setNewInput(GeneralMesh * input)
 {
     input_ = input;
 }
-
 
 void ShapeUnderClothOptimizer::setNewPriorPath(const char * prior_path)
 {
@@ -41,23 +35,12 @@ void ShapeUnderClothOptimizer::setNewPriorPath(const char * prior_path)
     readStiffness_(path);
 }
 
-void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd>* iteration_results, const double parameter)
+void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::MatrixXd>* iteration_results, const double parameter)
 {
-    // Get some space
-    erase_params_();
-    this->translation_ = new double[SMPLWrapper::SPACE_DIM];
-    this->pose_ = new double[SMPLWrapper::POSE_SIZE];
-    this->shape_ = new double[SMPLWrapper::SHAPE_SIZE];
+    // Use the current state of smpl_ as init parameters
 
-    // Init parameters
-    E::VectorXd translation_guess = this->input_->getMeanPoint() - this->smpl_->getTemplateMeanPoint();
-    assert(translation_guess.size() == SMPLWrapper::SPACE_DIM 
-        && "Calculated translation guess should have size equal to the SMPL world dimentionality");
-    //this->zeros_(this->translation_, SMPLWrapper::SPACE_DIM);
-    for (int i = 0; i < SMPLWrapper::SPACE_DIM; ++i)
-        this->translation_[i] = translation_guess(i);
-    this->zeros_(this->pose_, SMPLWrapper::POSE_SIZE);
-    this->zeros_(this->shape_, SMPLWrapper::SHAPE_SIZE);
+    // zero guess, because we assume normalized input and normalized smpl_
+    E::VectorXd translation_guess = input_->getMeanPoint() - smpl_->getTemplateMeanPoint();
 
     // Setup solvers options
     Solver::Options options;
@@ -71,13 +54,10 @@ void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd
     SMPLVertsLoggingCallBack* callback = nullptr;
     if (iteration_results != nullptr)
     {
-        callback = new SMPLVertsLoggingCallBack(this->smpl_, this->pose_, this->shape_, this->translation_, iteration_results);
+        callback = new SMPLVertsLoggingCallBack(smpl_, iteration_results);
         options.callbacks.push_back(callback);
         options.update_state_every_iteration = true;
     }
-
-    // parameters estimation
-    //this->directionalPoseEstimation_(options);
 
     auto start_time = std::chrono::system_clock::now();
     // just some number of cycles
@@ -87,9 +67,9 @@ void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd
             << "    Cycle #" << i << std::endl
             << "***********************" << std::endl;
 
-        this->generalPoseEstimation_(options, 1.);
+        generalPoseEstimation_(options, 1.);
 
-        this->shapeEstimation_(options, parameter);
+        shapeEstimation_(options, parameter);
     }
 
     auto end_time = std::chrono::system_clock::now();
@@ -108,7 +88,6 @@ void ShapeUnderClothOptimizer::findOptimalParameters(std::vector<Eigen::MatrixXd
     }
 }
 
-
 void ShapeUnderClothOptimizer::generalPoseEstimation_(Solver::Options& options, const double parameter)
 {
     std::cout << "-----------------------" << std::endl
@@ -118,13 +97,16 @@ void ShapeUnderClothOptimizer::generalPoseEstimation_(Solver::Options& options, 
     Problem problem;
 
     // Main cost
-    CostFunction* cost_function = new AbsoluteDistanceForPose(this->smpl_, this->input_, parameter, this->shape_);
-    problem.AddResidualBlock(cost_function, nullptr, this->pose_, this->translation_);
+    CostFunction* cost_function = new AbsoluteDistanceForPose(smpl_, input_, parameter, smpl_->getStatePointers().shape);
+    problem.AddResidualBlock(cost_function, nullptr, 
+        smpl_->getStatePointers().pose,
+        smpl_->getStatePointers().translation);
 
     // Regularizer
-    CostFunction* prior = new NormalPrior(this->stiffness_, this->attractive_pose_);
+    CostFunction* prior = new NormalPrior(stiffness_, attractive_pose_);
     LossFunction* scale_prior = new ScaledLoss(NULL, 0.007, ceres::TAKE_OWNERSHIP);    // 0.0007
-    problem.AddResidualBlock(prior, scale_prior, this->pose_);
+    problem.AddResidualBlock(prior, scale_prior, 
+        smpl_->getStatePointers().pose);
 
     // Run the solver!
     Solver::Summary summary;
@@ -160,7 +142,6 @@ void ShapeUnderClothOptimizer::generalPoseEstimation_(Solver::Options& options, 
 #endif // DEBUG
 }
 
-
 void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const double parameter)
 {
     std::cout << "-----------------------" << std::endl
@@ -169,8 +150,10 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
 
     Problem problem;
 
-    CostFunction* cost_function = new AbsoluteDistanceForShape(this->smpl_, this->input_, parameter, this->pose_); 
-    problem.AddResidualBlock(cost_function, nullptr, this->shape_, this->translation_);  
+    CostFunction* cost_function = new AbsoluteDistanceForShape(smpl_, input_, parameter, smpl_->getStatePointers().pose);
+    problem.AddResidualBlock(cost_function, nullptr, 
+        smpl_->getStatePointers().shape, 
+        smpl_->getStatePointers().translation);
 
     // TODO add light regularization
 
@@ -208,29 +191,6 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
 #endif // DEBUG
 }
 
-
-void ShapeUnderClothOptimizer::erase_params_()
-{
-    if (this->translation_ != nullptr)
-    {
-        delete[] this->translation_;
-        this->translation_ = nullptr;
-    }
-
-    if (this->pose_ != nullptr)
-    {
-        delete[] this->pose_;
-        this->pose_ = nullptr;
-    }
-
-    if (this->shape_ != nullptr)
-    {
-        delete[] this->shape_;
-        this->shape_ = nullptr;
-    }
-}
-
-
 void ShapeUnderClothOptimizer::readAttractivePose_(const std::string path)
 {
     //std::string filename = path + "mean_pose.txt";
@@ -247,10 +207,10 @@ void ShapeUnderClothOptimizer::readAttractivePose_(const std::string path)
     this->attractive_pose_.resize(SMPLWrapper::POSE_SIZE);
     // For convinient use of the mean pose with full pose vectors, root rotation is set to zero
     for (int i = 0; i < SMPLWrapper::SPACE_DIM; i++)
-        this->attractive_pose_(i) = 0.;
+        attractive_pose_(i) = 0.;
     // Now read from file
     for (int i = SMPLWrapper::SPACE_DIM; i < SMPLWrapper::POSE_SIZE; i++)
-        inFile >> this->attractive_pose_(i);
+        inFile >> attractive_pose_(i);
 
     inFile.close();
 
@@ -263,7 +223,6 @@ void ShapeUnderClothOptimizer::readAttractivePose_(const std::string path)
     //std::cout << std::endl;
 #endif // DEBUG
 }
-
 
 void ShapeUnderClothOptimizer::readStiffness_(const std::string path)
 {
@@ -309,7 +268,6 @@ void ShapeUnderClothOptimizer::readStiffness_(const std::string path)
 
 }
 
-
 void ShapeUnderClothOptimizer::zeros_(double * arr, std::size_t size)
 {
     for (int i = 0; i < size; i++)
@@ -317,7 +275,6 @@ void ShapeUnderClothOptimizer::zeros_(double * arr, std::size_t size)
         arr[i] = 0.;
     }
 }
-
 
 void ShapeUnderClothOptimizer::printArray_(double * arr, std::size_t size)
 {
@@ -328,14 +285,11 @@ void ShapeUnderClothOptimizer::printArray_(double * arr, std::size_t size)
     std::cout << std::endl;
 }
 
-
 ceres::CallbackReturnType ShapeUnderClothOptimizer::SMPLVertsLoggingCallBack::operator()(const ceres::IterationSummary & summary)
 {
-    Eigen::MatrixXd verts = this->smpl_->calcModel(this->pose_, this->shape_);
-    for (int i = 0; i < SMPLWrapper::VERTICES_NUM; ++i)
-        for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)
-            verts(i, j) += this->translation_[j];
-    this->smpl_verts_results_->push_back(verts);
+    // TODO get last calculated vertices
+    Eigen::MatrixXd verts = smpl_->calcModel();
+    smpl_verts_results_->push_back(verts);
 
     return ceres::SOLVER_CONTINUE;
 }

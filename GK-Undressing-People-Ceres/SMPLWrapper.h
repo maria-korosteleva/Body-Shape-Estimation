@@ -61,7 +61,7 @@ public:
     const DictionaryInt& getKeyVertices() const         { return key_vertices_; }
     const std::vector <DirPair>& getKeyDirections() const { return key_directions_; }
     // beware: returns pointer to the inner arrays
-    State getStatePointers() const { return state_; }
+    State& getStatePointers() { return state_; }
 
     // Methods can only be used with SPACE_DIM==3
     void rotateLimbToDirection(const std::string joint_name, const E::Vector3d& direction);
