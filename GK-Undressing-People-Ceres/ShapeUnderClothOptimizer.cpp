@@ -66,9 +66,9 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
             << "    Cycle #" << i << std::endl
             << "***********************" << std::endl;
 
-        generalPoseEstimation_(options, 1.);
-
         shapeEstimation_(options, parameter);
+
+        generalPoseEstimation_(options, 1.);
     }
 
     auto end_time = std::chrono::system_clock::now();
