@@ -22,8 +22,6 @@ SMPLWrapper::SMPLWrapper(char gender, const std::string path)
     readShapes_();
     readWeights_();
     readHierarchy_();
-    readKeyVertices_();
-    readKeyDirections_();
 
     joint_locations_template_ = calcJointLocations();
 }
@@ -427,60 +425,6 @@ void SMPLWrapper::readHierarchy_()
     inFile.close();
 }
 
-void SMPLWrapper::readKeyVertices_()
-{
-    std::string file_name(this->general_path_);
-    file_name += "key_vertices.txt";
-
-    std::fstream inFile;
-    inFile.open(file_name, std::ios_base::in);
-    int keys_n;
-    inFile >> keys_n;
-    // Sanity check
-    if (keys_n <= 0)
-    {
-        throw std::exception("Number of key vertices should be a positive number!");
-    }
-
-    std::string key_name;
-    int vertexId;
-    for (int i = 0; i < keys_n; i++)
-    {
-        inFile >> key_name;
-        inFile >> vertexId;
-        this->key_vertices_.insert(DictEntryInt(key_name, vertexId));
-    }
-
-    inFile.close();
-}
-
-void SMPLWrapper::readKeyDirections_()
-{
-    std::string file_name(this->general_path_);
-    file_name += "key_directions.txt";
-
-    std::fstream inFile;
-    inFile.open(file_name, std::ios_base::in);
-    int dirs_n;
-    inFile >> dirs_n;
-    // Sanity check
-    if (dirs_n <= 0)
-    {
-        throw std::exception("Number of key directions should be a positive number!");
-    }
-
-    std::string key_1;
-    std::string key_2;
-    for (int i = 0; i < dirs_n; i++)
-    {
-        inFile >> key_1;
-        inFile >> key_2;
-        this->key_directions_.push_back(DirPair(key_1, key_2));
-    }
-
-    inFile.close();
-}
-
 E::Vector3d SMPLWrapper::angle_axis_(const E::Vector3d& from, const E::Vector3d& to)
 {
     assert(SMPLWrapper::SPACE_DIM == 3 && "angle_axis_() can only be used in 3D world");
@@ -870,7 +814,7 @@ E::MatrixXd SMPLWrapper::get3DTranslationMat_(const E::MatrixXd & translationVec
     return translation;
 }
 
-E::SparseMatrix<double> SMPLWrapper::getLBSMatrix_(E::MatrixXd & verts) const
+E::SparseMatrix<double> SMPLWrapper::getLBSMatrix_(const E::MatrixXd & verts) const
 {
     const int dim = SMPLWrapper::SPACE_DIM;
     const int nVerts = SMPLWrapper::VERTICES_NUM;
