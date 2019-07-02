@@ -66,11 +66,12 @@ std::shared_ptr<SMPLWrapper> PoseShapeExtractor::runExtraction()
     
     // 2.
     estimateInitialPoseWithOP_();
+    smpl_->savePosedOnlyToObj(logger_->getOpenPoseGuessesPath() + "/smpl_op_posed.obj");
+    smpl_->logParameters(logger_->getOpenPoseGuessesPath() + "/smpl_op_posed_params.txt");
 
     // 3.
     runPoseShapeOptimization_();
 
-    // 4.
     logger_->saveFinalModel(*smpl_);
     if (save_iteration_results_)
         logger_->saveIterationsSMPLObjects(*smpl_, iteration_outputs_);
