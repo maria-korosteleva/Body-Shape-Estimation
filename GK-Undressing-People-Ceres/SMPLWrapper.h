@@ -99,6 +99,7 @@ private:
     void assignJointGlobalRotation_(int joint_id, E::VectorXd rotation, 
         const EHomoCoordMatrix(&fk_transform)[SMPLWrapper::JOINTS_NUM]);
    
+    // Model calculation
     // if not nullptr, shape_jac is expected to be an array of SHAPE_SIZE of MatrixXd, one matrix for each shape parameter
     void shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::MatrixXd* shape_jac = nullptr);
     void poseSMPL_(const double * const pose, E::MatrixXd & verts, E::MatrixXd * pose_jac = nullptr);
@@ -110,6 +111,8 @@ private:
 
     // pass fk_transforms_ to be explicit of which version of fk_transforms is used for calculations
     static E::MatrixXd extractJointLocationFromFKTransform_(const EHomoCoordMatrix(&fk_transform)[SMPLWrapper::JOINTS_NUM]);
+
+    // result passed in the form of stacked transposed matrices with the homo row clipped: JOINTS_NUM * 4 x 3
     static E::MatrixXd extractLBSJointTransformFromFKTransform_(
         const EHomoCoordMatrix (&fk_transform) [SMPLWrapper::JOINTS_NUM], const E::MatrixXd & t_pose_joints_locations,
         const E::MatrixXd (*FKDerivatives)[SMPLWrapper::JOINTS_NUM][SMPLWrapper::POSE_SIZE] = nullptr, 
@@ -155,7 +158,7 @@ private:
     // current state
     State state_;
 
-    // in the form of stacked transposed matrices with the homo row clipped: JOINTS_NUM * 4 x 3
+    
     // These vars indicate the last model re-calculation 
     // !! Params are allowed to be changed directly, so make sure it's fresh before using
     EHomoCoordMatrix fk_transforms_[SMPLWrapper::JOINTS_NUM];
