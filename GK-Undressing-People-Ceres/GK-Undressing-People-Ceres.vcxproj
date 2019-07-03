@@ -99,7 +99,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalOptions>/DEIGEN_STACK_ALLOCATION_LIMIT=0 /bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/DEIGEN_STACK_ALLOCATION_LIMIT=0 /bigobj /D_ENABLE_EXTENDED_ALIGNED_STORAGE %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -118,7 +118,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
-      <AdditionalOptions>/DEIGEN_STACK_ALLOCATION_LIMIT=0 /bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/DEIGEN_STACK_ALLOCATION_LIMIT=0 /bigobj /D_ENABLE_EXTENDED_ALIGNED_STORAGE %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -138,7 +138,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalOptions>/DEIGEN_STACK_ALLOCATION_LIMIT=0 /bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/DEIGEN_STACK_ALLOCATION_LIMIT=0 /bigobj /D_ENABLE_EXTENDED_ALIGNED_STORAGE %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -160,7 +160,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalOptions>/DEIGEN_STACK_ALLOCATION_LIMIT=0 /bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/DEIGEN_STACK_ALLOCATION_LIMIT=0 /bigobj /D_ENABLE_EXTENDED_ALIGNED_STORAGE %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
