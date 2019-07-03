@@ -490,7 +490,7 @@ void SMPLWrapper::assignJointGlobalRotation_(int joint_id, E::VectorXd rotation)
     if (joint_id > 0)
     {
         Eigen::MatrixXd joint_inverse_rotation =
-            joints_global_transform_.block(joint_id * (SPACE_DIM + 1), 0, SPACE_DIM, SPACE_DIM);
+            fk_transforms_[joint_id].block(0, 0, SPACE_DIM, SPACE_DIM).transpose();
 
         rotation_local = joint_inverse_rotation * rotation;
     }
@@ -535,6 +535,7 @@ void SMPLWrapper::poseSMPL_(const double * const pose, E::MatrixXd & verts, E::M
 
     E::MatrixXd jointLocations = this->jointRegressorMat_ * verts;
     updateJointsGlobalTransformation_(pose, jointLocations, pose_jac);
+    joints_global_transform_ = extractLBSJointTransformFromFKTransform_(fk_transforms_, jointLocations);
 
     verts = LBSMat * joints_global_transform_;
 
@@ -581,7 +582,7 @@ E::MatrixXd SMPLWrapper::calcJointLocations_(const double * translation,
     if (pose != nullptr)
     {
         updateJointsGlobalTransformation_(pose, joint_locations);
-        joint_locations = extractJointLocationFromTransform_();
+        joint_locations = extractJointLocationFromFKTransform_(fk_transforms_);
     }
 
     if (translation != nullptr)
@@ -592,23 +593,38 @@ E::MatrixXd SMPLWrapper::calcJointLocations_(const double * translation,
     return joint_locations;
 }
 
-E::MatrixXd SMPLWrapper::extractJointLocationFromTransform_()
+E::MatrixXd SMPLWrapper::extractJointLocationFromFKTransform_(const EHomoCoordMatrix * fk_transform)
 {
-    // Go over the fk_transform_ matrix and gather joint locations
+    // Go over the fk_transform and gather joint locations
     E::MatrixXd joints_locations(JOINTS_NUM, SPACE_DIM);
     for (int j = 0; j < JOINTS_NUM; j++)
     {
         // translation info is in the last column
-        joints_locations.row(j) = fk_transforms_[j].block(0, SPACE_DIM, SPACE_DIM, 1).transpose();
+        joints_locations.row(j) = fk_transform[j].block(0, SPACE_DIM, SPACE_DIM, 1).transpose();
     }
-
-    joints_locations_ = joints_locations;
 
     return joints_locations;
 }
 
+E::MatrixXd SMPLWrapper::extractLBSJointTransformFromFKTransform_(
+    const EHomoCoordMatrix * fk_transform, const E::MatrixXd & t_pose_joints_locations)
+{
+    E::MatrixXd joints_transform(HOMO_SIZE * SMPLWrapper::JOINTS_NUM, SMPLWrapper::SPACE_DIM);
+
+    // Go over the fk_transform_ matrix and create LBS-compatible matrix
+    for (int j = 0; j < JOINTS_NUM; j++)
+    {
+        E::MatrixXd tmpPointGlobalTransform = fk_transform[j] * get3DTranslationMat_(-t_pose_joints_locations.row(j));
+        
+        joints_transform.block(HOMO_SIZE * j, 0, HOMO_SIZE, SMPLWrapper::SPACE_DIM)
+            = tmpPointGlobalTransform.transpose().leftCols(SMPLWrapper::SPACE_DIM);
+    }
+
+    return joints_transform;
+}
+
 void SMPLWrapper::updateJointsGlobalTransformation_(
-    const double * const pose, const E::MatrixXd & jointLocations, E::MatrixXd * jacsTotal) 
+    const double * const pose, const E::MatrixXd & t_pose_joints_locations, E::MatrixXd * jacsTotal) 
 {
 #ifdef DEBUG
     std::cout << "global transform (analytic)" << std::endl;
@@ -619,8 +635,6 @@ void SMPLWrapper::updateJointsGlobalTransformation_(
 
     // for jacobian calculations, each entry is 4x4 or empty. FK=Forward Kinematics
     E::MatrixXd FKDerivatives[SMPLWrapper::JOINTS_NUM][SMPLWrapper::POSE_SIZE];
-    // Stacked (transposed) global transformation matrices for points
-    joints_global_transform_.resize(HOMO_SIZE * SMPLWrapper::JOINTS_NUM, SMPLWrapper::SPACE_DIM);
 
     // root 
     if (jacsTotal != nullptr)
@@ -630,24 +644,20 @@ void SMPLWrapper::updateJointsGlobalTransformation_(
             jacsTotal[i].setZero(HOMO_SIZE * SMPLWrapper::JOINTS_NUM, SMPLWrapper::SPACE_DIM);
         }
 
-        fk_transforms_[0] = this->get3DLocalTransformMat_(pose, jointLocations.row(0), FKDerivatives[0]);
+        fk_transforms_[0] = this->get3DLocalTransformMat_(pose, t_pose_joints_locations.row(0), FKDerivatives[0]);
 
         // fill derivatives w.r.t. coordinates of rotation of the first joint  in the exponential coordinates
         E::MatrixXd tmpPointGlobalJac;
         for (int i = 0; i < SMPLWrapper::SPACE_DIM; ++i)
         {
-            tmpPointGlobalJac = FKDerivatives[0][i] * this->get3DTranslationMat_(-jointLocations.row(0));
+            tmpPointGlobalJac = FKDerivatives[0][i] * this->get3DTranslationMat_(-t_pose_joints_locations.row(0));
             jacsTotal[i].block(0, 0, HOMO_SIZE, SMPLWrapper::SPACE_DIM) = tmpPointGlobalJac.transpose().leftCols(SMPLWrapper::SPACE_DIM);
         }
     }
     else
     {
-        fk_transforms_[0] = this->get3DLocalTransformMat_(pose, jointLocations.row(0));
+        fk_transforms_[0] = this->get3DLocalTransformMat_(pose, t_pose_joints_locations.row(0));
     }
-
-    E::MatrixXd tmpPointGlobalTransform = fk_transforms_[0] * this->get3DTranslationMat_(-jointLocations.row(0));
-    joints_global_transform_.block(0, 0, HOMO_SIZE, SMPLWrapper::SPACE_DIM)
-        = tmpPointGlobalTransform.transpose().leftCols(SMPLWrapper::SPACE_DIM);
 
     // the rest of the joints
     for (int joint_id = 1; joint_id < SMPLWrapper::JOINTS_NUM; joint_id++)
@@ -657,12 +667,7 @@ void SMPLWrapper::updateJointsGlobalTransformation_(
             // Forward Kinematics Formula
             fk_transforms_[joint_id] = fk_transforms_[this->joints_parents_[joint_id]]
                 * this->get3DLocalTransformMat_((pose + joint_id * 3),
-                    jointLocations.row(joint_id) - jointLocations.row(this->joints_parents_[joint_id]));
-
-            // collect transform for final matrix
-            tmpPointGlobalTransform = fk_transforms_[joint_id] * this->get3DTranslationMat_(-jointLocations.row(joint_id));
-            joints_global_transform_.block(joint_id * HOMO_SIZE, 0, HOMO_SIZE, SMPLWrapper::SPACE_DIM)
-                = tmpPointGlobalTransform.transpose().leftCols(SMPLWrapper::SPACE_DIM);
+                    t_pose_joints_locations.row(joint_id) - t_pose_joints_locations.row(this->joints_parents_[joint_id]));
         }
         else // calc jacobian
         {
@@ -670,15 +675,11 @@ void SMPLWrapper::updateJointsGlobalTransformation_(
             E::MatrixXd localTransformJac[SMPLWrapper::SPACE_DIM];
 
             localTransform = this->get3DLocalTransformMat_((pose + joint_id * SMPLWrapper::SPACE_DIM),
-                jointLocations.row(joint_id) - jointLocations.row(this->joints_parents_[joint_id]),
+                t_pose_joints_locations.row(joint_id) - t_pose_joints_locations.row(this->joints_parents_[joint_id]),
                 localTransformJac); // ask to calc jacobian
 
             // Forward Kinematics Formula
             fk_transforms_[joint_id] = fk_transforms_[this->joints_parents_[joint_id]] * localTransform;
-            // collect transform for final matrix
-            tmpPointGlobalTransform = fk_transforms_[joint_id] * this->get3DTranslationMat_(-jointLocations.row(joint_id));
-            joints_global_transform_.block(joint_id * HOMO_SIZE, 0, HOMO_SIZE, SMPLWrapper::SPACE_DIM)
-                = tmpPointGlobalTransform.transpose().leftCols(SMPLWrapper::SPACE_DIM);
 
             E::MatrixXd tmpPointGlobalJac;
             // jac w.r.t current joint rot coordinates
@@ -687,7 +688,7 @@ void SMPLWrapper::updateJointsGlobalTransformation_(
                 FKDerivatives[joint_id][joint_id * SMPLWrapper::SPACE_DIM + j] = fk_transforms_[this->joints_parents_[joint_id]] * localTransformJac[j];
 
                 tmpPointGlobalJac
-                    = FKDerivatives[joint_id][joint_id * SMPLWrapper::SPACE_DIM + j] * this->get3DTranslationMat_(-jointLocations.row(joint_id));
+                    = FKDerivatives[joint_id][joint_id * SMPLWrapper::SPACE_DIM + j] * this->get3DTranslationMat_(-t_pose_joints_locations.row(joint_id));
 
                 jacsTotal[joint_id * SMPLWrapper::SPACE_DIM + j].block(joint_id * HOMO_SIZE, 0, HOMO_SIZE, SMPLWrapper::SPACE_DIM)
                     = tmpPointGlobalJac.transpose().leftCols(SMPLWrapper::SPACE_DIM);
@@ -700,7 +701,7 @@ void SMPLWrapper::updateJointsGlobalTransformation_(
                 {
                     FKDerivatives[joint_id][j] = FKDerivatives[this->joints_parents_[joint_id]][j] * localTransform;
 
-                    tmpPointGlobalJac = FKDerivatives[joint_id][j] * this->get3DTranslationMat_(-jointLocations.row(joint_id));
+                    tmpPointGlobalJac = FKDerivatives[joint_id][j] * this->get3DTranslationMat_(-t_pose_joints_locations.row(joint_id));
                     jacsTotal[j].block(joint_id * HOMO_SIZE, 0, HOMO_SIZE, SMPLWrapper::SPACE_DIM)
                         = tmpPointGlobalJac.transpose().leftCols(SMPLWrapper::SPACE_DIM);
                 }
@@ -792,7 +793,7 @@ E::MatrixXd SMPLWrapper::get3DLocalTransformMat_(const double * const jointAxisA
     return localTransform;
 }
 
-E::MatrixXd SMPLWrapper::get3DTranslationMat_(const E::MatrixXd & translationVector) const
+E::MatrixXd SMPLWrapper::get3DTranslationMat_(const E::MatrixXd & translationVector)
 {
     E::MatrixXd translation;
     translation.setIdentity(4, 4);  // in homogenious coordinates

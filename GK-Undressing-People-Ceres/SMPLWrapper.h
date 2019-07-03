@@ -18,9 +18,6 @@ TODO: - Add pose blendshape
 
 namespace E = Eigen;
 
-using DictionaryInt = std::map<std::string, int>;
-using DictEntryInt = std::pair<std::string, int>;
-
 class SMPLWrapper
 {
 public:
@@ -39,6 +36,10 @@ public:
     static constexpr std::size_t JOINTS_NUM = POSE_SIZE / SPACE_DIM;
     static constexpr std::size_t VERTICES_NUM = 6890;
     static constexpr std::size_t WEIGHTS_BY_VERTEX = 4;     // number of joints each vertex depend on
+
+    using DictionaryInt = std::map<std::string, int>;
+    using DictEntryInt = std::pair<std::string, int>;
+    using EHomoCoordMatrix = E::Matrix<double, HOMO_SIZE, HOMO_SIZE>;
 
     /*
     Class should be initialized with the gender of the model to use and with the path to the model folder,
@@ -99,14 +100,18 @@ private:
 
     E::MatrixXd calcJointLocations_(const double * translation = nullptr, 
         const double * shape = nullptr, const double * pose = nullptr);
-    E::MatrixXd extractJointLocationFromTransform_();
+
+    // these routines assumes that fk_transforms_ is calculated
+    static E::MatrixXd extractJointLocationFromFKTransform_(const EHomoCoordMatrix * fk_transform);
+    static E::MatrixXd extractLBSJointTransformFromFKTransform_(
+        const EHomoCoordMatrix * fk_transform, const E::MatrixXd & t_pose_joints_locations);
 
     // Posing routines: all sssumes that SPACE_DIM == 3
     // Assumes the default joint angles to be all zeros
     // Updates joints_global_transform_
     void updateJointsGlobalTransformation_(
         const double * const pose, 
-        const E::MatrixXd & jointLocations, 
+        const E::MatrixXd & t_pose_joints_locations,
         E::MatrixXd * jacsTotal = nullptr);
     void updateJointsGlobalTransformation_();   // shortcut
     
@@ -114,7 +119,7 @@ private:
         const double * const jointAxisAngleRotation, 
         const E::MatrixXd & jointToParentDist, 
         E::MatrixXd* localTransformJac = nullptr) const;
-    E::MatrixXd get3DTranslationMat_(const E::MatrixXd & translationVector) const;
+    static E::MatrixXd get3DTranslationMat_(const E::MatrixXd & translationVector);
     
     // Composes weights (object local) and given vertices in the rest pose into (Sparse) LBSMatrix. 
     // Inspired by igl::lbs_matrix(..)
@@ -142,10 +147,10 @@ private:
     // in the form of stacked transposed matrices with the homo row clipped: JOINTS_NUM * 4 x 3
     // These vars indicate the last model re-calculation 
     // !! Params are allowed to be changed directly, so make sure it's fresh before using
-    E::Matrix<double, HOMO_SIZE, HOMO_SIZE> fk_transforms_[SMPLWrapper::JOINTS_NUM];
+    EHomoCoordMatrix fk_transforms_[SMPLWrapper::JOINTS_NUM];
     E::MatrixXd joints_global_transform_;
-    E::MatrixXd shaped_joints_locations_;
-    E::MatrixXd joints_locations_;  // all shaped, posed and translated
+    //E::MatrixXd shaped_joints_locations_;
+    //E::MatrixXd joints_locations_;  // all shaped, posed and translated
     E::MatrixXd verts_;
 
 public:
