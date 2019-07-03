@@ -67,10 +67,10 @@ public:
     E::MatrixXd calcModel(const double * const translation, const double * const pose, const double * const shape,
         E::MatrixXd * pose_jac = nullptr, E::MatrixXd * shape_jac = nullptr);
     // using current SMPLWrapper state
-    E::MatrixXd calcModel(E::MatrixXd * pose_jac = nullptr, E::MatrixXd * shape_jac = nullptr);
+    E::MatrixXd calcModel();
     E::MatrixXd calcJointLocations();
 
-    void saveToObj(const double * translation, const double * pose, const double* shape, const std::string path);
+    
     // using current SMPLWrapper state
     void saveToObj(const std::string path);
     void savePosedOnlyToObj(const std::string path);
@@ -84,6 +84,8 @@ private:
     void readShapes_();
     void readWeights_();
     void readHierarchy_();
+
+    void saveToObj_(const double * translation, const double * pose, const double* shape, const std::string path);
 
     // For individual joint rotation calculation
     static E::Vector3d angle_axis_(const E::Vector3d& from, const E::Vector3d& to);
@@ -114,10 +116,15 @@ private:
     void updateJointsFKTransforms_(const double * const pose, 
         const E::MatrixXd & t_pose_joints_locations, bool calc_derivatives = false);
     
-    E::MatrixXd get3DLocalTransformMat_(
+    static E::MatrixXd get3DLocalTransformMat_(
         const double * const jointAxisAngleRotation, 
-        const E::MatrixXd & jointToParentDist, 
-        E::MatrixXd* localTransformJac = nullptr) const;
+        const E::MatrixXd & jointToParentDist);
+
+    static void get3DLocalTransformJac_(
+        const double * const jointAxisAngleRotation,
+        const E::MatrixXd & transform_mat,
+        E::MatrixXd* local_transform_jac_out);
+
     static E::MatrixXd get3DTranslationMat_(const E::MatrixXd & translationVector);
     
     // Composes weights (object local) and given vertices in the rest pose into (Sparse) LBSMatrix. 

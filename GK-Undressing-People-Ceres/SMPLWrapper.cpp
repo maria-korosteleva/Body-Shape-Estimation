@@ -150,13 +150,12 @@ void SMPLWrapper::twistBack(const E::Vector3d& shoulder_dir)
 
     // divide between the back joints
     assignJointGlobalRotation_(joint_names_.at("LowBack"), axis * angle / 3);
-    updateJointsFKTransforms_(state_.pose, joint_locations_template_);
 
+    updateJointsFKTransforms_(state_.pose, joint_locations_template_);
     assignJointGlobalRotation_(joint_names_.at("MiddleBack"), axis * angle / 3);
-    updateJointsFKTransforms_(state_.pose, joint_locations_template_);
 
+    updateJointsFKTransforms_(state_.pose, joint_locations_template_);
     assignJointGlobalRotation_(joint_names_.at("TopBack"), axis * angle / 3);
-    //updateJointsFKTransforms_(state_.pose, joint_locations_template_);
 }
 
 E::MatrixXd SMPLWrapper::calcModel(const double * const translation, const double * const pose, const double * const shape,
@@ -164,9 +163,6 @@ E::MatrixXd SMPLWrapper::calcModel(const double * const translation, const doubl
 {
     // assignment won't work without cast
     E::MatrixXd verts = verts_template_normalized_;
-#ifdef DEBUG
-    std::cout << "Calc model" << std::endl;
-#endif // DEBUG
 
     if (shape != nullptr)
         shapeSMPL_(shape, verts, shape_jac);
@@ -176,45 +172,19 @@ E::MatrixXd SMPLWrapper::calcModel(const double * const translation, const doubl
         poseSMPL_(pose, verts, pose_jac);
 
         if (shape_jac != nullptr)
-        {
-            // WARNING! This will significantly increse iteration time
             for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; ++i)
-            {
-                // TODO: add the use of pre-computed LBS Matrices 
-                // TODO: test
-                this->poseSMPL_(pose, shape_jac[i]);
-            }
-        }
-#ifdef DEBUG
-        std::cout << "Fin posing " << verts.rows() << " x " << verts.cols() << std::endl;
-#endif // DEBUG
+                this->poseSMPL_(pose, shape_jac[i]); // TODO: add the use of pre-computed LBS Matrices 
     }
 
     if (translation != nullptr)
         translate_(translation, verts);
 
-
-#ifdef DEBUG
-    std::cout << "Fin calculating" << std::endl;
-    //if (std::is_same_v<T, double>)
-    //{
-    //    for (int i = 0; i < SMPLWrapper::VERTICES_NUM; i++)
-    //    {
-    //        for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
-    //        {
-    //            std::cout << verts(i, j) << " ";
-    //        }
-    //        std::cout << std::endl;
-    //    }
-    //}
-#endif // DEBUG
-
     return verts;
 }
 
-E::MatrixXd SMPLWrapper::calcModel(E::MatrixXd * pose_jac, E::MatrixXd * shape_jac)
+E::MatrixXd SMPLWrapper::calcModel()
 {
-    return calcModel(state_.translation, state_.pose, state_.shape, pose_jac, shape_jac);;
+    return calcModel(state_.translation, state_.pose, state_.shape);;
 }
 
 E::MatrixXd SMPLWrapper::calcJointLocations()
@@ -222,7 +192,7 @@ E::MatrixXd SMPLWrapper::calcJointLocations()
     return calcJointLocations_(state_.translation, state_.shape, state_.pose);
 }
 
-void SMPLWrapper::saveToObj(const double* translation, const double* pose, const double* shape, 
+void SMPLWrapper::saveToObj_(const double* translation, const double* pose, const double* shape, 
     const std::string path)
 {
     E::MatrixXd verts = calcModel(translation, pose, shape);
@@ -232,17 +202,17 @@ void SMPLWrapper::saveToObj(const double* translation, const double* pose, const
 
 void SMPLWrapper::saveToObj(const std::string path) 
 {
-    saveToObj(state_.translation, state_.pose, state_.shape, path);
+    saveToObj_(state_.translation, state_.pose, state_.shape, path);
 }
 
 void SMPLWrapper::savePosedOnlyToObj(const std::string path) 
 {
-    saveToObj(state_.translation, state_.pose, nullptr, path);
+    saveToObj_(state_.translation, state_.pose, nullptr, path);
 }
 
 void SMPLWrapper::saveShapedOnlyToObj(const std::string path) 
 {
-    saveToObj(state_.translation, nullptr, state_.shape, path);
+    saveToObj_(state_.translation, nullptr, state_.shape, path);
 }
 
 void SMPLWrapper::logParameters(const std::string path)
@@ -528,10 +498,6 @@ void SMPLWrapper::shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::
 
 void SMPLWrapper::poseSMPL_(const double * const pose, E::MatrixXd & verts, E::MatrixXd * pose_jac)
 {
-#ifdef DEBUG
-    std::cout << "pose (analytic)" << std::endl;
-#endif // DEBUG
-
     E::SparseMatrix<double> LBSMat = this->getLBSMatrix_(verts);
 
     E::MatrixXd jointLocations = this->jointRegressorMat_ * verts;
@@ -631,9 +597,10 @@ E::MatrixXd SMPLWrapper::extractLBSJointTransformFromFKTransform_(
     // Go over the fk_transform_ matrix and create LBS-compatible matrix
     for (int j = 0; j < JOINTS_NUM; j++)
     {
+        // inverse is needed to transform verts coordinates to local coordinate system
         inverse_t_pose_translate = get3DTranslationMat_(-t_pose_joints_locations.row(j));
-        tmpPointGlobalTransform = fk_transform[j] * inverse_t_pose_translate;
         
+        tmpPointGlobalTransform = fk_transform[j] * inverse_t_pose_translate;
         joints_transform.block(HOMO_SIZE * j, 0, HOMO_SIZE, SMPLWrapper::SPACE_DIM)
             = tmpPointGlobalTransform.transpose().leftCols(SMPLWrapper::SPACE_DIM);
 
@@ -675,37 +642,25 @@ void SMPLWrapper::updateJointsFKTransforms_(
     // uses functions that assume input in 3D (see below)
     assert(SMPLWrapper::SPACE_DIM == 3 && "The function can only be used in 3D world");
 
-    // root 
+    // root as special case
+    fk_transforms_[0] = get3DLocalTransformMat_(pose, t_pose_joints_locations.row(0));
     if (calc_derivatives)
     {
-        fk_transforms_[0] = this->get3DLocalTransformMat_(pose, t_pose_joints_locations.row(0), fk_derivatives_[0]);
-    }
-    else
-    {
-        fk_transforms_[0] = this->get3DLocalTransformMat_(pose, t_pose_joints_locations.row(0));
+        get3DLocalTransformJac_(pose, fk_transforms_[0], fk_derivatives_[0]);
     }
 
-    // the rest of the joints
+    E::MatrixXd localTransform, localTransformJac[SMPLWrapper::SPACE_DIM];
     for (int joint_id = 1; joint_id < SMPLWrapper::JOINTS_NUM; joint_id++)
     {
-        if (!calc_derivatives)
-        {
-            // Forward Kinematics Formula
-            fk_transforms_[joint_id] = fk_transforms_[joints_parents_[joint_id]]
-                * get3DLocalTransformMat_((pose + joint_id * 3),
-                    t_pose_joints_locations.row(joint_id) - t_pose_joints_locations.row(joints_parents_[joint_id]));
-        }
-        else // calc jacobian
-        {
-            E::MatrixXd localTransform;
-            E::MatrixXd localTransformJac[SMPLWrapper::SPACE_DIM];
+        localTransform = get3DLocalTransformMat_((pose + joint_id * 3),
+            t_pose_joints_locations.row(joint_id) - t_pose_joints_locations.row(joints_parents_[joint_id]));
 
-            localTransform = get3DLocalTransformMat_((pose + joint_id * SMPLWrapper::SPACE_DIM),
-                t_pose_joints_locations.row(joint_id) - t_pose_joints_locations.row(joints_parents_[joint_id]),
-                localTransformJac); // ask to calc jacobian
+        // Forward Kinematics Formula
+        fk_transforms_[joint_id] = fk_transforms_[joints_parents_[joint_id]] * localTransform;
 
-            // Forward Kinematics Formula
-            fk_transforms_[joint_id] = fk_transforms_[joints_parents_[joint_id]] * localTransform;
+        if (calc_derivatives)
+        {
+            get3DLocalTransformJac_((pose + joint_id * 3), localTransform, localTransformJac);
 
             // jac w.r.t current joint rot coordinates
             for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)
@@ -730,21 +685,13 @@ void SMPLWrapper::updateJointsFKTransforms_(
     // now the fk_* are updated
 }
 
-E::MatrixXd SMPLWrapper::get3DLocalTransformMat_(const double * const jointAxisAngleRotation, const E::MatrixXd & jointToParentDist, E::MatrixXd* localTransformJac) const
+E::MatrixXd SMPLWrapper::get3DLocalTransformMat_(const double * const jointAxisAngleRotation, 
+    const E::MatrixXd & jointToParentDist)
 {
     // init
     E::MatrixXd localTransform;
     localTransform.setIdentity(4, 4);   // in homogenious coordinates
     localTransform.block(0, 3, 3, 1) = jointToParentDist.transpose(); // g(0)
-
-    if (localTransformJac != nullptr)
-    {
-        for (int i = 0; i < 3; ++i)
-        {
-            localTransformJac[i].setZero(4, 4);
-            localTransformJac[i].block(0, 3, 3, 1) = jointToParentDist.transpose();   // For the default pose transformation
-        }
-    }
 
     // prepare the info
     E::Vector3d w = E::Map<const E::Vector3d>(jointAxisAngleRotation);
@@ -757,51 +704,74 @@ E::MatrixXd SMPLWrapper::get3DLocalTransformMat_(const double * const jointAxisA
     w_skew /= norm;
     E::Matrix3d exponent = E::Matrix3d::Identity();
 
-    // calculate
     if (norm > 0.0001)  // don't waste computations on zero joint movement
     {
         // apply Rodrigues formula
         exponent += w_skew * sin(norm) + w_skew * w_skew * (1. - cos(norm));
         localTransform.block(0, 0, 3, 3) = exponent;
     }
-    
-    // jacobian
-    if (localTransformJac != nullptr)
-    {
-        if (norm > 0.0001)
-        {
-            for (int i = 0; i < 3; ++i)
-            {
-                // compact formula from https://arxiv.org/pdf/1312.0788.pdf
-                E::Vector3d cross = w.cross((E::Matrix3d::Identity() - exponent).col(i)) / (norm * norm);
-                E::Matrix3d cross_skew;
-                cross_skew <<
-                    0, -cross[2], cross[1],
-                    cross[2], 0, -cross[0],
-                    -cross[1], cross[0], 0;
-
-                localTransformJac[i].block(0, 0, 3, 3) = 
-                    (w_skew * w[i] / norm + cross_skew) * exponent;
-            }
-        }
-        else // zero case 
-        {
-            localTransformJac[0].block(0, 0, 3, 3) <<
-                0, 0, 0,
-                0, 0, -1,
-                0, 1, 0;
-            localTransformJac[1].block(0, 0, 3, 3) <<
-                0, 0, 1,
-                0, 0, 0,
-                -1, 0, 0;
-            localTransformJac[2].block(0, 0, 3, 3) <<
-                0, -1, 0,
-                1, 0, 0,
-                0, 0, 0;
-        }
-    }
 
     return localTransform;
+}
+
+void SMPLWrapper::get3DLocalTransformJac_(const double * const jointAxisAngleRotation, 
+    const E::MatrixXd & transform_mat, E::MatrixXd* local_transform_jac_out)
+{
+    for (int i = 0; i < SPACE_DIM; ++i)
+    {
+        local_transform_jac_out[i].setZero(4, 4);
+        // For the default pose transformation g(0)
+        local_transform_jac_out[i].col(SPACE_DIM) = transform_mat.col(SPACE_DIM);   
+        // local_transform_jac_out[i](3, 3) = 0;   
+        // (3, 3) should be 1 to account for the positions of the previous and subsequent joints in jac calculation
+    }
+
+    E::Vector3d w = E::Map<const E::Vector3d>(jointAxisAngleRotation);
+    double norm = w.norm();
+
+    if (norm > 0.0001)
+    {
+        E::Matrix3d w_skew;
+        w_skew <<
+            0, -w[2], w[1],
+            w[2], 0, -w[0],
+            -w[1], w[0], 0;
+        w_skew /= norm;
+
+        E::MatrixXd rot_mat = transform_mat.block(0, 0, SPACE_DIM, SPACE_DIM);
+
+        for (int i = 0; i < SPACE_DIM; ++i)
+        {
+            // compact formula from https://arxiv.org/pdf/1312.0788.pdf
+            E::Vector3d cross = 
+                w.cross((E::Matrix3d::Identity() - rot_mat).col(i))
+                / (norm * norm);
+            E::Matrix3d cross_skew;
+            cross_skew <<
+                0, -cross[2], cross[1],
+                cross[2], 0, -cross[0],
+                -cross[1], cross[0], 0;
+
+            local_transform_jac_out[i].block(0, 0, 3, 3) =
+                (w_skew * w[i] / norm + cross_skew) * rot_mat;
+        }
+    }
+    else // zero case 
+    {
+        local_transform_jac_out[0].block(0, 0, 3, 3) <<
+            0, 0, 0,
+            0, 0, -1,
+            0, 1, 0;
+        local_transform_jac_out[1].block(0, 0, 3, 3) <<
+            0, 0, 1,
+            0, 0, 0,
+            -1, 0, 0;
+        local_transform_jac_out[2].block(0, 0, 3, 3) <<
+            0, -1, 0,
+            1, 0, 0,
+            0, 0, 0;
+    }
+
 }
 
 E::MatrixXd SMPLWrapper::get3DTranslationMat_(const E::MatrixXd & translationVector)
