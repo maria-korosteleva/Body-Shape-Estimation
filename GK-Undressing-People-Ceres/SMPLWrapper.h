@@ -102,18 +102,17 @@ private:
         const double * shape = nullptr, const double * pose = nullptr);
 
     // these routines assumes that fk_transforms_ is calculated
-    static E::MatrixXd extractJointLocationFromFKTransform_(const EHomoCoordMatrix * fk_transform);
+    static E::MatrixXd extractJointLocationFromFKTransform_(const EHomoCoordMatrix(&fk_transform)[SMPLWrapper::JOINTS_NUM]);
     static E::MatrixXd extractLBSJointTransformFromFKTransform_(
-        const EHomoCoordMatrix * fk_transform, const E::MatrixXd & t_pose_joints_locations);
+        const EHomoCoordMatrix (&fk_transform) [SMPLWrapper::JOINTS_NUM], const E::MatrixXd & t_pose_joints_locations,
+        const E::MatrixXd (*FKDerivatives)[SMPLWrapper::JOINTS_NUM][SMPLWrapper::POSE_SIZE] = nullptr, 
+        E::MatrixXd * jacsTotal = nullptr);
 
     // Posing routines: all sssumes that SPACE_DIM == 3
     // Assumes the default joint angles to be all zeros
-    // Updates joints_global_transform_
-    void updateJointsGlobalTransformation_(
-        const double * const pose, 
-        const E::MatrixXd & t_pose_joints_locations,
-        E::MatrixXd * jacsTotal = nullptr);
-    void updateJointsGlobalTransformation_();   // shortcut
+    // Updates fk_*
+    void updateJointsFKTransforms_(const double * const pose, 
+        const E::MatrixXd & t_pose_joints_locations, bool calc_derivatives = false);
     
     E::MatrixXd get3DLocalTransformMat_(
         const double * const jointAxisAngleRotation, 
@@ -137,7 +136,7 @@ private:
     E::MatrixXd joint_locations_template_;
     E::MatrixXd shape_diffs_[10];  // store only differences between blendshapes and template
     E::MatrixXd jointRegressorMat_;
-    int joints_parents_[JOINTS_NUM];
+    static int joints_parents_[JOINTS_NUM];
     DictionaryInt joint_names_;
     E::SparseMatrix<double> weights_;
 
@@ -148,6 +147,8 @@ private:
     // These vars indicate the last model re-calculation 
     // !! Params are allowed to be changed directly, so make sure it's fresh before using
     EHomoCoordMatrix fk_transforms_[SMPLWrapper::JOINTS_NUM];
+    E::MatrixXd fk_derivatives_[SMPLWrapper::JOINTS_NUM][SMPLWrapper::POSE_SIZE];
+
     E::MatrixXd joints_global_transform_;
     //E::MatrixXd shaped_joints_locations_;
     //E::MatrixXd joints_locations_;  // all shaped, posed and translated
