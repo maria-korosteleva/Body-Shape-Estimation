@@ -2,6 +2,11 @@
 /*
 The class is a wrapper around SMPL model. It is able to calculate the SMPL model output based on pose and shape parameters.
 
+Limitations:
+    - Wrapper does not keep the tranformed vertices and joint locations corresponding to the current
+    wrapper state_. Since the state is allowed to be modified from the outside, there is no way to know
+    "the freshness" of the atrefacts, if saved.
+
 TODO: - Add pose blendshape 
 */
 
@@ -70,7 +75,6 @@ public:
     E::MatrixXd calcModel();
     E::MatrixXd calcJointLocations();
 
-    
     // using current SMPLWrapper state
     void saveToObj(const std::string path);
     void savePosedOnlyToObj(const std::string path);
@@ -91,8 +95,9 @@ private:
     static E::Vector3d angle_axis_(const E::Vector3d& from, const E::Vector3d& to);
     static E::Vector3d rotate_by_angle_axis_(const E::Vector3d& vector, const E::Vector3d& angle_axis_rotation);
     static E::Vector3d combine_two_angle_axis_(const E::Vector3d& first, const E::Vector3d& second);
-    // make sure that joint_transform is updated before calling this function
-    void assignJointGlobalRotation_(int joint_id, E::VectorXd rotation);
+    // pass fk_transforms_ to be explicit of which version of fk_transforms is used for calculations
+    void assignJointGlobalRotation_(int joint_id, E::VectorXd rotation, 
+        const EHomoCoordMatrix(&fk_transform)[SMPLWrapper::JOINTS_NUM]);
    
     // if not nullptr, shape_jac is expected to be an array of SHAPE_SIZE of MatrixXd, one matrix for each shape parameter
     void shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::MatrixXd* shape_jac = nullptr);
@@ -103,7 +108,7 @@ private:
     E::MatrixXd calcJointLocations_(const double * translation = nullptr, 
         const double * shape = nullptr, const double * pose = nullptr);
 
-    // these routines assumes that fk_transforms_ is calculated
+    // pass fk_transforms_ to be explicit of which version of fk_transforms is used for calculations
     static E::MatrixXd extractJointLocationFromFKTransform_(const EHomoCoordMatrix(&fk_transform)[SMPLWrapper::JOINTS_NUM]);
     static E::MatrixXd extractLBSJointTransformFromFKTransform_(
         const EHomoCoordMatrix (&fk_transform) [SMPLWrapper::JOINTS_NUM], const E::MatrixXd & t_pose_joints_locations,
@@ -156,10 +161,10 @@ private:
     EHomoCoordMatrix fk_transforms_[SMPLWrapper::JOINTS_NUM];
     E::MatrixXd fk_derivatives_[SMPLWrapper::JOINTS_NUM][SMPLWrapper::POSE_SIZE];
 
-    E::MatrixXd joints_global_transform_;
+    //E::MatrixXd joints_global_transform_;
     //E::MatrixXd shaped_joints_locations_;
     //E::MatrixXd joints_locations_;  // all shaped, posed and translated
-    E::MatrixXd verts_;
+    //E::MatrixXd verts_;
 
 public:
     // I use fixed-size eigen objects as class members, 

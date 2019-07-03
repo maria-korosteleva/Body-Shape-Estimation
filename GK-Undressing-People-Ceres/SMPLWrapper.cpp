@@ -75,7 +75,7 @@ void SMPLWrapper::rotateLimbToDirection(const std::string joint_name, const E::V
     if (direction.norm() * default_dir.norm() > 0.0)
     {
         E::Vector3d axis = angle_axis_(default_dir, direction);
-        assignJointGlobalRotation_(joint_id, axis);
+        assignJointGlobalRotation_(joint_id, axis, fk_transforms_);
     }
 
     // sanity check
@@ -120,7 +120,7 @@ void SMPLWrapper::rotateRoot(const E::Vector3d& body_up, const E::Vector3d& body
     std::cout << "Combined rotation with angle " << combined_rotation.norm() * 180 / 3.1415
         << "\n" << combined_rotation << std::endl;
 
-    assignJointGlobalRotation_(0, combined_rotation);
+    assignJointGlobalRotation_(0, combined_rotation, fk_transforms_);
 }
 
 void SMPLWrapper::twistBack(const E::Vector3d& shoulder_dir)
@@ -149,13 +149,13 @@ void SMPLWrapper::twistBack(const E::Vector3d& shoulder_dir)
         << "\n" << rotation << std::endl;
 
     // divide between the back joints
-    assignJointGlobalRotation_(joint_names_.at("LowBack"), axis * angle / 3);
+    assignJointGlobalRotation_(joint_names_.at("LowBack"), axis * angle / 3, fk_transforms_);
 
     updateJointsFKTransforms_(state_.pose, joint_locations_template_);
-    assignJointGlobalRotation_(joint_names_.at("MiddleBack"), axis * angle / 3);
+    assignJointGlobalRotation_(joint_names_.at("MiddleBack"), axis * angle / 3, fk_transforms_);
 
     updateJointsFKTransforms_(state_.pose, joint_locations_template_);
-    assignJointGlobalRotation_(joint_names_.at("TopBack"), axis * angle / 3);
+    assignJointGlobalRotation_(joint_names_.at("TopBack"), axis * angle / 3, fk_transforms_);
 }
 
 E::MatrixXd SMPLWrapper::calcModel(const double * const translation, const double * const pose, const double * const shape,
@@ -455,13 +455,14 @@ E::Vector3d SMPLWrapper::combine_two_angle_axis_(const E::Vector3d& first, const
     return angle * axis;
 }
 
-void SMPLWrapper::assignJointGlobalRotation_(int joint_id, E::VectorXd rotation)
+void SMPLWrapper::assignJointGlobalRotation_(int joint_id, E::VectorXd rotation, 
+    const EHomoCoordMatrix(&fk_transform)[SMPLWrapper::JOINTS_NUM])
 {
     Eigen::Vector3d rotation_local;
     if (joint_id > 0)
     {
         Eigen::MatrixXd joint_inverse_rotation =
-            fk_transforms_[joint_id].block(0, 0, SPACE_DIM, SPACE_DIM).transpose();
+            fk_transform[joint_id].block(0, 0, SPACE_DIM, SPACE_DIM).transpose();
 
         rotation_local = joint_inverse_rotation * rotation;
     }
@@ -503,11 +504,11 @@ void SMPLWrapper::poseSMPL_(const double * const pose, E::MatrixXd & verts, E::M
     E::MatrixXd jointLocations = this->jointRegressorMat_ * verts;
     updateJointsFKTransforms_(pose, jointLocations, pose_jac != nullptr);
 
-    joints_global_transform_ = extractLBSJointTransformFromFKTransform_(
+    E::MatrixXd joints_global_transform = extractLBSJointTransformFromFKTransform_(
         fk_transforms_, jointLocations, 
         &fk_derivatives_, pose_jac);
 
-    verts = LBSMat * joints_global_transform_;
+    verts = LBSMat * joints_global_transform;
 
     if (pose_jac != nullptr)
     {
