@@ -53,7 +53,9 @@ bool AbsoluteDistanceForPose::Evaluate(double const * const * parameters, double
     {
         //residuals[i] = sqrD(i); 
         // only ouside term
-        residuals[i] = signedDists(i) > 0 ? signedDists(i) * signedDists(i) : this->inside_coef_ * signedDists(i) * signedDists(i);
+        residuals[i] = signedDists(i) > 0 ? 
+            signedDists(i) * signedDists(i) 
+            : inside_coef_ * signedDists(i) * signedDists(i);
     }
 
     // Jacobians
@@ -65,9 +67,10 @@ bool AbsoluteDistanceForPose::Evaluate(double const * const * parameters, double
             for (int p_id = 0; p_id < SMPLWrapper::POSE_SIZE; ++p_id)
             {
                 jacobians[0][(v_id)* SMPLWrapper::POSE_SIZE + p_id]
-                    = signedDists(v_id) > 0 
-                    ? 2. * (verts.row(v_id) - closest_points.row(v_id)).dot(pose_jac[p_id].row(v_id))
-                    : this->inside_coef_ * 2. * (verts.row(v_id) - closest_points.row(v_id)).dot(pose_jac[p_id].row(v_id));
+                    = pose_jac_elem_(verts.row(v_id), 
+                        closest_points.row(v_id), 
+                        signedDists(v_id), 
+                        pose_jac[p_id].row(v_id));
             }
         }
     }
@@ -79,10 +82,8 @@ bool AbsoluteDistanceForPose::Evaluate(double const * const * parameters, double
         {
             for (int k = 0; k < SMPLWrapper::SPACE_DIM; ++k)
             {
-                jacobians[1][(v_id) * SMPLWrapper::SPACE_DIM + k]
-                    = signedDists(v_id) > 0
-                    ? 2 * (verts(v_id, k) - closest_points(v_id, k))
-                    : this->inside_coef_ * 2 * (verts(v_id, k) - closest_points(v_id, k));
+                jacobians[1][(v_id)* SMPLWrapper::SPACE_DIM + k]
+                    = translation_jac_elem_(verts(v_id, k), closest_points(v_id, k), signedDists(v_id));
             }
         }
     }
