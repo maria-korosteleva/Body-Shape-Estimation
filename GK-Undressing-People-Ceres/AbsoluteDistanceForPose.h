@@ -6,7 +6,7 @@
 #include <GeneralMesh/GeneralMesh.h>
 #include "SMPLWrapper.h"
 
-//#define DEBUG
+#define SQR(x) ((x)*(x)) 
 
 class AbsoluteDistanceForPose : public ceres::CostFunction
 {
@@ -26,9 +26,7 @@ private:
     {
         //residuals[i] = sqrD(i); 
         return
-            signed_dist > 0 ?
-            signed_dist * signed_dist
-            : inside_coef_ * signed_dist * signed_dist;
+            signed_dist > 0 ? SQR(signed_dist) : inside_coef_ * SQR(signed_dist);
     }
 
     //
@@ -62,3 +60,4 @@ private:
     double inside_coef_ = 1.;
 };
 
+#undef SQR(x)

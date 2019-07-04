@@ -54,11 +54,7 @@ bool AbsoluteDistanceForShape::Evaluate(double const * const * parameters, doubl
 
     for (int i = 0; i < SMPLWrapper::VERTICES_NUM; ++i)
     {
-        //residuals[i] = sqrD(i);
-        // only ouside term
-        residuals[i] = signedDists(i) > 0 ? 
-            this->outside_coef_ * signedDists(i) * signedDists(i)
-            : signedDists(i) * signedDists(i) / (1 + this->inside_coef_ * signedDists(i) * signedDists(i));     // inner distance regularized
+        residuals[i] = residual_elem_(signedDists(i));
     }
 
     // Jacobians
@@ -68,11 +64,9 @@ bool AbsoluteDistanceForShape::Evaluate(double const * const * parameters, doubl
         {
             for (int sh_id = 0; sh_id < SMPLWrapper::SHAPE_SIZE; ++sh_id)
             {
-                jacobians[0][v_id * SMPLWrapper::SHAPE_SIZE + sh_id] 
-                   = signedDists(v_id) >= 0.
-                    ? 2. * this->outside_coef_ * (verts.row(v_id) - closest_points.row(v_id)).dot(shape_jac[sh_id].row(v_id))
-                    : 2. * (verts.row(v_id) - closest_points.row(v_id)).dot(shape_jac[sh_id].row(v_id))
-                    / ((1 + this->inside_coef_ * (-signedDists(v_id))) * (1 + this->inside_coef_ * (-signedDists(v_id))));
+                jacobians[0][v_id * SMPLWrapper::SHAPE_SIZE + sh_id]
+                    = shape_jac_elem_(verts.row(v_id), closest_points.row(v_id), signedDists(v_id),
+                        shape_jac[sh_id].row(v_id));
             }
         }
     }
