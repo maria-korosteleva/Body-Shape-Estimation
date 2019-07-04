@@ -27,7 +27,7 @@ private:
     inline double residual_elem_(const double signed_dist) const
     {
         //residuals[i] = sqrD(i); 
-        return signed_dist;
+        return abs(signed_dist);
     }
 
     //
