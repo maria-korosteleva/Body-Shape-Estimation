@@ -37,7 +37,7 @@ public:
     std::shared_ptr<SMPLWrapper> getLastSMPL() const { return smpl_; }
 
     // parameter is some parameter of the underlying procedures; used for experiments; the semantics should be controlled by the programmer
-    void findOptimalSMPLParameters(std::vector<Eigen::MatrixXd>* iteration_results = nullptr, const double parameter = 1.);
+    void findOptimalSMPLParameters(std::vector<Eigen::MatrixXd>* iteration_results = nullptr, const double parameter = 0.);
 
 private:
     // inidividual optimizers
