@@ -12,6 +12,7 @@
 // cost functions
 #include "AbsoluteDistanceForPose.h"
 #include "AbsoluteDistanceForShape.h"
+#include "AbsoluteDistanceForTranslation.h"
 
 using ceres::AutoDiffCostFunction;
 using ceres::NumericDiffCostFunction;
@@ -42,7 +43,8 @@ public:
 private:
     // inidividual optimizers
     // expect the params to be initialized outside
-    void generalPoseEstimation_(Solver::Options& options, const double parameter = 1.);
+    void translationEstimation_(Solver::Options& options);
+    void poseEstimation_(Solver::Options& options, const double parameter = 1.);
     void shapeEstimation_(Solver::Options& options, const double parameter = 1.);
 
     // utils

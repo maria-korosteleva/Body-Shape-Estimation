@@ -1,11 +1,9 @@
 #include "AbsoluteDistanceForShape.h"
 
 
-AbsoluteDistanceForShape::AbsoluteDistanceForShape(SMPLWrapper* smpl, GeneralMesh * toMesh, const double param = 1.)
-    : toMesh_(toMesh), smpl_(smpl), gm_coef_(param)
+AbsoluteDistanceForShape::AbsoluteDistanceForShape(SMPLWrapper* smpl, GeneralMesh * toMesh, const double param)
+    : AbsoluteDistanceBase(smpl, toMesh), gm_coef_(param)
 {
-    this->set_num_residuals(SMPLWrapper::VERTICES_NUM);
-
     this->mutable_parameter_block_sizes()->push_back(SMPLWrapper::SHAPE_SIZE);
     this->mutable_parameter_block_sizes()->push_back(SMPLWrapper::SPACE_DIM);
 }

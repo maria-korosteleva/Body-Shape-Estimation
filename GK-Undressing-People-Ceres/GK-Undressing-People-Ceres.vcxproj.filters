@@ -45,6 +45,12 @@
     <ClInclude Include="PoseShapeExtractor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AbsoluteDistanceForTranslation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AbsoluteDistanceBase.h">
+      <Filter>Header Files\Optimization</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GK-Undressing-People-Ceres.cpp">
@@ -62,9 +68,6 @@
     <ClCompile Include="AbsoluteDistanceForPose.cpp">
       <Filter>Source Files\Optimization</Filter>
     </ClCompile>
-    <ClCompile Include="AbsoluteDistanceForShape.cpp">
-      <Filter>Source Files\Optimization</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\my_modules\GeneralMesh\GeneralMesh.cpp">
       <Filter>External source code</Filter>
     </ClCompile>
@@ -73,6 +76,15 @@
     </ClCompile>
     <ClCompile Include="PoseShapeExtractor.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AbsoluteDistanceForTranslation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AbsoluteDistanceBase.cpp">
+      <Filter>Source Files\Optimization</Filter>
+    </ClCompile>
+    <ClCompile Include="AbsoluteDistanceForShape.cpp">
+      <Filter>Source Files\Optimization</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

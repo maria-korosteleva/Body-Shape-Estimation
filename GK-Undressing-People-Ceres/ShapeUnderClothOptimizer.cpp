@@ -66,10 +66,11 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
         std::cout << "***********************" << std::endl
             << "    Cycle #" << i << std::endl
             << "***********************" << std::endl;
+        translationEstimation_(options);
 
         shapeEstimation_(options, parameter);
 
-        generalPoseEstimation_(options);
+        poseEstimation_(options);
     }
 
     auto end_time = std::chrono::system_clock::now();
@@ -88,7 +89,28 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
     }
 }
 
-void ShapeUnderClothOptimizer::generalPoseEstimation_(Solver::Options& options, const double parameter)
+void ShapeUnderClothOptimizer::translationEstimation_(Solver::Options & options)
+{
+    std::cout << "-----------------------" << std::endl
+              << "      Translation" << std::endl
+              << "-----------------------" << std::endl;
+
+    Problem problem;
+
+    // send raw pointers because inner class were not refactored
+    CostFunction* cost_function = new AbsoluteDistanceForTranslation(smpl_.get(), input_.get());
+    problem.AddResidualBlock(cost_function, nullptr, smpl_->getStatePointers().translation);
+
+    // Run the solver!
+    Solver::Summary summary;
+    Solve(options, &problem, &summary);
+
+    // Print summary
+    std::cout << "Translation estimation summary:" << std::endl;
+    std::cout << summary.FullReport() << std::endl;
+}
+
+void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, const double parameter)
 {
     std::cout << "-----------------------" << std::endl
               << "          Pose" << std::endl

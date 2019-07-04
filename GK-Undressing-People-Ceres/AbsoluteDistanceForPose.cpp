@@ -2,10 +2,8 @@
 
 
 AbsoluteDistanceForPose::AbsoluteDistanceForPose(SMPLWrapper* smpl, GeneralMesh * toMesh)
-    : toMesh_(toMesh), smpl_(smpl)
+    : AbsoluteDistanceBase(smpl, toMesh)
 {
-    this->set_num_residuals(SMPLWrapper::VERTICES_NUM);
-
     this->mutable_parameter_block_sizes()->push_back(SMPLWrapper::POSE_SIZE);
     this->mutable_parameter_block_sizes()->push_back(SMPLWrapper::SPACE_DIM);
 }
