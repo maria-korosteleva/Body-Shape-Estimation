@@ -158,6 +158,17 @@ void SMPLWrapper::twistBack(const E::Vector3d& shoulder_dir)
     assignJointGlobalRotation_(joint_names_.at("TopBack"), axis * angle / 3, fk_transforms_);
 }
 
+void SMPLWrapper::translateTo(const E::VectorXd & center_point)
+{
+    E::MatrixXd verts = calcModel();
+    E::VectorXd mean_point = verts.colwise().mean();
+
+    for (int i = 0; i < SPACE_DIM; i++)
+    {
+        state_.translation[i] = center_point(i) - mean_point(i);
+    }
+}
+
 E::MatrixXd SMPLWrapper::calcModel(const double * const translation, const double * const pose, const double * const shape,
     E::MatrixXd * pose_jac, E::MatrixXd * shape_jac)
 {

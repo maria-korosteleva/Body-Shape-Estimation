@@ -39,7 +39,8 @@ void ShapeUnderClothOptimizer::setNewPriorPath(const char * prior_path)
 void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::MatrixXd>* iteration_results, const double parameter)
 {
     // Use the current state of smpl_ as init parameter
-    // => translation starts from zero guess, because we assume normalized input and normalized smpl_
+    // smpl is moved to zero, because we use normalized input - equivalent to translation guess
+    smpl_->translateTo(E::Vector3d(0., 0., 0.));
 
     // Setup solvers options
     Solver::Options options;

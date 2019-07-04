@@ -27,9 +27,7 @@ private:
     inline double residual_elem_(const double signed_dist) const
     {
         //residuals[i] = sqrD(i); 
-        return signed_dist > 0 ? 
-            SQR(signed_dist)
-            : SQR(signed_dist) / (1 + gm_coef_ * SQR(signed_dist));     // inner distance regularized
+        return signed_dist;
     }
 
     //
@@ -39,9 +37,9 @@ private:
         double signed_dist,
         const Row3&& grad) const
     {
-        double jac_entry = signed_dist >= 0.
-            ? 2. * (vertex - closest_input_point).dot(grad)
-            : 2. * (vertex - closest_input_point).dot(grad) / SQR(1 + gm_coef_ * SQR(signed_dist));
+        double jac_entry = abs(signed_dist) < 1e-5
+            ? 0
+            : (vertex - closest_input_point).dot(grad) / abs(signed_dist);
 
         return jac_entry;
     }
@@ -50,9 +48,9 @@ private:
     inline double translation_jac_elem_(const double vert_coord,
         const double input_coord, double signed_dist) const
     {
-        double jac_entry = signed_dist >= 0.
-            ? 2. * (vert_coord - input_coord)
-            : 2. * (vert_coord - input_coord) / SQR(1 + gm_coef_ * SQR(signed_dist));
+        double jac_entry = abs(signed_dist) < 1e-5
+            ? 0
+            : (vert_coord - input_coord) / abs(signed_dist);
 
         return jac_entry;
     }

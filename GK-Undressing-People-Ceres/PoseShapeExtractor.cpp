@@ -108,7 +108,15 @@ void PoseShapeExtractor::viewFinalResult(bool withOpenPoseKeypoints)
     igl::opengl::glfw::imgui::ImGuiMenu menu;
     viewer.plugins.push_back(&menu);
 
-    viewer.data().set_mesh(smpl_->calcModel(), smpl_->getFaces());
+    Eigen::MatrixXd verts = smpl_->calcModel();
+
+    viewer.data().set_mesh(verts, smpl_->getFaces());
+
+    // display corresponding input points
+    Eigen::VectorXd sqrD; Eigen::MatrixXd closest_points; Eigen::VectorXi closest_face_ids;
+    igl::point_mesh_squared_distance(verts, input_->getNormalizedVertices(), input_->getFaces(), sqrD,
+        closest_face_ids, closest_points);
+    viewer.data().add_edges(verts, closest_points, Eigen::RowVector3d(1., 0., 0.));
 
     if (withOpenPoseKeypoints)
     {
@@ -294,7 +302,7 @@ bool PoseShapeExtractor::visualizeIterationKeyDown_(igl::opengl::glfw::Viewer & 
         Eigen::MatrixXd closest_points;
         Eigen::VectorXi closest_face_ids;
         igl::point_mesh_squared_distance(verts,
-            input_to_viz_->getVertices(), input_to_viz_->getFaces(), sqrD,
+            input_to_viz_->getNormalizedVertices(), input_to_viz_->getFaces(), sqrD,
             closest_face_ids, closest_points);
 
         viewer.data().add_edges(verts, closest_points, Eigen::RowVector3d(1., 0., 0.));

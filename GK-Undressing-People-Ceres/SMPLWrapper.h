@@ -68,6 +68,9 @@ public:
     // shoulder_dir points from right to left 
     void twistBack(const E::Vector3d& shoulder_dir);
 
+    // re-calculates translation to move the posed/shaped mesh center to the specified point
+    void translateTo(const E::VectorXd& center_point);
+
     // *_jacs are expected to have space for POSE_SIZE and SHAPE_SIZE Matrices
     E::MatrixXd calcModel(const double * const translation, const double * const pose, const double * const shape,
         E::MatrixXd * pose_jac = nullptr, E::MatrixXd * shape_jac = nullptr);
