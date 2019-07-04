@@ -1,8 +1,8 @@
 #include "AbsoluteDistanceForPose.h"
 
 
-AbsoluteDistanceForPose::AbsoluteDistanceForPose(SMPLWrapper* smpl, GeneralMesh * toMesh, const double inside_coef = 1.)
-    : toMesh_(toMesh), smpl_(smpl), inside_coef_(inside_coef)
+AbsoluteDistanceForPose::AbsoluteDistanceForPose(SMPLWrapper* smpl, GeneralMesh * toMesh)
+    : toMesh_(toMesh), smpl_(smpl)
 {
     this->set_num_residuals(SMPLWrapper::VERTICES_NUM);
 

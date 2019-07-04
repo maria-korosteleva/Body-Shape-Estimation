@@ -11,7 +11,7 @@
 class AbsoluteDistanceForPose : public ceres::CostFunction
 {
 public:
-    AbsoluteDistanceForPose(SMPLWrapper*, GeneralMesh *, const double inside_coef);
+    AbsoluteDistanceForPose(SMPLWrapper*, GeneralMesh *);
     ~AbsoluteDistanceForPose();
 
     // parameters[0] <-> pose, parameters[1] <-> translation
@@ -24,9 +24,7 @@ private:
     // 
     inline double residual_elem_(const double signed_dist) const
     {
-        //residuals[i] = sqrD(i); 
-        return
-            signed_dist > 0 ? SQR(signed_dist) : inside_coef_ * SQR(signed_dist);
+        return SQR(signed_dist);
     }
 
     //
@@ -36,9 +34,7 @@ private:
         double signed_dist,
         const Row3&& grad) const
     {
-        double jac_entry = signed_dist > 0
-            ? 2. * (vertex - closest_input_point).dot(grad)
-            : inside_coef_ * 2. * (vertex - closest_input_point).dot(grad);
+        double jac_entry = 2. * (vertex - closest_input_point).dot(grad);
 
         return jac_entry;
     }
@@ -47,17 +43,12 @@ private:
     inline double translation_jac_elem_(const double vert_coord,
         const double input_coord, double signed_dist) const
     {
-        double jac_entry = signed_dist > 0
-            ? 2. * (vert_coord - input_coord)
-            : inside_coef_ * 2. * (vert_coord - input_coord);
+        double jac_entry = 2. * (vert_coord - input_coord);
         return jac_entry;
     }
 
     GeneralMesh * toMesh_;
     SMPLWrapper * smpl_;
-
-    // optional 
-    double inside_coef_ = 1.;
 };
 
 #undef SQR(x)

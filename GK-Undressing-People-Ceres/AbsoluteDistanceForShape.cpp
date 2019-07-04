@@ -2,14 +2,12 @@
 
 
 AbsoluteDistanceForShape::AbsoluteDistanceForShape(SMPLWrapper* smpl, GeneralMesh * toMesh, const double param = 1.)
-    : toMesh_(toMesh), smpl_(smpl), inside_coef_(param)
+    : toMesh_(toMesh), smpl_(smpl), gm_coef_(param)
 {
     this->set_num_residuals(SMPLWrapper::VERTICES_NUM);
 
     this->mutable_parameter_block_sizes()->push_back(SMPLWrapper::SHAPE_SIZE);
     this->mutable_parameter_block_sizes()->push_back(SMPLWrapper::SPACE_DIM);
-
-    //this->inside_coef_ = 100.;
 }
 
 
@@ -37,10 +35,8 @@ bool AbsoluteDistanceForShape::Evaluate(double const * const * parameters, doubl
     }
 
     //Eigen::VectorXd sqrD;
-    Eigen::VectorXd signedDists;
-    Eigen::MatrixXd closest_points;
-    Eigen::VectorXi closest_face_ids;
-    Eigen::MatrixXd normals;
+    Eigen::VectorXd signedDists; Eigen::MatrixXd closest_points;
+    Eigen::VectorXi closest_face_ids; Eigen::MatrixXd normals;
 
     //igl::point_mesh_squared_distance(verts, this->toMesh_->getVertices(), this->toMesh_->getFaces(), sqrD, closest_face_ids, closest_points);
     igl::SignedDistanceType type = igl::SIGNED_DISTANCE_TYPE_PSEUDONORMAL;
@@ -79,10 +75,7 @@ bool AbsoluteDistanceForShape::Evaluate(double const * const * parameters, doubl
             for (int k = 0; k < SMPLWrapper::SPACE_DIM; ++k)
             {
                 jacobians[1][v_id* SMPLWrapper::SPACE_DIM + k]
-                    = signedDists(v_id) >= 0.
-                    ? 2. * this->outside_coef_ * (verts(v_id, k) - closest_points(v_id, k))
-                    : 2. * (verts(v_id, k) - closest_points(v_id, k))
-                    / ((1 + this->inside_coef_ * (-signedDists(v_id))) * (1 + this->inside_coef_ * (-signedDists(v_id))));
+                    = translation_jac_elem_(verts(v_id, k), closest_points(v_id, k), signedDists(v_id));
             }
         }
     }

@@ -68,7 +68,7 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
 
         shapeEstimation_(options, parameter);
 
-        generalPoseEstimation_(options, 1.);
+        generalPoseEstimation_(options);
     }
 
     auto end_time = std::chrono::system_clock::now();
@@ -97,7 +97,7 @@ void ShapeUnderClothOptimizer::generalPoseEstimation_(Solver::Options& options, 
 
     // Main cost
     // send raw pointers because inner class were not refactored
-    CostFunction* cost_function = new AbsoluteDistanceForPose(smpl_.get(), input_.get(), parameter);
+    CostFunction* cost_function = new AbsoluteDistanceForPose(smpl_.get(), input_.get());
     problem.AddResidualBlock(cost_function, nullptr, 
         smpl_->getStatePointers().pose,
         smpl_->getStatePointers().translation);
