@@ -5,7 +5,6 @@ AbsoluteDistanceForPose::AbsoluteDistanceForPose(SMPLWrapper* smpl, GeneralMesh 
     : AbsoluteDistanceBase(smpl, toMesh)
 {
     this->mutable_parameter_block_sizes()->push_back(SMPLWrapper::POSE_SIZE);
-    this->mutable_parameter_block_sizes()->push_back(SMPLWrapper::SPACE_DIM);
 }
 
 
@@ -17,18 +16,19 @@ bool AbsoluteDistanceForPose::Evaluate(double const * const * parameters, double
 {
     assert(SMPLWrapper::SPACE_DIM == 3 && "Distance evaluation is only implemented in 3D");
     assert(this->parameter_block_sizes()[0] == SMPLWrapper::POSE_SIZE && "Pose parameter size is set as expected");
-    assert(this->parameter_block_sizes()[1] == SMPLWrapper::SPACE_DIM && "Translation parameter size is set as expected");
 
     // params inside the smpl_ object ARE NOT the same as the oned passed through parameters argument
     Eigen::MatrixXd pose_jac[SMPLWrapper::POSE_SIZE];
     Eigen::MatrixXd verts;
     if (jacobians != NULL && jacobians[0] != NULL)
     {
-        verts = smpl_->calcModel(parameters[1], parameters[0], smpl_->getStatePointers().shape, pose_jac, nullptr);
+        verts = smpl_->calcModel(smpl_->getStatePointers().translation, 
+            parameters[0], smpl_->getStatePointers().shape, pose_jac, nullptr);
     }
     else
     {
-        verts = smpl_->calcModel(parameters[1], parameters[0], smpl_->getStatePointers().shape);
+        verts = smpl_->calcModel(smpl_->getStatePointers().translation, 
+            parameters[0], smpl_->getStatePointers().shape);
     }
 
     Eigen::VectorXd signedDists;
@@ -65,19 +65,6 @@ bool AbsoluteDistanceForPose::Evaluate(double const * const * parameters, double
                         closest_points.row(v_id), 
                         signedDists(v_id), 
                         pose_jac[p_id].row(v_id));
-            }
-        }
-    }
-
-    // wrt translation
-    if (jacobians != NULL && jacobians[1] != NULL) 
-    {
-        for (int v_id = 0; v_id < SMPLWrapper::VERTICES_NUM; ++v_id)
-        {
-            for (int k = 0; k < SMPLWrapper::SPACE_DIM; ++k)
-            {
-                jacobians[1][(v_id)* SMPLWrapper::SPACE_DIM + k]
-                    = translation_jac_elem_(verts(v_id, k), closest_points(v_id, k), signedDists(v_id));
             }
         }
     }

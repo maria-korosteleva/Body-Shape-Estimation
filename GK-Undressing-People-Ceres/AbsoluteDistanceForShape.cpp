@@ -5,7 +5,6 @@ AbsoluteDistanceForShape::AbsoluteDistanceForShape(SMPLWrapper* smpl, GeneralMes
     : AbsoluteDistanceBase(smpl, toMesh), gm_coef_(param)
 {
     this->mutable_parameter_block_sizes()->push_back(SMPLWrapper::SHAPE_SIZE);
-    this->mutable_parameter_block_sizes()->push_back(SMPLWrapper::SPACE_DIM);
 }
 
 
@@ -18,18 +17,19 @@ bool AbsoluteDistanceForShape::Evaluate(double const * const * parameters, doubl
 {
     assert(SMPLWrapper::SPACE_DIM == 3 && "Distance evaluation is only implemented in 3D");
     assert(this->parameter_block_sizes()[0] == SMPLWrapper::SHAPE_SIZE && "Shape parameter size is set as expected");
-    assert(this->parameter_block_sizes()[1] == SMPLWrapper::SPACE_DIM && "Translation parameter size is set as expected");
 
     // params inside the smpl_ object ARE NOT the same as the oned passed through parameters argument
     Eigen::MatrixXd shape_jac[SMPLWrapper::SHAPE_SIZE];
     Eigen::MatrixXd verts;
     if (jacobians != NULL && jacobians[0] != NULL)
     {
-        verts = smpl_->calcModel(parameters[1], smpl_->getStatePointers().pose, parameters[0], nullptr, shape_jac);
+        verts = smpl_->calcModel(smpl_->getStatePointers().translation, 
+            smpl_->getStatePointers().pose, parameters[0], nullptr, shape_jac);
     }
     else
     {
-        verts = smpl_->calcModel(parameters[1], smpl_->getStatePointers().pose, parameters[0]);
+        verts = smpl_->calcModel(smpl_->getStatePointers().translation, smpl_->getStatePointers().pose, 
+            parameters[0]);
     }
 
     //Eigen::VectorXd sqrD;
@@ -65,17 +65,5 @@ bool AbsoluteDistanceForShape::Evaluate(double const * const * parameters, doubl
         }
     }
 
-    // wrt translation
-    if (jacobians != NULL && jacobians[1] != NULL)
-    {
-        for (int v_id = 0; v_id < SMPLWrapper::VERTICES_NUM; ++v_id)
-        {
-            for (int k = 0; k < SMPLWrapper::SPACE_DIM; ++k)
-            {
-                jacobians[1][v_id* SMPLWrapper::SPACE_DIM + k]
-                    = translation_jac_elem_(verts(v_id, k), closest_points(v_id, k), signedDists(v_id));
-            }
-        }
-    }
     return true;
 }

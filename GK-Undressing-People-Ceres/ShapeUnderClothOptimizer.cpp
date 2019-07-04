@@ -122,8 +122,7 @@ void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, const d
     // send raw pointers because inner class were not refactored
     CostFunction* cost_function = new AbsoluteDistanceForPose(smpl_.get(), input_.get());
     problem.AddResidualBlock(cost_function, nullptr, 
-        smpl_->getStatePointers().pose,
-        smpl_->getStatePointers().translation);
+        smpl_->getStatePointers().pose);
 
     // Regularizer
     CostFunction* prior = new NormalPrior(stiffness_, attractive_pose_);
@@ -174,9 +173,8 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
     Problem problem;
 
     CostFunction* cost_function = new AbsoluteDistanceForShape(smpl_.get(), input_.get(), parameter);
-    problem.AddResidualBlock(cost_function, nullptr, 
-        smpl_->getStatePointers().shape, 
-        smpl_->getStatePointers().translation);
+    problem.AddResidualBlock(cost_function, nullptr,
+        smpl_->getStatePointers().shape);
 
     // TODO add light regularization
 
