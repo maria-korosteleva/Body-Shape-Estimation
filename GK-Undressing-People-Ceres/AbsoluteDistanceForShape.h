@@ -41,7 +41,7 @@ private:
     {
         double jac_entry = signed_dist >= 0.
             ? 2. * (vertex - closest_input_point).dot(grad)
-            : 2. * (vertex - closest_input_point).dot(grad) / SQR(1 - gm_coef_ * signed_dist);
+            : 2. * (vertex - closest_input_point).dot(grad) / SQR(1 + gm_coef_ * SQR(signed_dist));
 
         return jac_entry;
     }
@@ -52,7 +52,7 @@ private:
     {
         double jac_entry = signed_dist >= 0.
             ? 2. * (vert_coord - input_coord)
-            : 2. * (vert_coord - input_coord) / SQR(1 - gm_coef_ * signed_dist);
+            : 2. * (vert_coord - input_coord) / SQR(1 + gm_coef_ * SQR(signed_dist));
 
         return jac_entry;
     }

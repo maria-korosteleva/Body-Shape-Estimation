@@ -66,7 +66,7 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
             << "    Cycle #" << i << std::endl
             << "***********************" << std::endl;
 
-        shapeEstimation_(options, parameter);
+        shapeEstimation_(options, 50.);
 
         generalPoseEstimation_(options);
     }
