@@ -21,6 +21,17 @@ public:
         double* residuals,
         double** jacobians) const;
 private:
+    // 
+    inline double residual_elem_(const double signed_dist) const
+    {
+        //residuals[i] = sqrD(i); 
+        return
+            signed_dist > 0 ?
+            signed_dist * signed_dist
+            : inside_coef_ * signed_dist * signed_dist;
+    }
+
+    //
     template<typename Row1, typename Row2, typename Row3>
     inline double pose_jac_elem_(const Row1&& vertex,
         const Row2&& closest_input_point,
@@ -34,6 +45,7 @@ private:
         return jac_entry;
     }
 
+    //
     inline double translation_jac_elem_(const double vert_coord,
         const double input_coord, double signed_dist) const
     {

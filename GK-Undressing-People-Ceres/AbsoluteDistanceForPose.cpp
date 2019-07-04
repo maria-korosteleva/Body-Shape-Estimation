@@ -51,11 +51,7 @@ bool AbsoluteDistanceForPose::Evaluate(double const * const * parameters, double
 
     for (int i = 0; i < SMPLWrapper::VERTICES_NUM; ++i)
     {
-        //residuals[i] = sqrD(i); 
-        // only ouside term
-        residuals[i] = signedDists(i) > 0 ? 
-            signedDists(i) * signedDists(i) 
-            : inside_coef_ * signedDists(i) * signedDists(i);
+        residuals[i] = residual_elem_(signedDists(i));
     }
 
     // Jacobians
