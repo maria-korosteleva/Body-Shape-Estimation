@@ -14,6 +14,9 @@ ShapeUnderClothOptimizer::ShapeUnderClothOptimizer(std::shared_ptr<SMPLWrapper> 
     path += '/';
     readAveragePose_deprecated_(path);
     readStiffness_(path);
+
+    // parameters
+    shape_reg_weight_ = 0.;
 }
 
 ShapeUnderClothOptimizer::~ShapeUnderClothOptimizer()
@@ -180,6 +183,12 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
         smpl_->getStatePointers().shape);
 
     // TODO add light regularization
+    CostFunction* prior = new NormalPrior(
+        Eigen::MatrixXd::Identity(SMPLWrapper::SHAPE_SIZE, SMPLWrapper::SHAPE_SIZE), 
+        Eigen::VectorXd::Zero(SMPLWrapper::SHAPE_SIZE));
+    LossFunction* scale_prior = new ScaledLoss(NULL, shape_reg_weight_, ceres::TAKE_OWNERSHIP);
+    problem.AddResidualBlock(prior, scale_prior,
+        smpl_->getStatePointers().shape);
 
     // Run the solver!
     Solver::Summary summary;
@@ -228,13 +237,13 @@ void ShapeUnderClothOptimizer::readAveragePose_deprecated_(const std::string pat
     if (size != SMPLWrapper::POSE_SIZE - SMPLWrapper::SPACE_DIM)
         throw std::exception("Striffness matrix size doesn't match the number of non-root pose parameters");
     
-    this->average_pose_deprecated_.resize(SMPLWrapper::POSE_SIZE);
+    average_pose_deprecated_.resize(SMPLWrapper::POSE_SIZE);
     // For convinient use of the mean pose with full pose vectors, root rotation is set to zero
     for (int i = 0; i < SMPLWrapper::SPACE_DIM; i++)
-        attractive_pose_(i) = 0.;
+        average_pose_deprecated_(i) = 0.;
     // Now read from file
     for (int i = SMPLWrapper::SPACE_DIM; i < SMPLWrapper::POSE_SIZE; i++)
-        inFile >> attractive_pose_(i);
+        inFile >> average_pose_deprecated_(i);
 
     inFile.close();
 

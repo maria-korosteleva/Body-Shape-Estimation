@@ -34,6 +34,7 @@ public:
     void setNewSMPLModel(std::shared_ptr<SMPLWrapper>);
     void setNewInput(std::shared_ptr<GeneralMesh>);
     void setNewPriorPath(const char*);
+    void setShapeRegularizationWeight(double weight) { shape_reg_weight_ = weight; };
 
     std::shared_ptr<SMPLWrapper> getLastSMPL() const { return smpl_; }
 
@@ -60,6 +61,9 @@ private:
     std::shared_ptr<GeneralMesh> input_ = nullptr;
     ceres::Matrix stiffness_;
     ceres::Vector average_pose_deprecated_;
+
+    // parameters
+    double shape_reg_weight_;
 
     // inner classes
     class SMPLVertsLoggingCallBack : public ceres::IterationCallback
