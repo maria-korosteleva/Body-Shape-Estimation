@@ -43,10 +43,10 @@ int main()
     {
         std::vector<std::shared_ptr<GeneralMesh>> inputs;
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_jumping_jacks/00000.obj", GeneralMesh::FEMALE));
-        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_jiggle_on_toes/00048.obj", GeneralMesh::FEMALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_jiggle_on_toes/00048.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_chicken_wings/00091.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_knees/00070.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_knees/00130.obj", GeneralMesh::FEMALE));
+        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_knees/00130.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_knees/00270.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_punching/00053.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Sexy Girl.obj", GeneralMesh::FEMALE));
@@ -67,20 +67,19 @@ int main()
             "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources",
             output_path);
 
-        extractor.setupNewExperiment(inputs[0], "sh_po_no_transl");
-        //extractor.viewCameraSetupForPhotos();
+        extractor.setupNewExperiment(inputs[0], "init_p_as_reg_007");
         extractor.setSaveIntermediateResults(true);
         extractor.runExtraction();
-        //extractor.viewFinalResult(true);
         extractor.viewIteratoinProcess();
 
-        //int gm_params[] = { 0, 10, 50 };
+        extractor.viewCameraSetupForPhotos();
+        //extractor.viewFinalResult(true);
 
         //for (auto&& input : inputs)
         //{
         //    try 
         //    {
-        //        extractor.setupNewCameraExperiment(input, 4.5, 7, 0., "cams");
+        //        extractor.setupNewExperiment(input, "init_p_as_reg_007");
 
         //        //std::shared_ptr<SMPLWrapper> smpl = extractor.runExtraction();
         //        extractor.runExtraction();

@@ -44,21 +44,22 @@ private:
     // inidividual optimizers
     // expect the params to be initialized outside
     void translationEstimation_(Solver::Options& options);
-    void poseEstimation_(Solver::Options& options, const double parameter = 1.);
+    void poseEstimation_(Solver::Options& options, ceres::Vector& prior_pose, const double parameter = 1.);
     void shapeEstimation_(Solver::Options& options, const double parameter = 1.);
 
     // utils
-    void readAttractivePose_(const std::string);
+    void readAveragePose_deprecated_(const std::string);
     void readStiffness_(const std::string);
     static void zeros_(double *, std::size_t);
     static void printArray_(double*, std::size_t);
+    static ceres::Vector copyArray_(double*, std::size_t);
 
     // data
     // use the shared_ptr to make sure objects won't dissapear in-between calls to this class
     std::shared_ptr<SMPLWrapper> smpl_ = nullptr;
     std::shared_ptr<GeneralMesh> input_ = nullptr;
     ceres::Matrix stiffness_;
-    ceres::Vector attractive_pose_;
+    ceres::Vector average_pose_deprecated_;
 
     // inner classes
     class SMPLVertsLoggingCallBack : public ceres::IterationCallback

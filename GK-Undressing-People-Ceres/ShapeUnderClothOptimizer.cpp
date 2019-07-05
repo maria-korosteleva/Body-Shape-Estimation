@@ -12,7 +12,7 @@ ShapeUnderClothOptimizer::ShapeUnderClothOptimizer(std::shared_ptr<SMPLWrapper> 
     // read prior info
     std::string path(path_to_prior);
     path += '/';
-    readAttractivePose_(path);
+    readAveragePose_deprecated_(path);
     readStiffness_(path);
 }
 
@@ -32,7 +32,7 @@ void ShapeUnderClothOptimizer::setNewInput(std::shared_ptr<GeneralMesh> input)
 void ShapeUnderClothOptimizer::setNewPriorPath(const char * prior_path)
 {
     std::string path(prior_path);
-    readAttractivePose_(path);
+    readAveragePose_deprecated_(path);
     readStiffness_(path);
 }
 
@@ -41,6 +41,9 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
     // Use the current state of smpl_ as init parameter
     // smpl is moved to zero, because we use normalized input - equivalent to translation guess
     smpl_->translateTo(E::Vector3d(0., 0., 0.));
+    // Put our trust into the initial pose
+    ceres::Vector initial_pose_as_prior 
+        = copyArray_(smpl_->getStatePointers().pose, SMPLWrapper::POSE_SIZE);
 
     // Setup solvers options
     Solver::Options options;
@@ -70,7 +73,7 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
 
         shapeEstimation_(options, parameter);
 
-        poseEstimation_(options);
+        poseEstimation_(options, initial_pose_as_prior);
     }
 
     auto end_time = std::chrono::system_clock::now();
@@ -110,7 +113,7 @@ void ShapeUnderClothOptimizer::translationEstimation_(Solver::Options & options)
     std::cout << summary.FullReport() << std::endl;
 }
 
-void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, const double parameter)
+void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, ceres::Vector& prior_pose, const double parameter)
 {
     std::cout << "-----------------------" << std::endl
               << "          Pose" << std::endl
@@ -125,7 +128,7 @@ void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, const d
         smpl_->getStatePointers().pose);
 
     // Regularizer
-    CostFunction* prior = new NormalPrior(stiffness_, attractive_pose_);
+    CostFunction* prior = new NormalPrior(stiffness_, prior_pose);
     LossFunction* scale_prior = new ScaledLoss(NULL, 0.007, ceres::TAKE_OWNERSHIP);    // 0.0007
     problem.AddResidualBlock(prior, scale_prior, 
         smpl_->getStatePointers().pose);
@@ -212,7 +215,7 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
 #endif // DEBUG
 }
 
-void ShapeUnderClothOptimizer::readAttractivePose_(const std::string path)
+void ShapeUnderClothOptimizer::readAveragePose_deprecated_(const std::string path)
 {
     //std::string filename = path + "mean_pose.txt";
     std::string filename = path + "A_pose.txt";
@@ -225,7 +228,7 @@ void ShapeUnderClothOptimizer::readAttractivePose_(const std::string path)
     if (size != SMPLWrapper::POSE_SIZE - SMPLWrapper::SPACE_DIM)
         throw std::exception("Striffness matrix size doesn't match the number of non-root pose parameters");
     
-    this->attractive_pose_.resize(SMPLWrapper::POSE_SIZE);
+    this->average_pose_deprecated_.resize(SMPLWrapper::POSE_SIZE);
     // For convinient use of the mean pose with full pose vectors, root rotation is set to zero
     for (int i = 0; i < SMPLWrapper::SPACE_DIM; i++)
         attractive_pose_(i) = 0.;
@@ -304,6 +307,16 @@ void ShapeUnderClothOptimizer::printArray_(double * arr, std::size_t size)
         std::cout << arr[i] << "; ";
     }
     std::cout << std::endl;
+}
+
+ceres::Vector ShapeUnderClothOptimizer::copyArray_(double * arr, std::size_t size)
+{
+    ceres::Vector copy(size);
+
+    for (int i = 0; i < size; ++i)
+        copy[i] = arr[i];
+
+    return copy;
 }
 
 ceres::CallbackReturnType ShapeUnderClothOptimizer::SMPLVertsLoggingCallBack::operator()(const ceres::IterationSummary & summary)
