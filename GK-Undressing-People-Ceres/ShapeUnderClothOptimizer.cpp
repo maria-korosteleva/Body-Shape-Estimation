@@ -182,7 +182,7 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
     problem.AddResidualBlock(cost_function, nullptr,
         smpl_->getStatePointers().shape);
 
-    // TODO add light regularization
+    // Regularization
     CostFunction* prior = new NormalPrior(
         Eigen::MatrixXd::Identity(SMPLWrapper::SHAPE_SIZE, SMPLWrapper::SHAPE_SIZE), 
         Eigen::VectorXd::Zero(SMPLWrapper::SHAPE_SIZE));
