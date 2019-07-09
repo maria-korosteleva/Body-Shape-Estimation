@@ -39,6 +39,10 @@ void CustomLogger::startRedirectCoutToFile(const std::string filename)
     coutbuf_ = std::cout.rdbuf();   //save old buf
     std::cout.rdbuf(redirecting_file_stream_.rdbuf());  //redirect std::cout to file!
 
+    // redirect cerr to the same file
+    stderrbuf_ = std::cerr.rdbuf();
+    std::cerr.rdbuf(redirecting_file_stream_.rdbuf());
+
     std::cout << log_folder_name_ + filename << std::endl;
 
     redirection_started_ = true;
@@ -56,6 +60,7 @@ void CustomLogger::endRedirectCoutToFile()
     }
 
     std::cout.rdbuf(coutbuf_);   //  reset cout to standard output again
+    std::cerr.rdbuf(stderrbuf_);
     redirecting_file_stream_.close();
 
     redirection_started_ = false;

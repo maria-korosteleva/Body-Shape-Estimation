@@ -68,7 +68,7 @@ int main()
             "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources",
             output_path);
 
-        extractor.setupNewExperiment(inputs[0], "threads");
+        extractor.setupNewExperiment(inputs[0], "problem_dump");
         extractor.setSaveIntermediateResults(true);
         extractor.runExtraction();
         extractor.viewIteratoinProcess();

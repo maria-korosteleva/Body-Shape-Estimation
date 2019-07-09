@@ -47,5 +47,6 @@ private:
     std::string redirecting_filename_;
     std::ofstream redirecting_file_stream_;
     std::streambuf *coutbuf_;
+    std::streambuf *stderrbuf_;
 };
 

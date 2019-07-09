@@ -55,7 +55,10 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
     options.max_num_iterations = 500;   // usually converges way faster
 
     // test
-
+    //std::vector<int> iter_to_dump({ 3, 25 });
+    //options.trust_region_minimizer_iterations_to_dump = iter_to_dump;
+    //options.trust_region_problem_dump_format_type = ceres::TEXTFILE;
+    //options.trust_region_problem_dump_directory = "./tmp/";
 
     // to debug jacobian
     //options.check_gradients = true;
