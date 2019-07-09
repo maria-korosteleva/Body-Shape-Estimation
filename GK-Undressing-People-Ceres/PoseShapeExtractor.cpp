@@ -18,12 +18,12 @@ PoseShapeExtractor::PoseShapeExtractor(const std::string& smpl_model_path,
     logger_ = nullptr;
     openpose_ = nullptr;
 
-    // parameters
+    // default parameter values
     cameras_distance_ = 4.5f;
     num_cameras_ = 7;
     cameras_elevation_ = 0.0;
 
-    optimizer_shape_reg_weight_ = 0.0;
+    optimizer_shape_reg_weight_ = 0.01;
 
     optimizer_ = std::make_shared<ShapeUnderClothOptimizer>(nullptr, nullptr, pose_prior_path_);
 

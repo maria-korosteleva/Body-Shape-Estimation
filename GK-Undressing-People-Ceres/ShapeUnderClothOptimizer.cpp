@@ -16,7 +16,7 @@ ShapeUnderClothOptimizer::ShapeUnderClothOptimizer(std::shared_ptr<SMPLWrapper> 
     readStiffness_(path);
 
     // parameters
-    shape_reg_weight_ = 0.;
+    shape_reg_weight_ = 0.01;
 }
 
 ShapeUnderClothOptimizer::~ShapeUnderClothOptimizer()
@@ -74,9 +74,10 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
             << "***********************" << std::endl;
         translationEstimation_(options);
 
+        poseEstimation_(options, initial_pose_as_prior);
+
         shapeEstimation_(options, parameter);
 
-        poseEstimation_(options, initial_pose_as_prior);
     }
 
     auto end_time = std::chrono::system_clock::now();
