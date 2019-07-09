@@ -54,6 +54,7 @@ private:
     static void zeros_(double *, std::size_t);
     static void printArray_(double*, std::size_t);
     static ceres::Vector copyArray_(double*, std::size_t);
+    void checkCeresOptions(const Solver::Options& options);
 
     // data
     // use the shared_ptr to make sure objects won't dissapear in-between calls to this class

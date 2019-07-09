@@ -52,7 +52,10 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
     Solver::Options options;
     options.linear_solver_type = ceres::DENSE_QR;   // analytic jacobian is dense
     options.minimizer_progress_to_stdout = true;
-    options.max_num_iterations = 500;   // usually converges faster
+    options.max_num_iterations = 500;   // usually converges way faster
+
+    // test
+
 
     // to debug jacobian
     //options.check_gradients = true;
@@ -64,6 +67,8 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
         options.callbacks.push_back(callback);
         options.update_state_every_iteration = true;
     }
+
+    checkCeresOptions(options);
 
     auto start_time = std::chrono::system_clock::now();
     // just some number of cycles
@@ -327,6 +332,13 @@ ceres::Vector ShapeUnderClothOptimizer::copyArray_(double * arr, std::size_t siz
         copy[i] = arr[i];
 
     return copy;
+}
+
+void ShapeUnderClothOptimizer::checkCeresOptions(const Solver::Options & options)
+{
+    std::string error_text;
+    if (!options.IsValid(&error_text))
+        throw std::exception(("Ceres Options Error: " + error_text).c_str());
 }
 
 ceres::CallbackReturnType ShapeUnderClothOptimizer::SMPLVertsLoggingCallBack::operator()(const ceres::IterationSummary & summary)
