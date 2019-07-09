@@ -45,10 +45,13 @@
     <ClInclude Include="PoseShapeExtractor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AbsoluteDistanceForTranslation.h">
+    <ClInclude Include="AbsoluteDistanceBase.h">
+      <Filter>Header Files\Optimization</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AbsoluteDistanceBase.h">
+    <ClInclude Include="AbsoluteDistanceForTranslation.h">
       <Filter>Header Files\Optimization</Filter>
     </ClInclude>
   </ItemGroup>
@@ -77,13 +80,16 @@
     <ClCompile Include="PoseShapeExtractor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AbsoluteDistanceForTranslation.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="AbsoluteDistanceBase.cpp">
       <Filter>Source Files\Optimization</Filter>
     </ClCompile>
     <ClCompile Include="AbsoluteDistanceForShape.cpp">
+      <Filter>Source Files\Optimization</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AbsoluteDistanceForTranslation.cpp">
       <Filter>Source Files\Optimization</Filter>
     </ClCompile>
   </ItemGroup>

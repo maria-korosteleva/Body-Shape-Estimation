@@ -12,10 +12,6 @@
 #include "SMPLWrapper.h"
 
 /*
-    TODO initial pose estimation with openpose
-    TODO use normalized General Mesh vertices for optimization 
-    TODO Shape regularization 
-    TODO directional pose estimation -- idea: add it to the main objective as additional resudual
     TODO SMPL wrapper avalible for everyone
 */
 
@@ -72,7 +68,7 @@ int main()
             "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources",
             output_path);
 
-        extractor.setupNewExperiment(inputs[0], "shape_reg_fin");
+        extractor.setupNewExperiment(inputs[0], "pch_speed_test");
         extractor.setSaveIntermediateResults(true);
         extractor.runExtraction();
         extractor.viewIteratoinProcess();
