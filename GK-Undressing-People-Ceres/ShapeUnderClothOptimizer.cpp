@@ -17,6 +17,7 @@ ShapeUnderClothOptimizer::ShapeUnderClothOptimizer(std::shared_ptr<SMPLWrapper> 
 
     // parameters
     shape_reg_weight_ = 0.01;
+    pose_reg_weight_ = 0.001;
 }
 
 ShapeUnderClothOptimizer::~ShapeUnderClothOptimizer()
@@ -69,7 +70,7 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
 
     auto start_time = std::chrono::system_clock::now();
     // just some number of cycles
-    for (int i = 0; i < 20; ++i)
+    for (int i = 0; i < 3; ++i)
     {
         std::cout << "***********************" << std::endl
             << "    Cycle #" << i << std::endl
@@ -135,7 +136,7 @@ void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, ceres::
 
     // Regularizer
     CostFunction* prior = new NormalPrior(stiffness_, prior_pose);
-    LossFunction* scale_prior = new ScaledLoss(NULL, 0.007, ceres::TAKE_OWNERSHIP);    // 0.0007
+    LossFunction* scale_prior = new ScaledLoss(NULL, pose_reg_weight_, ceres::TAKE_OWNERSHIP);    // 0.0007
     problem.AddResidualBlock(prior, scale_prior, 
         smpl_->getStatePointers().pose);
 

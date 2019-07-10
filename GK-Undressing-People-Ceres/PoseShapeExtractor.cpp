@@ -24,6 +24,7 @@ PoseShapeExtractor::PoseShapeExtractor(const std::string& smpl_model_path,
     cameras_elevation_ = 0.0;
 
     optimizer_shape_reg_weight_ = 0.01;
+    optimizer_pose_reg_weight_ = 0.001;
 
     optimizer_ = std::make_shared<ShapeUnderClothOptimizer>(nullptr, nullptr, pose_prior_path_);
 
@@ -54,6 +55,14 @@ void PoseShapeExtractor::setupNewShapeRegExperiment(std::shared_ptr<GeneralMesh>
 
     setupNewExperiment(std::move(input),
         experiment_name + "_" + std::to_string((int)(weight * 100)));
+}
+
+void PoseShapeExtractor::setupNewPoseRegExperiment(std::shared_ptr<GeneralMesh> input, double weight, const std::string experiment_name)
+{
+    optimizer_pose_reg_weight_ = weight;
+
+    setupNewExperiment(std::move(input),
+        experiment_name + "_" + std::to_string(weight));
 }
 
 void PoseShapeExtractor::setupNewCameraExperiment(std::shared_ptr<GeneralMesh> input, 
@@ -228,6 +237,7 @@ void PoseShapeExtractor::runPoseShapeOptimization_()
     optimizer_->setNewInput(input_);
     optimizer_->setNewSMPLModel(smpl_);
     optimizer_->setShapeRegularizationWeight(optimizer_shape_reg_weight_);
+    optimizer_->setPoseRegularizationWeight(optimizer_pose_reg_weight_);
 
     std::cout << "Starting optimization...\n";
 

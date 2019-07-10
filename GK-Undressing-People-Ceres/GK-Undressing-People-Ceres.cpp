@@ -39,7 +39,7 @@ int main()
     {
         std::vector<std::shared_ptr<GeneralMesh>> inputs;
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_jumping_jacks/00000.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/smpl_outs/pose_00048_270_dyna_thin.obj", GeneralMesh::FEMALE));
+        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/smpl_outs/pose_00048_270_dyna_thin.obj", GeneralMesh::FEMALE));
         inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/smpl_outs/pose_50004_knees_270_dyna_fat.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/smpl_outs/pose_leg_up_knee_up.obj", GeneralMesh::FEMALE));
@@ -68,29 +68,29 @@ int main()
             "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources",
             output_path);
 
-        extractor.setupNewExperiment(inputs[0], "cycles_20");
-        extractor.setSaveIntermediateResults(true);
-        extractor.runExtraction();
-        extractor.viewIteratoinProcess();
+        //extractor.setupNewExperiment(inputs[0], "cycles_20");
+        //extractor.setSaveIntermediateResults(true);
+        //extractor.runExtraction();
+        //extractor.viewIteratoinProcess();
 
         //extractor.viewCameraSetupForPhotos();
         //extractor.viewFinalResult(true);
 
-        //for (auto&& input : inputs)
-        //{
-        //    for (const double& rate : { 0.})
-        //    {
-        //        try
-        //        {
-        //            extractor.setupNewShapeRegExperiment(input, rate, "ps_shape_reg_zero");
-        //            extractor.runExtraction();
-        //        }
-        //        catch (std::exception& e)
-        //        {
-        //            std::cout << "Exception encountered: " << e.what() << std::endl;
-        //        }
-        //    }
-        //}
+        for (auto&& input : inputs)
+        {
+            for (const double& rate : { 0.001 })
+            {
+                try
+                {
+                    extractor.setupNewPoseRegExperiment(input, rate, "pose_reg");
+                    extractor.runExtraction();
+                }
+                catch (std::exception& e)
+                {
+                    std::cout << "Exception encountered: " << e.what() << std::endl;
+                }
+            }
+        }
     }
     catch (std::exception& e)
     {

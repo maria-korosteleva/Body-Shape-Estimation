@@ -34,6 +34,8 @@ public:
     void setupNewExperiment(std::shared_ptr<GeneralMesh> input, const std::string experiment_name = "");
     void setupNewShapeRegExperiment(std::shared_ptr<GeneralMesh> input,
         double weight, const std::string experiment_name = "");
+    void setupNewPoseRegExperiment(std::shared_ptr<GeneralMesh> input,
+        double weight, const std::string experiment_name = "");
     void setupNewCameraExperiment(std::shared_ptr<GeneralMesh> input, 
         double distance, int n_cameras, double elevation, const std::string experiment_name = "");
 
@@ -73,6 +75,7 @@ private:
 
     // for optimizer
     double optimizer_shape_reg_weight_;
+    double optimizer_pose_reg_weight_;
 
     // tools
     std::shared_ptr<OpenPoseWrapper> openpose_;
