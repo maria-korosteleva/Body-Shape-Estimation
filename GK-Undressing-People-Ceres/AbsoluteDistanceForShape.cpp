@@ -46,9 +46,15 @@ bool AbsoluteDistanceForShape::Evaluate(double const * const * parameters, doubl
     assert(signedDists.size() == SMPLWrapper::VERTICES_NUM && "Size of the set of distances should equal main parameters");
     assert(closest_points.rows() == SMPLWrapper::VERTICES_NUM && "Size of the set of distances should equal main parameters");
 
+    // get normals
+    Eigen::MatrixXd verts_normals = smpl_->calcVertexNormals(&verts);
+    const Eigen::MatrixXd& input_face_normals = toMesh_->getFaceNormals();
+
     for (int i = 0; i < SMPLWrapper::VERTICES_NUM; ++i)
     {
-        residuals[i] = residual_elem_(signedDists(i));
+        residuals[i] = residual_elem_(signedDists(i), 
+            verts_normals.row(i),
+            input_face_normals.row(closest_face_ids(i)));
     }
 
     // Jacobians
@@ -59,7 +65,7 @@ bool AbsoluteDistanceForShape::Evaluate(double const * const * parameters, doubl
             for (int sh_id = 0; sh_id < SMPLWrapper::SHAPE_SIZE; ++sh_id)
             {
                 jacobians[0][v_id * SMPLWrapper::SHAPE_SIZE + sh_id]
-                    = shape_jac_elem_(verts.row(v_id), closest_points.row(v_id), signedDists(v_id),
+                    = shape_jac_elem_(verts.row(v_id), closest_points.row(v_id), residuals[v_id],
                         shape_jac[sh_id].row(v_id));
             }
         }

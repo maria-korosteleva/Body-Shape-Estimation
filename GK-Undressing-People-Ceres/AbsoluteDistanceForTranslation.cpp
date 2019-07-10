@@ -36,9 +36,15 @@ bool AbsoluteDistanceForTranslation::Evaluate(double const * const * parameters,
     assert(signedDists.size() == SMPLWrapper::VERTICES_NUM && "Size of the set of distances should equal main parameters");
     assert(closest_points.rows() == SMPLWrapper::VERTICES_NUM && "Size of the set of distances should equal main parameters");
 
+    // get normals
+    Eigen::MatrixXd verts_normals = smpl_->calcVertexNormals(&verts);
+    const Eigen::MatrixXd& input_face_normals = toMesh_->getFaceNormals();
+
     for (int i = 0; i < SMPLWrapper::VERTICES_NUM; ++i)
     {
-        residuals[i] = residual_elem_(signedDists(i));
+        residuals[i] = residual_elem_(signedDists(i), 
+            verts_normals.row(i), 
+            input_face_normals.row(closest_face_ids(i)));
     }
 
     // wrt translation
@@ -49,7 +55,7 @@ bool AbsoluteDistanceForTranslation::Evaluate(double const * const * parameters,
             for (int k = 0; k < SMPLWrapper::SPACE_DIM; ++k)
             {
                 jacobians[0][(v_id)* SMPLWrapper::SPACE_DIM + k]
-                    = translation_jac_elem_(verts(v_id, k), closest_points(v_id, k), signedDists(v_id));
+                    = translation_jac_elem_(verts(v_id, k), closest_points(v_id, k), residuals[v_id]);
             }
         }
     }

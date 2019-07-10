@@ -31,10 +31,8 @@ bool AbsoluteDistanceForPose::Evaluate(double const * const * parameters, double
             parameters[0], smpl_->getStatePointers().shape);
     }
 
-    Eigen::VectorXd signedDists;
-    Eigen::VectorXi closest_face_ids;
-    Eigen::MatrixXd closest_points;
-    Eigen::MatrixXd normals;
+    Eigen::VectorXd signedDists; Eigen::VectorXi closest_face_ids; Eigen::MatrixXd closest_points;
+    Eigen::MatrixXd normals_for_sign;
 
     //igl::point_mesh_squared_distance(verts, this->toMesh_->getVertices(), this->toMesh_->getFaces(), sqrD, closest_face_ids, closest_points);
     // requires the toMesh_ to be watertight
@@ -42,14 +40,20 @@ bool AbsoluteDistanceForPose::Evaluate(double const * const * parameters, double
     igl::signed_distance(verts, 
         toMesh_->getNormalizedVertices(), 
         toMesh_->getFaces(), 
-        type, signedDists, closest_face_ids, closest_points, normals);
+        type, signedDists, closest_face_ids, closest_points, normals_for_sign);
 
     assert(signedDists.size() == SMPLWrapper::VERTICES_NUM && "Size of the set of distances should equal main parameters");
     assert(closest_points.rows() == SMPLWrapper::VERTICES_NUM && "Size of the set of distances should equal main parameters");
 
+    // get normals
+    Eigen::MatrixXd verts_normals = smpl_->calcVertexNormals(&verts);
+    const Eigen::MatrixXd& input_face_normals = toMesh_->getFaceNormals();
+
     for (int i = 0; i < SMPLWrapper::VERTICES_NUM; ++i)
     {
-        residuals[i] = residual_elem_(signedDists(i));
+        residuals[i] = residual_elem_(signedDists(i), 
+            verts_normals.row(i),
+            input_face_normals.row(closest_face_ids(i)));
     }
 
     // Jacobians

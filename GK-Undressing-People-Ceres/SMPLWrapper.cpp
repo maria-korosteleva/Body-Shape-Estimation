@@ -193,6 +193,14 @@ E::MatrixXd SMPLWrapper::calcModel(const double * const translation, const doubl
     return verts;
 }
 
+E::MatrixXd SMPLWrapper::calcVertexNormals(const E::MatrixXd * verts)
+{
+    E::MatrixXd normals;
+    igl::per_vertex_normals(*verts, faces_, normals);
+
+    return normals;
+}
+
 E::MatrixXd SMPLWrapper::calcModel()
 {
     return calcModel(state_.translation, state_.pose, state_.shape);;

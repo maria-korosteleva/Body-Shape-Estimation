@@ -24,6 +24,7 @@
 #include <igl/point_mesh_squared_distance.h>
 #include <igl/signed_distance.h>
 #include <igl/per_vertex_normals.h>
+#include <igl/per_face_normals.h>
 
 #include <ceres/ceres.h>
 #include <ceres/normal_prior.h>

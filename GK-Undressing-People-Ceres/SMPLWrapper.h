@@ -19,6 +19,7 @@ TODO: - Add pose blendshape
 #include <Eigen/SparseCore>
 #include <igl/readOBJ.h>
 #include <igl/writeOBJ.h>
+#include <igl/per_vertex_normals.h>
 
 
 namespace E = Eigen;
@@ -74,6 +75,8 @@ public:
     // *_jacs are expected to have space for POSE_SIZE and SHAPE_SIZE Matrices
     E::MatrixXd calcModel(const double * const translation, const double * const pose, const double * const shape,
         E::MatrixXd * pose_jac = nullptr, E::MatrixXd * shape_jac = nullptr);
+    // calculate for the supplied vertices (calcModel output)
+    E::MatrixXd calcVertexNormals(const E::MatrixXd* verts);
     // using current SMPLWrapper state
     E::MatrixXd calcModel();
     E::MatrixXd calcJointLocations();
