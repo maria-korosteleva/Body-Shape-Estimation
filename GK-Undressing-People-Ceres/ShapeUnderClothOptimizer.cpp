@@ -54,12 +54,6 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
     options.minimizer_progress_to_stdout = true;
     options.max_num_iterations = 500;   // usually converges way faster
 
-    // test
-    //std::vector<int> iter_to_dump({ 3, 25 });
-    //options.trust_region_minimizer_iterations_to_dump = iter_to_dump;
-    //options.trust_region_problem_dump_format_type = ceres::TEXTFILE;
-    //options.trust_region_problem_dump_directory = "./tmp/";
-
     // to debug jacobian
     //options.check_gradients = true;
 
@@ -75,7 +69,7 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
 
     auto start_time = std::chrono::system_clock::now();
     // just some number of cycles
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 20; ++i)
     {
         std::cout << "***********************" << std::endl
             << "    Cycle #" << i << std::endl
