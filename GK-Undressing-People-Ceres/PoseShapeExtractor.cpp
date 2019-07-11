@@ -25,7 +25,7 @@ PoseShapeExtractor::PoseShapeExtractor(const std::string& smpl_model_path,
 
     optimizer_shape_reg_weight_ = 0.01;
     optimizer_pose_reg_weight_ = 0.001;
-    optimizer_shape_prune_threshold_ = 0.1;
+    optimizer_shape_prune_threshold_ = 0.05;
 
     optimizer_ = std::make_shared<ShapeUnderClothOptimizer>(nullptr, nullptr, pose_prior_path_);
 

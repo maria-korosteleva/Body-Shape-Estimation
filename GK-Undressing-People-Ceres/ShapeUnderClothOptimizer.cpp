@@ -19,7 +19,7 @@ ShapeUnderClothOptimizer::ShapeUnderClothOptimizer(std::shared_ptr<SMPLWrapper> 
     // NOTE: the parameters might be reset from the outside
     shape_reg_weight_ = 0.01;
     pose_reg_weight_ = 0.001;
-    shape_prune_threshold_ = 0.1;
+    shape_prune_threshold_ = 0.05;
 }
 
 ShapeUnderClothOptimizer::~ShapeUnderClothOptimizer()
@@ -77,12 +77,10 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
         std::cout << "***********************" << std::endl
             << "    Cycle #" << i << std::endl
             << "***********************" << std::endl;
+        
         translationEstimation_(options);
-
-        poseEstimation_(options, initial_pose_as_prior);
-
         shapeEstimation_(options, parameter);
-
+        poseEstimation_(options, initial_pose_as_prior);
     }
 
     auto end_time = std::chrono::system_clock::now();
