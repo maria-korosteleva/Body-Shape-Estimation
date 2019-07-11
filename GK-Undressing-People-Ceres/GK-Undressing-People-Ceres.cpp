@@ -68,7 +68,7 @@ int main()
             "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources",
             output_path);
 
-        extractor.setupNewShapePruningExperiment(inputs[0], 0.05, "shape_prun_reg_test");
+        extractor.setupNewExperiment(inputs[0], "non_mon");
         extractor.setSaveIntermediateResults(true);
         extractor.runExtraction();
         extractor.viewIteratoinProcess();

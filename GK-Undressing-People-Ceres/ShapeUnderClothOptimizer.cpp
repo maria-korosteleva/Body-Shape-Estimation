@@ -53,12 +53,9 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
 
     // Setup solvers options
     Solver::Options options;
-    options.linear_solver_type = ceres::DENSE_QR;   // analytic jacobian is dense
+    options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY; // analytic jacobian is dense
     options.minimizer_progress_to_stdout = true;
     options.max_num_iterations = 500;   // usually converges way faster
-
-    // to debug jacobian
-    //options.check_gradients = true;
 
     SMPLVertsLoggingCallBack* callback = nullptr;
     if (iteration_results != nullptr)
