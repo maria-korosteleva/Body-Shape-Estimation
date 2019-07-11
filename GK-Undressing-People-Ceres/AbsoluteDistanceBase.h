@@ -9,7 +9,7 @@
 class AbsoluteDistanceBase : public ceres::CostFunction
 {
 public:
-    AbsoluteDistanceBase(SMPLWrapper*, GeneralMesh *);
+    AbsoluteDistanceBase(SMPLWrapper*, GeneralMesh *, double pruning_threshold = 100.);
     ~AbsoluteDistanceBase();
 
 protected:
@@ -19,10 +19,13 @@ protected:
     inline double residual_elem_(const double signed_dist, 
         const Row1 vertex_normal, const Row2 input_normal) const
     {
-        if (vertex_normal.dot(input_normal) > 0)
-            return abs(signed_dist);
-        else
+        // TODO remove the check for the translation and pose optimization cases
+        if (abs(signed_dist) > pruning_threshold_)  // prune far away coorespondences
             return 0;
+        if (vertex_normal.dot(input_normal) <= 0)   // do not account for a point, if the normals don't match
+            return 0;
+        
+        return abs(signed_dist);
     }
 
     //
@@ -63,7 +66,9 @@ protected:
         return jac_entry;
     }
 
+
     GeneralMesh * toMesh_;
     SMPLWrapper * smpl_;
+    double pruning_threshold_;
 };
 

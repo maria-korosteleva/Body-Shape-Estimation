@@ -5,7 +5,7 @@
 class AbsoluteDistanceForShape : public AbsoluteDistanceBase
 {
 public:
-    AbsoluteDistanceForShape(SMPLWrapper*, GeneralMesh *, const double param = 0.);
+    AbsoluteDistanceForShape(SMPLWrapper*, GeneralMesh *, double pruning_threshold = 100., const double param = 0.);
     ~AbsoluteDistanceForShape();
 
     // parameters[0] <-> shape, parameters[1] <-> translation

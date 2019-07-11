@@ -16,8 +16,10 @@ ShapeUnderClothOptimizer::ShapeUnderClothOptimizer(std::shared_ptr<SMPLWrapper> 
     readStiffness_(path);
 
     // parameters
+    // NOTE: the parameters might be reset from the outside
     shape_reg_weight_ = 0.01;
     pose_reg_weight_ = 0.001;
+    shape_prune_threshold_ = 0.1;
 }
 
 ShapeUnderClothOptimizer::~ShapeUnderClothOptimizer()
@@ -182,7 +184,8 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
 
     Problem problem;
 
-    CostFunction* cost_function = new AbsoluteDistanceForShape(smpl_.get(), input_.get(), parameter);
+    CostFunction* cost_function = new AbsoluteDistanceForShape(smpl_.get(), input_.get(),
+        shape_prune_threshold_, parameter);
     problem.AddResidualBlock(cost_function, nullptr,
         smpl_->getStatePointers().shape);
 

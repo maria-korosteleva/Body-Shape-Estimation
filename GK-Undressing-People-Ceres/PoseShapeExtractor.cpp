@@ -18,13 +18,14 @@ PoseShapeExtractor::PoseShapeExtractor(const std::string& smpl_model_path,
     logger_ = nullptr;
     openpose_ = nullptr;
 
-    // default parameter values
+    // default parameter values -- supported by experiments I performed
     cameras_distance_ = 4.5f;
     num_cameras_ = 7;
     cameras_elevation_ = 0.0;
 
     optimizer_shape_reg_weight_ = 0.01;
     optimizer_pose_reg_weight_ = 0.001;
+    optimizer_shape_prune_threshold_ = 0.1;
 
     optimizer_ = std::make_shared<ShapeUnderClothOptimizer>(nullptr, nullptr, pose_prior_path_);
 
@@ -55,6 +56,14 @@ void PoseShapeExtractor::setupNewShapeRegExperiment(std::shared_ptr<GeneralMesh>
 
     setupNewExperiment(std::move(input),
         experiment_name + "_" + std::to_string((int)(weight * 100)));
+}
+
+void PoseShapeExtractor::setupNewShapePruningExperiment(std::shared_ptr<GeneralMesh> input, double threshold, const std::string experiment_name)
+{
+    optimizer_shape_prune_threshold_ = threshold;
+
+    setupNewExperiment(std::move(input),
+        experiment_name + "_" + std::to_string(threshold));
 }
 
 void PoseShapeExtractor::setupNewPoseRegExperiment(std::shared_ptr<GeneralMesh> input, double weight, const std::string experiment_name)
@@ -238,6 +247,7 @@ void PoseShapeExtractor::runPoseShapeOptimization_()
     optimizer_->setNewSMPLModel(smpl_);
     optimizer_->setShapeRegularizationWeight(optimizer_shape_reg_weight_);
     optimizer_->setPoseRegularizationWeight(optimizer_pose_reg_weight_);
+    optimizer_->setShapePruningThreshold(optimizer_shape_prune_threshold_);
 
     std::cout << "Starting optimization...\n";
 

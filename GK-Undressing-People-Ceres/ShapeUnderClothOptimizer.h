@@ -35,6 +35,7 @@ public:
     void setNewInput(std::shared_ptr<GeneralMesh>);
     void setNewPriorPath(const char*);
     void setShapeRegularizationWeight(double weight) { shape_reg_weight_ = weight; };
+    void setShapePruningThreshold(double value) { shape_prune_threshold_ = value; };
     void setPoseRegularizationWeight(double weight) { pose_reg_weight_ = weight; };
 
     std::shared_ptr<SMPLWrapper> getLastSMPL() const { return smpl_; }
@@ -67,6 +68,7 @@ private:
     // parameters
     double shape_reg_weight_;
     double pose_reg_weight_;
+    double shape_prune_threshold_;
 
     // inner classes
     class SMPLVertsLoggingCallBack : public ceres::IterationCallback

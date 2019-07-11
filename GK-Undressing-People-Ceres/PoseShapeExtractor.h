@@ -34,6 +34,8 @@ public:
     void setupNewExperiment(std::shared_ptr<GeneralMesh> input, const std::string experiment_name = "");
     void setupNewShapeRegExperiment(std::shared_ptr<GeneralMesh> input,
         double weight, const std::string experiment_name = "");
+    void setupNewShapePruningExperiment(std::shared_ptr<GeneralMesh> input,
+        double threshold, const std::string experiment_name = "");
     void setupNewPoseRegExperiment(std::shared_ptr<GeneralMesh> input,
         double weight, const std::string experiment_name = "");
     void setupNewCameraExperiment(std::shared_ptr<GeneralMesh> input, 
@@ -75,6 +77,7 @@ private:
 
     // for optimizer
     double optimizer_shape_reg_weight_;
+    double optimizer_shape_prune_threshold_;
     double optimizer_pose_reg_weight_;
 
     // tools

@@ -1,8 +1,9 @@
 #include "AbsoluteDistanceForShape.h"
 
 
-AbsoluteDistanceForShape::AbsoluteDistanceForShape(SMPLWrapper* smpl, GeneralMesh * toMesh, const double param)
-    : AbsoluteDistanceBase(smpl, toMesh), gm_coef_(param)
+AbsoluteDistanceForShape::AbsoluteDistanceForShape(SMPLWrapper* smpl, GeneralMesh * toMesh,
+    double pruning_threshold, const double param)
+    : AbsoluteDistanceBase(smpl, toMesh, pruning_threshold), gm_coef_(param)
 {
     this->mutable_parameter_block_sizes()->push_back(SMPLWrapper::SHAPE_SIZE);
 }
