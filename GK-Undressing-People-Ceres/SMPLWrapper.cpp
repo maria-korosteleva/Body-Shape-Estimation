@@ -852,7 +852,7 @@ SMPLWrapper::State::State()
 
 SMPLWrapper::State::~State()
 {
-//    delete[] pose;
-//    delete[] shape;
-//    delete[] translation;
+    delete[] pose;
+    delete[] shape;
+    delete[] translation;
 }
