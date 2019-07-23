@@ -105,7 +105,7 @@ void ShapeUnderClothOptimizer::translationEstimation_(Solver::Options & options)
     Problem problem;
 
     // send raw pointers because inner class were not refactored
-    CostFunction* cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(), 100., 
+    CostFunction* cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(), 
         AbsoluteDistanceBase::TRANSLATION, AbsoluteDistanceBase::BOTH_DIST);
     problem.AddResidualBlock(cost_function, nullptr, smpl_->getStatePointers().translation);
 
@@ -128,7 +128,7 @@ void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, ceres::
 
     // Main cost
     // send raw pointers because inner class were not refactored
-    CostFunction* cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(), 100.,
+    CostFunction* cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
         AbsoluteDistanceBase::POSE, AbsoluteDistanceBase::BOTH_DIST);
     problem.AddResidualBlock(cost_function, nullptr, 
         smpl_->getStatePointers().pose);
@@ -156,8 +156,9 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
 
     Problem problem;
 
-    CostFunction* cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(), shape_prune_threshold_,
-        AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::BOTH_DIST);
+    CostFunction* cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
+        AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::BOTH_DIST, 
+        shape_prune_threshold_);
     problem.AddResidualBlock(cost_function, nullptr,
         smpl_->getStatePointers().shape);
 
