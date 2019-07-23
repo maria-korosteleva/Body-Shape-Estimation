@@ -68,7 +68,7 @@ int main()
             "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources",
             output_path);
 
-        extractor.setupNewExperiment(inputs[0], "non_mon");
+        extractor.setupNewExperiment(inputs[0], "one_class_improper_fix");
         extractor.setSaveIntermediateResults(true);
         extractor.runExtraction();
         extractor.viewIteratoinProcess();

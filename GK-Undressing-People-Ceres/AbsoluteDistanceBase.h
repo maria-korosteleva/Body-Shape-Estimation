@@ -9,10 +9,47 @@
 class AbsoluteDistanceBase : public ceres::CostFunction
 {
 public:
-    AbsoluteDistanceBase(SMPLWrapper*, GeneralMesh *, double pruning_threshold = 100.);
+    enum ParameterType{
+        BASE, 
+        TRANSLATION, 
+        SHAPE, 
+        POSE
+    };
+    enum DistanceType {
+        IN_DIST, 
+        OUT_DIST, 
+        BOTH_DIST
+    };
+
+    AbsoluteDistanceBase(SMPLWrapper*, GeneralMesh *, double pruning_threshold = 100., 
+        ParameterType parameter = BASE, DistanceType dist_type = BOTH_DIST);
     ~AbsoluteDistanceBase();
 
+    // parameters[0] <-> this->parameter_type_
+    // Main idea for point-to-surface distance jacobian: 
+    // Gradient for each vertex correspondes to the distance from this vertex to the input mesh.
+    virtual bool Evaluate(double const* const* parameters,
+        double* residuals,
+        double** jacobians) const;
+
 protected:
+    struct DistanceResult {
+        Eigen::MatrixXd verts;
+        Eigen::MatrixXd verts_normals;
+        std::vector<Eigen::MatrixXd> jacobian;
+        // libigl output
+        Eigen::VectorXd signedDists; 
+        Eigen::VectorXi closest_face_ids; 
+        Eigen::MatrixXd closest_points;
+        Eigen::MatrixXd normals_for_sign;
+    };
+
+    // TODO switch to calculations from smpl
+    std::unique_ptr<DistanceResult> calcDistance(double const * parameter, bool with_jacobian) const;
+
+    void fillShapeJac(const DistanceResult& distance_res, const double* residuals, double * jacobian) const;
+    void fillPoseJac(const DistanceResult& distance_res, const double* residuals, double * jacobian) const;
+    void fillTranslationJac(const DistanceResult& distance_res, const double* residuals, double * jacobian) const;
 
     // 
     template<typename Row1, typename Row2>
@@ -28,6 +65,8 @@ protected:
         return abs(signed_dist);
     }
 
+    // Jac values are set to zero whenever the residual is zero/close to zero
+    // TODO unite shape and pose jacobians
     //
     template<typename Row1, typename Row2, typename Row3>
     inline double pose_jac_elem_(const Row1&& vertex,
@@ -66,9 +105,15 @@ protected:
         return jac_entry;
     }
 
-
     GeneralMesh * toMesh_;
     SMPLWrapper * smpl_;
     double pruning_threshold_;
+
+    // instance type
+    ParameterType parameter_type_;
+    DistanceType dist_evaluation_type_;
+
+    // last evaluated result
+    //DistanceResult last_result_;
 };
 

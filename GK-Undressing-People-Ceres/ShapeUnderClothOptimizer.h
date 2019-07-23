@@ -10,9 +10,7 @@
 #include <GeneralMesh/GeneralMesh.h>
 #include "SMPLWrapper.h"
 // cost functions
-#include "AbsoluteDistanceForPose.h"
-#include "AbsoluteDistanceForShape.h"
-#include "AbsoluteDistanceForTranslation.h"
+#include "AbsoluteDistanceBase.h"
 
 using ceres::AutoDiffCostFunction;
 using ceres::NumericDiffCostFunction;

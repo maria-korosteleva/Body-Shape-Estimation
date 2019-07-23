@@ -56,7 +56,6 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
     options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY; // analytic jacobian is dense
     options.minimizer_progress_to_stdout = true;
     options.max_num_iterations = 500;   // usually converges way faster
-    options.use_nonmonotonic_steps = true;
 
     SMPLVertsLoggingCallBack* callback = nullptr;
     if (iteration_results != nullptr)
@@ -106,7 +105,8 @@ void ShapeUnderClothOptimizer::translationEstimation_(Solver::Options & options)
     Problem problem;
 
     // send raw pointers because inner class were not refactored
-    CostFunction* cost_function = new AbsoluteDistanceForTranslation(smpl_.get(), input_.get());
+    CostFunction* cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(), 100., 
+        AbsoluteDistanceBase::TRANSLATION, AbsoluteDistanceBase::BOTH_DIST);
     problem.AddResidualBlock(cost_function, nullptr, smpl_->getStatePointers().translation);
 
     // Run the solver!
@@ -128,7 +128,8 @@ void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, ceres::
 
     // Main cost
     // send raw pointers because inner class were not refactored
-    CostFunction* cost_function = new AbsoluteDistanceForPose(smpl_.get(), input_.get());
+    CostFunction* cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(), 100.,
+        AbsoluteDistanceBase::POSE, AbsoluteDistanceBase::BOTH_DIST);
     problem.AddResidualBlock(cost_function, nullptr, 
         smpl_->getStatePointers().pose);
 
@@ -172,7 +173,7 @@ void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, ceres::
 #endif // DEBUG
 }
 
-void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const double parameter)
+void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const double gm_parameter)
 {
     std::cout << "-----------------------" << std::endl
         << "          Shape" << std::endl
@@ -180,8 +181,8 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
 
     Problem problem;
 
-    CostFunction* cost_function = new AbsoluteDistanceForShape(smpl_.get(), input_.get(),
-        shape_prune_threshold_, parameter);
+    CostFunction* cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(), shape_prune_threshold_,
+        AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::BOTH_DIST);
     problem.AddResidualBlock(cost_function, nullptr,
         smpl_->getStatePointers().shape);
 
