@@ -21,8 +21,9 @@ public:
         BOTH_DIST
     };
 
-    AbsoluteDistanceBase(SMPLWrapper*, GeneralMesh *, double pruning_threshold = 100., 
-        ParameterType parameter = BASE, DistanceType dist_type = BOTH_DIST);
+    AbsoluteDistanceBase(SMPLWrapper*, GeneralMesh *, 
+        ParameterType parameter = BASE, DistanceType dist_type = BOTH_DIST, 
+        double pruning_threshold = 100.);
     ~AbsoluteDistanceBase();
 
     // parameters[0] <-> this->parameter_type_
@@ -44,11 +45,10 @@ protected:
         Eigen::MatrixXd normals_for_sign;
     };
 
-    // TODO switch to calculations from smpl
+    // TODO put result in static member
     std::unique_ptr<DistanceResult> calcDistance(double const * parameter, bool with_jacobian) const;
 
-    void fillShapeJac(const DistanceResult& distance_res, const double* residuals, double * jacobian) const;
-    void fillPoseJac(const DistanceResult& distance_res, const double* residuals, double * jacobian) const;
+    void fillJac(const DistanceResult& distance_res, const double* residuals, double * jacobian) const;
     void fillTranslationJac(const DistanceResult& distance_res, const double* residuals, double * jacobian) const;
 
     // 
@@ -56,20 +56,20 @@ protected:
     inline double residual_elem_(const double signed_dist, 
         const Row1 vertex_normal, const Row2 input_normal) const
     {
-        // TODO remove the check for the translation and pose optimization cases
-        if (abs(signed_dist) > pruning_threshold_)  // prune far away coorespondences
+        if (dist_evaluation_type_ == IN_DIST && signed_dist > 0     // is outside, want inside
+            || dist_evaluation_type_ == OUT_DIST && signed_dist < 0 // is inside, want outside
+            || abs(signed_dist) > pruning_threshold_                // too far
+            || vertex_normal.dot(input_normal) <= 0)                // looks the wrong way. Check last, as it's most expensive
+        {
             return 0;
-        if (vertex_normal.dot(input_normal) <= 0)   // do not account for a point, if the normals don't match
-            return 0;
-        
+        }
+
         return abs(signed_dist);
     }
 
     // Jac values are set to zero whenever the residual is zero/close to zero
-    // TODO unite shape and pose jacobians
-    //
     template<typename Row1, typename Row2, typename Row3>
-    inline double pose_jac_elem_(const Row1&& vertex,
+    inline double jac_elem_(const Row1&& vertex,
         const Row2&& closest_input_point,
         double abs_dist,
         const Row3&& grad) const
@@ -77,25 +77,9 @@ protected:
         double jac_entry = abs_dist < 1e-5
             ? 0
             : (vertex - closest_input_point).dot(grad) / abs_dist;
-
         return jac_entry;
     }
 
-    //
-    template<typename Row1, typename Row2, typename Row3>
-    inline double shape_jac_elem_(const Row1&& vertex,
-        const Row2&& closest_input_point,
-        double abs_dist,
-        const Row3&& grad) const
-    {
-        double jac_entry = abs_dist < 1e-5
-            ? 0
-            : (vertex - closest_input_point).dot(grad) / abs_dist;
-
-        return jac_entry;
-    }
-
-    //
     inline double translation_jac_elem_(const double vert_coord,
         const double input_coord, double abs_dist) const
     {

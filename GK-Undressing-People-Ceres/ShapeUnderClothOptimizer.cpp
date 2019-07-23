@@ -146,31 +146,6 @@ void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, ceres::
     // Print summary
     std::cout << "Pose estimation summary:" << std::endl;
     std::cout << summary.FullReport() << std::endl;
-
-#ifdef DEBUG
-    // Print last Gradient (?) and Jacobian
-    std::vector<double> gradient;
-    ceres::CRSMatrix jac;
-    problem.Evaluate(Problem::EvaluateOptions(), NULL, NULL, &gradient, &jac);
-    std::cout << "Gradient" << std::endl;
-    for (auto i = gradient.begin(); i != gradient.end(); ++i)
-    {
-        std::cout << *i << " ";
-    }
-    std::cout << std::endl;
-
-    std::cout << "Jacobian (sparse)" << std::endl;
-
-    for (int i = 0; i < jac.num_rows; ++i)
-    {
-        for (int j = jac.rows[i]; j < jac.rows[i + 1]; ++j)   // only pose jacobian
-        {
-            std::cout << jac.values[j] << " ";
-        }
-        std::cout << std::endl;
-    }
-
-#endif // DEBUG
 }
 
 void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const double gm_parameter)
@@ -201,31 +176,6 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
     // Print summary
     std::cout << "Shape estimation summary:" << std::endl;
     std::cout << summary.FullReport() << std::endl;
-
-#ifdef DEBUG
-    // Print last Gradient (?) and Jacobian
-    std::vector<double> gradient;
-    ceres::CRSMatrix jac;
-    problem.Evaluate(Problem::EvaluateOptions(), NULL, NULL, &gradient, &jac);
-    std::cout << "Gradient" << std::endl;
-    for (auto i = gradient.begin(); i != gradient.end(); ++i)
-    {
-        std::cout << *i << " ";
-    }
-    std::cout << std::endl;
-
-    std::cout << "Jacobian (sparse)" << std::endl;
-
-    for (int i = 0; i < jac.num_rows; ++i)
-    {
-        for (int j = jac.rows[i]; j < jac.rows[i + 1]; ++j)   // only pose jacobian
-        {
-            std::cout << jac.values[j] << " ";
-        }
-        std::cout << std::endl;
-    }
-
-#endif // DEBUG
 }
 
 void ShapeUnderClothOptimizer::readAveragePose_deprecated_(const std::string path)
