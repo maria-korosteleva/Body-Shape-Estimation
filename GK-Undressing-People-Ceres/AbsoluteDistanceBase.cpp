@@ -1,11 +1,16 @@
 #include "AbsoluteDistanceBase.h"
 
+AbsoluteDistanceBase::DistanceResult AbsoluteDistanceBase::last_result_;
 
-
-AbsoluteDistanceBase::AbsoluteDistanceBase(SMPLWrapper* smpl, GeneralMesh * toMesh,  
-    ParameterType parameter, DistanceType dist_type, double pruning_threshold)
-    :toMesh_(toMesh), smpl_(smpl), pruning_threshold_(pruning_threshold), 
-    parameter_type_(parameter), dist_evaluation_type_(dist_type)
+AbsoluteDistanceBase::AbsoluteDistanceBase(SMPLWrapper* smpl, GeneralMesh * toMesh,
+    ParameterType parameter, DistanceType dist_type,
+    bool use_pre_computation,
+    double pruning_threshold)
+    : ceres::EvaluationCallback(),
+    toMesh_(toMesh), smpl_(smpl),
+    pruning_threshold_(pruning_threshold),
+    parameter_type_(parameter), dist_evaluation_type_(dist_type),
+    use_evaluation_callback_(use_pre_computation)
 {
     this->set_num_residuals(SMPLWrapper::VERTICES_NUM);
 
@@ -30,21 +35,38 @@ AbsoluteDistanceBase::~AbsoluteDistanceBase()
 {
 }
 
+void AbsoluteDistanceBase::PrepareForEvaluation(bool evaluate_jacobians, bool new_evaluation_point)
+{
+    if (evaluate_jacobians || new_evaluation_point)
+        updateDistanceCalculations(evaluate_jacobians, last_result_);
+}
+
 bool AbsoluteDistanceBase::Evaluate(double const * const * parameters, double * residuals, double ** jacobians) const
 {
     assert(SMPLWrapper::SPACE_DIM == 3 && "Distance evaluation is only implemented in 3D");
     
-    // main calculation
-    std::unique_ptr<DistanceResult> distance_result(
-        std::move(calcDistance(parameters[0], jacobians != NULL && jacobians[0] != NULL)));
+    std::unique_ptr<DistanceResult> immediate_distance_result;
+    DistanceResult* distance_to_use;
+
+    if (use_evaluation_callback_)
+    {
+        distance_to_use = &last_result_;
+        // TODO add the checks for the expected paramter size and the one used for calculating last_result
+    }
+    else  // allow to run the code without EvaluationCallback calculations
+    {
+        immediate_distance_result = std::move(calcDistance(parameters[0], jacobians != NULL && jacobians[0] != NULL));
+        distance_to_use = immediate_distance_result.get();
+    }
+
 
     // fill resuduals
     const Eigen::MatrixXd& input_face_normals = toMesh_->getFaceNormals();
     for (int i = 0; i < SMPLWrapper::VERTICES_NUM; ++i)
     {
-        residuals[i] = residual_elem_(distance_result->signedDists(i),
-            distance_result->verts_normals.row(i),
-            input_face_normals.row(distance_result->closest_face_ids(i)));
+        residuals[i] = residual_elem_(distance_to_use->signedDists(i),
+            distance_to_use->verts_normals.row(i),
+            input_face_normals.row(distance_to_use->closest_face_ids(i)));
     }
 
     // fill out jacobians
@@ -53,11 +75,11 @@ bool AbsoluteDistanceBase::Evaluate(double const * const * parameters, double * 
         switch (parameter_type_)
         {
         case TRANSLATION:
-            fillTranslationJac(*distance_result, residuals, jacobians[0]);
+            fillTranslationJac(*distance_to_use, residuals, jacobians[0]);
             break;
         case SHAPE:
         case POSE:
-            fillJac(*distance_result, residuals, jacobians[0]);
+            fillJac(*distance_to_use, residuals, jacobians[0]);
             break;
         default:
             throw std::exception("DistanceBase Caclulation::WARNING:: no parameter type specified");
@@ -72,6 +94,7 @@ std::unique_ptr<AbsoluteDistanceBase::DistanceResult> AbsoluteDistanceBase::calc
 {
     std::unique_ptr<DistanceResult> distance_res = std::unique_ptr<DistanceResult>(new DistanceResult);
 
+    // vertices for passed paramter
     if (with_jacobian)
         distance_res->jacobian.resize(parameter_block_sizes()[0]);
 
@@ -103,25 +126,67 @@ std::unique_ptr<AbsoluteDistanceBase::DistanceResult> AbsoluteDistanceBase::calc
         throw std::exception("DistanceBase Caclulation::WARNING:: no parameter type specified");
     }
 
-    igl::SignedDistanceType type = igl::SIGNED_DISTANCE_TYPE_PSEUDONORMAL;
-    igl::signed_distance(distance_res->verts,
-        toMesh_->getNormalizedVertices(), 
-        toMesh_->getFaces(), 
-        type, 
-        distance_res->signedDists, 
-        distance_res->closest_face_ids, 
-        distance_res->closest_points, 
-        distance_res->normals_for_sign);
-
-    assert(distance_res->signedDists.size() == SMPLWrapper::VERTICES_NUM 
-        && "Size of the set of distances should equal main parameters");
-    assert(distance_res->closest_points.rows() == SMPLWrapper::VERTICES_NUM 
-        && "Size of the set of distances should equal main parameters");
-
     // get normals
     distance_res->verts_normals = smpl_->calcVertexNormals(&distance_res->verts);
 
+    // distnaces
+    calcSignedDistByVertecies(*distance_res);
+
     return distance_res;
+}
+
+void AbsoluteDistanceBase::updateDistanceCalculations(bool with_jacobian, DistanceResult& out_distance_result)
+{
+    if (with_jacobian)
+    {
+        out_distance_result.jacobian.resize(parameter_block_sizes()[0]);
+
+        switch (parameter_type_)
+        {
+        case TRANSLATION:
+            out_distance_result.verts = smpl_->calcModel(
+                smpl_->getStatePointers().translation, smpl_->getStatePointers().pose, smpl_->getStatePointers().shape);
+        case SHAPE:
+            out_distance_result.verts = smpl_->calcModel(
+                smpl_->getStatePointers().translation, smpl_->getStatePointers().pose, smpl_->getStatePointers().shape, 
+                nullptr, &out_distance_result.jacobian[0]);
+            break;
+        case POSE:
+            out_distance_result.verts = smpl_->calcModel(
+                smpl_->getStatePointers().translation, smpl_->getStatePointers().pose, smpl_->getStatePointers().shape,
+                &out_distance_result.jacobian[0], nullptr);
+            break;
+        default:
+            throw std::exception("DistanceBase Update::WARNING:: no parameter type specified");
+        }
+    }
+    else
+    {
+        out_distance_result.verts = smpl_->calcModel(
+            smpl_->getStatePointers().translation, smpl_->getStatePointers().pose, smpl_->getStatePointers().shape);
+    }
+    // get vertex normals
+    out_distance_result.verts_normals = smpl_->calcVertexNormals(&out_distance_result.verts);
+        
+    calcSignedDistByVertecies(out_distance_result);
+}
+
+void AbsoluteDistanceBase::calcSignedDistByVertecies(DistanceResult & out_distance_result) const
+{
+    igl::SignedDistanceType type = igl::SIGNED_DISTANCE_TYPE_PSEUDONORMAL;
+    igl::signed_distance(out_distance_result.verts,
+        toMesh_->getNormalizedVertices(),
+        toMesh_->getFaces(),
+        type,
+        out_distance_result.signedDists,
+        out_distance_result.closest_face_ids,
+        out_distance_result.closest_points,
+        out_distance_result.normals_for_sign);
+
+    assert(distance_res->signedDists.size() == SMPLWrapper::VERTICES_NUM
+        && "Size of the set of distances should equal main parameters");
+    assert(distance_res->closest_points.rows() == SMPLWrapper::VERTICES_NUM
+        && "Size of the set of distances should equal main parameters");
 }
 
 void AbsoluteDistanceBase::fillJac(const DistanceResult& distance_res, const double* residuals, double * jacobian) const

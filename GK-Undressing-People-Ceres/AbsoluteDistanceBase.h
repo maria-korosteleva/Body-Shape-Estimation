@@ -6,7 +6,7 @@
 #include <GeneralMesh/GeneralMesh.h>
 #include "SMPLWrapper.h"
 
-class AbsoluteDistanceBase : public ceres::CostFunction
+class AbsoluteDistanceBase : public ceres::CostFunction, public ceres::EvaluationCallback
 {
 public:
     enum ParameterType{
@@ -23,8 +23,13 @@ public:
 
     AbsoluteDistanceBase(SMPLWrapper*, GeneralMesh *, 
         ParameterType parameter = BASE, DistanceType dist_type = BOTH_DIST, 
+        bool use_pre_computation = false,
         double pruning_threshold = 100.);
     ~AbsoluteDistanceBase();
+
+    // Callback to be called before the evaluation of the optimization step
+    // the new optimization parameter values are pushed to the smpl_ parameters 
+    virtual void PrepareForEvaluation(bool evaluate_jacobians, bool new_evaluation_point);
 
     // parameters[0] <-> this->parameter_type_
     // Main idea for point-to-surface distance jacobian: 
@@ -47,6 +52,8 @@ protected:
 
     // TODO put result in static member
     std::unique_ptr<DistanceResult> calcDistance(double const * parameter, bool with_jacobian) const;
+    void updateDistanceCalculations(bool with_jacobian, DistanceResult& out_distance_result);
+    void calcSignedDistByVertecies(DistanceResult& out_distance_result) const;
 
     void fillJac(const DistanceResult& distance_res, const double* residuals, double * jacobian) const;
     void fillTranslationJac(const DistanceResult& distance_res, const double* residuals, double * jacobian) const;
@@ -96,8 +103,9 @@ protected:
     // instance type
     ParameterType parameter_type_;
     DistanceType dist_evaluation_type_;
+    bool use_evaluation_callback_;
 
     // last evaluated result
-    //DistanceResult last_result_;
+    static DistanceResult last_result_;
 };
 

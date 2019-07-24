@@ -156,9 +156,15 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
 
     Problem problem;
 
-    CostFunction* cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
-        AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::BOTH_DIST, 
+    // Main cost
+    AbsoluteDistanceBase* cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
+        AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::BOTH_DIST, true,
         shape_prune_threshold_);
+
+    // add for performing pre-computation
+    options.evaluation_callback = cost_function;
+
+    // add Residuals 
     problem.AddResidualBlock(cost_function, nullptr,
         smpl_->getStatePointers().shape);
 
@@ -177,6 +183,9 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
     // Print summary
     std::cout << "Shape estimation summary:" << std::endl;
     std::cout << summary.FullReport() << std::endl;
+
+    // clear the options from the update for smooth future use
+    options.evaluation_callback = NULL;
 }
 
 void ShapeUnderClothOptimizer::readAveragePose_deprecated_(const std::string path)
