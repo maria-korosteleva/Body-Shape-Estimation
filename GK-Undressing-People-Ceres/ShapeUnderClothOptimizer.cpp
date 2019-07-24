@@ -130,12 +130,18 @@ void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, ceres::
     // send raw pointers because inner class were not refactored
     AbsoluteDistanceBase* out_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
         AbsoluteDistanceBase::POSE, AbsoluteDistanceBase::OUT_DIST, true);
+    AbsoluteDistanceBase* in_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
+        AbsoluteDistanceBase::POSE, AbsoluteDistanceBase::IN_DIST, true);
 
     // for pre-computation
     options.evaluation_callback = out_cost_function;
 
     problem.AddResidualBlock(out_cost_function, nullptr,
         smpl_->getStatePointers().pose);
+
+    //LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.1, ceres::TAKE_OWNERSHIP);
+    //problem.AddResidualBlock(in_cost_function, scale_in_cost,
+    //    smpl_->getStatePointers().pose);
 
     // Regularizer
     CostFunction* prior = new NormalPrior(stiffness_, prior_pose);
@@ -167,6 +173,9 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
     AbsoluteDistanceBase* out_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
         AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::OUT_DIST, true,
         shape_prune_threshold_);
+    AbsoluteDistanceBase* in_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
+        AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::IN_DIST, true,
+        shape_prune_threshold_);
 
     // add for performing pre-computation
     options.evaluation_callback = out_cost_function;
@@ -174,6 +183,10 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
     // add Residuals 
     problem.AddResidualBlock(out_cost_function, nullptr,
         smpl_->getStatePointers().shape);
+
+    //LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.1, ceres::TAKE_OWNERSHIP);
+    //problem.AddResidualBlock(in_cost_function, scale_in_cost,
+    //    smpl_->getStatePointers().shape);
 
     // Regularization
     CostFunction* prior = new NormalPrior(
