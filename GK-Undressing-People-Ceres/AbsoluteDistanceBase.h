@@ -50,7 +50,6 @@ protected:
         Eigen::MatrixXd normals_for_sign;
     };
 
-    // TODO put result in static member
     std::unique_ptr<DistanceResult> calcDistance(double const * parameter, bool with_jacobian) const;
     void updateDistanceCalculations(bool with_jacobian, DistanceResult& out_distance_result);
     void calcSignedDistByVertecies(DistanceResult& out_distance_result) const;

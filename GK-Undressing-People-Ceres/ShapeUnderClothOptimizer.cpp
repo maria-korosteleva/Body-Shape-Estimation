@@ -128,9 +128,13 @@ void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, ceres::
 
     // Main cost
     // send raw pointers because inner class were not refactored
-    CostFunction* cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
-        AbsoluteDistanceBase::POSE, AbsoluteDistanceBase::BOTH_DIST);
-    problem.AddResidualBlock(cost_function, nullptr, 
+    AbsoluteDistanceBase* out_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
+        AbsoluteDistanceBase::POSE, AbsoluteDistanceBase::OUT_DIST, true);
+
+    // for pre-computation
+    options.evaluation_callback = out_cost_function;
+
+    problem.AddResidualBlock(out_cost_function, nullptr,
         smpl_->getStatePointers().pose);
 
     // Regularizer
@@ -146,6 +150,9 @@ void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, ceres::
     // Print summary
     std::cout << "Pose estimation summary:" << std::endl;
     std::cout << summary.FullReport() << std::endl;
+
+    // clear the options from the update for smooth future use
+    options.evaluation_callback = NULL;
 }
 
 void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const double gm_parameter)
@@ -157,15 +164,15 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
     Problem problem;
 
     // Main cost
-    AbsoluteDistanceBase* cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
-        AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::BOTH_DIST, true,
+    AbsoluteDistanceBase* out_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
+        AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::OUT_DIST, true,
         shape_prune_threshold_);
 
     // add for performing pre-computation
-    options.evaluation_callback = cost_function;
+    options.evaluation_callback = out_cost_function;
 
     // add Residuals 
-    problem.AddResidualBlock(cost_function, nullptr,
+    problem.AddResidualBlock(out_cost_function, nullptr,
         smpl_->getStatePointers().shape);
 
     // Regularization
