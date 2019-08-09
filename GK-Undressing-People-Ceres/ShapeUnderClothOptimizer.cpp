@@ -190,10 +190,9 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
     // Main cost
     AbsoluteDistanceBase* out_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
         AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::OUT_DIST, true,
-        shape_prune_threshold_); // 
+        shape_prune_threshold_);
     AbsoluteDistanceBase* in_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
-        AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::IN_DIST, true,
-        100.); // shape_prune_threshold_
+        AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::IN_DIST, true);  // no threshold
 
     // add for performing pre-computation
     options.evaluation_callback = out_cost_function;
