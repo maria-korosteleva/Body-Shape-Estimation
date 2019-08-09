@@ -153,8 +153,8 @@ void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, ceres::
     problem.AddResidualBlock(out_cost_function, nullptr,
         smpl_->getStatePointers().pose);
 
-    LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.1, ceres::TAKE_OWNERSHIP);
-    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(0.05);
+    LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.05, ceres::TAKE_OWNERSHIP);
+    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(0.033);
     ceres::ComposedLoss* composed_loss = new ceres::ComposedLoss(
         scale_in_cost, ceres::TAKE_OWNERSHIP,
         geman_mcclare_cost, ceres::TAKE_OWNERSHIP);
@@ -190,10 +190,10 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
     // Main cost
     AbsoluteDistanceBase* out_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
         AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::OUT_DIST, true,
-        shape_prune_threshold_);
+        100.); // shape_prune_threshold_
     AbsoluteDistanceBase* in_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
         AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::IN_DIST, true,
-        shape_prune_threshold_);
+        100.); // shape_prune_threshold_
 
     // add for performing pre-computation
     options.evaluation_callback = out_cost_function;
@@ -202,8 +202,8 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
     problem.AddResidualBlock(out_cost_function, nullptr,
         smpl_->getStatePointers().shape);
 
-    LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.1, ceres::TAKE_OWNERSHIP);
-    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(0.05);
+    LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.05, ceres::TAKE_OWNERSHIP);
+    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(0.033);
     ceres::ComposedLoss* composed_loss = new ceres::ComposedLoss(
         scale_in_cost, ceres::TAKE_OWNERSHIP,
         geman_mcclare_cost, ceres::TAKE_OWNERSHIP);

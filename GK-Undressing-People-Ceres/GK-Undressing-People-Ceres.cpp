@@ -87,9 +87,9 @@ int main()
         
         inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/casual-woman-walking.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/girl_nasi_pants.obj", GeneralMesh::FEMALE));
-        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/jenya4.obj", GeneralMesh::FEMALE));
-        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/shan.obj", GeneralMesh::FEMALE));
-        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Web.obj", GeneralMesh::MALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/jenya4.obj", GeneralMesh::FEMALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/shan.obj", GeneralMesh::FEMALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Web.obj", GeneralMesh::MALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/reilly.obj", GeneralMesh::MALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Ivan Komarov.obj", GeneralMesh::MALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/casual-man.obj", GeneralMesh::MALE));
@@ -101,29 +101,29 @@ int main()
             "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources",
             output_path);
 
-        //extractor.setupNewExperiment(inputs[0], "gm_005_scale_01");
-        //extractor.setSaveIntermediateResults(true);
-        //extractor.runExtraction();
-        //extractor.viewIteratoinProcess();
+        extractor.setupNewExperiment(inputs[0], "gm_0033_sc_005_no_cut");
+        extractor.setSaveIntermediateResults(true);
+        extractor.runExtraction();
+        extractor.viewIteratoinProcess();
 
         //extractor.viewCameraSetupForPhotos();
         //extractor.viewFinalResult(true);
 
-        for (auto&& input : inputs)
-        {
-            //for (const double& threshold : { 0.1 })
-            {
-                try
-                {
-                    extractor.setupNewExperiment(input, "in_gm_005_scale_01");
-                    extractor.runExtraction();
-                }
-                catch (std::exception& e)
-                {
-                    std::cout << "exception encountered: " << e.what() << std::endl;
-                }
-            }
-        }
+        //for (auto&& input : inputs)
+        //{
+        //    //for (const double& threshold : { 0.1 })
+        //    {
+        //        try
+        //        {
+        //            extractor.setupNewExperiment(input, "in_gm_0033_scale_01");
+        //            extractor.runExtraction();
+        //        }
+        //        catch (std::exception& e)
+        //        {
+        //            std::cout << "exception encountered: " << e.what() << std::endl;
+        //        }
+        //    }
+        //}
     }
     catch (std::exception& e)
     {
