@@ -69,6 +69,33 @@ private:
     double shape_prune_threshold_;
 
     // inner classes
+    class GemanMcClareLoss : public ceres::LossFunction
+    {
+    public:
+        // GM function is x^2 / (1 + sigma^2 * x^2) with x as independent variable, sigma as paramter to control saturation
+        // in our case x is the distance of the model vertex to the input surface
+        // => GM loss is s / (1 + sigma^2 * s)
+        //
+        // ~(1/sigma) = saturation_threshold : 
+        // the value of the sqrt(s)=x where the loss stops being ~linear and start saturation
+        // ~(saturation_threshold^2) = the upper limit GM value approaches when saturated - 
+        // larger when the saturation threshold is larger
+        GemanMcClareLoss(double saturation_threshold) : sigma(1 / saturation_threshold) {};
+
+        virtual void Evaluate(double s, double out[3]) const
+        {
+            double sigma_sqr = sigma * sigma;
+            double denominator = 1 + s * sigma_sqr;
+
+            out[0] = s / denominator;
+            out[1] = 1 / denominator * denominator;
+            out[2] = -2 * sigma_sqr * out[1] / denominator;
+        }
+    private:
+        double sigma = 0.;
+    };
+
+
     class SMPLVertsLoggingCallBack : public ceres::IterationCallback
     {
     public:
@@ -85,6 +112,8 @@ private:
         std::shared_ptr<SMPLWrapper> smpl_;
         std::vector<Eigen::MatrixXd>* smpl_verts_results_;
     };
+
+
 };
 
 
