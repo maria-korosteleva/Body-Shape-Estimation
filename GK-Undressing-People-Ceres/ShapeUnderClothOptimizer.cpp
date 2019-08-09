@@ -96,6 +96,20 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
     }
 }
 
+void ShapeUnderClothOptimizer::gmLossTest()
+{
+    // sigma = 10
+    GemanMcClareLoss func(0.1);
+
+    std::array<double, 3> outs;
+
+    for (auto x : { 0., 0.05, 0.1, 0.2, 0.4, 0.5 })
+    {
+        func.Evaluate(x*x, &outs[0]);
+        std::cout << "GM(" << x << ") = " << outs[0] << std::endl;
+    }
+}
+
 void ShapeUnderClothOptimizer::translationEstimation_(Solver::Options & options)
 {
     std::cout << "-----------------------" << std::endl

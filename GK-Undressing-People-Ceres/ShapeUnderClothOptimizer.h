@@ -41,6 +41,9 @@ public:
     // parameter is some parameter of the underlying procedures; used for experiments; the semantics should be controlled by the programmer
     void findOptimalSMPLParameters(std::vector<Eigen::MatrixXd>* iteration_results = nullptr, const double parameter = 0.);
 
+    // tmp
+    void gmLossTest();
+
 private:
     // inidividual optimizers
     // expect the params to be initialized outside
@@ -76,10 +79,10 @@ private:
         // in our case x is the distance of the model vertex to the input surface
         // => GM loss is s / (1 + sigma^2 * s)
         //
-        // ~(1/sigma) = saturation_threshold : 
+        // ~(1/sigma) = saturation_threshold : about halfway through the fucntion values (1/(2 * sigma^2))
         // the value of the sqrt(s)=x where the loss stops being ~linear and start saturation
         // ~(saturation_threshold^2) = the upper limit GM value approaches when saturated - 
-        // larger when the saturation threshold is larger
+        // larger when the saturation_threshold is larger
         GemanMcClareLoss(double saturation_threshold) : sigma(1 / saturation_threshold) {};
 
         virtual void Evaluate(double s, double out[3]) const
