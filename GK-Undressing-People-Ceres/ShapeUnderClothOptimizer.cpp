@@ -153,9 +153,13 @@ void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, ceres::
     problem.AddResidualBlock(out_cost_function, nullptr,
         smpl_->getStatePointers().pose);
 
-    //LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.1, ceres::TAKE_OWNERSHIP);
-    //problem.AddResidualBlock(in_cost_function, scale_in_cost,
-    //    smpl_->getStatePointers().pose);
+    LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.1, ceres::TAKE_OWNERSHIP);
+    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(0.05);
+    ceres::ComposedLoss* composed_loss = new ceres::ComposedLoss(
+        scale_in_cost, ceres::TAKE_OWNERSHIP,
+        geman_mcclare_cost, ceres::TAKE_OWNERSHIP);
+    problem.AddResidualBlock(in_cost_function, composed_loss,
+        smpl_->getStatePointers().pose);
 
     // Regularizer
     CostFunction* prior = new NormalPrior(stiffness_, prior_pose);
@@ -198,9 +202,13 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
     problem.AddResidualBlock(out_cost_function, nullptr,
         smpl_->getStatePointers().shape);
 
-    //LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.1, ceres::TAKE_OWNERSHIP);
-    //problem.AddResidualBlock(in_cost_function, scale_in_cost,
-    //    smpl_->getStatePointers().shape);
+    LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.1, ceres::TAKE_OWNERSHIP);
+    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(0.05);
+    ceres::ComposedLoss* composed_loss = new ceres::ComposedLoss(
+        scale_in_cost, ceres::TAKE_OWNERSHIP,
+        geman_mcclare_cost, ceres::TAKE_OWNERSHIP);
+    problem.AddResidualBlock(in_cost_function, composed_loss,
+        smpl_->getStatePointers().shape);
 
     // Regularization
     CostFunction* prior = new NormalPrior(
@@ -244,15 +252,6 @@ void ShapeUnderClothOptimizer::readAveragePose_deprecated_(const std::string pat
         inFile >> average_pose_deprecated_(i);
 
     inFile.close();
-
-#ifdef DEBUG
-    std::cout << "Read mean pose" << std::endl;
-    //for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
-    //{
-    //    std::cout << this->mean_pose_(i) << " ";
-    //}
-    //std::cout << std::endl;
-#endif // DEBUG
 }
 
 void ShapeUnderClothOptimizer::readStiffness_(const std::string path)
