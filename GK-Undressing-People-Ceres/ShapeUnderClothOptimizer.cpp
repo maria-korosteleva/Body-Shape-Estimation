@@ -89,6 +89,13 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
         << "Total time " << elapsed_seconds.count() << "s" << std::endl
         << "***********************" << std::endl;
 
+    // add naive diplacement
+    std::cout << "***********************" << std::endl
+        << "Adding displacement" << std::endl
+        << "***********************" << std::endl;
+    naiveDisplacement_();
+
+
     // cleanup
     if (callback != nullptr)
     {
@@ -227,6 +234,21 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
 
     // clear the options from the update for smooth future use
     options.evaluation_callback = NULL;
+}
+
+void ShapeUnderClothOptimizer::naiveDisplacement_()
+{
+    E::MatrixXd verts = smpl_->calcModel();
+    E::MatrixXd signedDists, closest_points, normals_for_sign;
+    E::MatrixXi closest_face_ids;
+
+    igl::SignedDistanceType type = igl::SIGNED_DISTANCE_TYPE_PSEUDONORMAL;
+    igl::signed_distance(verts, 
+        input_->getNormalizedVertices(), input_->getFaces(),
+        type,
+        signedDists, closest_face_ids, closest_points, normals_for_sign);
+
+    smpl_->setDisplacement(closest_points - verts);
 }
 
 void ShapeUnderClothOptimizer::readAveragePose_deprecated_(const std::string path)

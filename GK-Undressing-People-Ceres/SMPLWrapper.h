@@ -31,6 +31,7 @@ public:
         double* pose = nullptr;
         double* shape = nullptr;
         double* translation = nullptr;
+        E::MatrixXd displacements;
 
         State();
         ~State();
@@ -71,6 +72,7 @@ public:
 
     // re-calculates translation to move the posed/shaped mesh center to the specified point
     void translateTo(const E::VectorXd& center_point);
+    void setDisplacement(const E::MatrixXd& displ) { state_.displacements = displ; }
 
     // *_jacs are expected to have space for POSE_SIZE and SHAPE_SIZE Matrices
     E::MatrixXd calcModel(const double * const translation, const double * const pose, const double * const shape,
@@ -83,6 +85,7 @@ public:
 
     // using current SMPLWrapper state
     void saveToObj(const std::string path);
+    void saveWithDisplacementToObj(const std::string path);
     void savePosedOnlyToObj(const std::string path);
     void saveShapedOnlyToObj(const std::string path);
     void logParameters(const std::string path);
@@ -95,7 +98,8 @@ private:
     void readWeights_();
     void readHierarchy_();
 
-    void saveToObj_(const double * translation, const double * pose, const double* shape, const std::string path);
+    void saveToObj_(const double * translation, const double * pose, const double* shape, const E::MatrixXd* displacements,
+        const std::string path);
 
     // For individual joint rotation calculation
     static E::Vector3d angle_axis_(const E::Vector3d& from, const E::Vector3d& to);

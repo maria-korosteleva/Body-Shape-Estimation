@@ -203,7 +203,7 @@ E::MatrixXd SMPLWrapper::calcVertexNormals(const E::MatrixXd * verts)
 
 E::MatrixXd SMPLWrapper::calcModel()
 {
-    return calcModel(state_.translation, state_.pose, state_.shape);;
+    return calcModel(state_.translation, state_.pose, state_.shape);
 }
 
 E::MatrixXd SMPLWrapper::calcJointLocations()
@@ -212,26 +212,36 @@ E::MatrixXd SMPLWrapper::calcJointLocations()
 }
 
 void SMPLWrapper::saveToObj_(const double* translation, const double* pose, const double* shape, 
-    const std::string path)
+    const E::MatrixXd* displacements, const std::string path)
 {
     E::MatrixXd verts = calcModel(translation, pose, shape);
+    if (displacements != nullptr)
+    {
+        verts = verts + *displacements;
+        verts = verts + *displacements;
+    }
 
     igl::writeOBJ(path, verts, faces_);
 }
 
 void SMPLWrapper::saveToObj(const std::string path) 
 {
-    saveToObj_(state_.translation, state_.pose, state_.shape, path);
+    saveToObj_(state_.translation, state_.pose, state_.shape, nullptr, path);
+}
+
+void SMPLWrapper::saveWithDisplacementToObj(const std::string path)
+{
+    saveToObj_(state_.translation, state_.pose, state_.shape, &state_.displacements, path);
 }
 
 void SMPLWrapper::savePosedOnlyToObj(const std::string path) 
 {
-    saveToObj_(state_.translation, state_.pose, nullptr, path);
+    saveToObj_(state_.translation, state_.pose, nullptr, nullptr, path);
 }
 
 void SMPLWrapper::saveShapedOnlyToObj(const std::string path) 
 {
-    saveToObj_(state_.translation, nullptr, state_.shape, path);
+    saveToObj_(state_.translation, nullptr, state_.shape, nullptr, path);
 }
 
 void SMPLWrapper::logParameters(const std::string path)
@@ -848,6 +858,8 @@ SMPLWrapper::State::State()
     translation = new double[SPACE_DIM];
     for (int i = 0; i < SPACE_DIM; i++)
         translation[i] = 0.;
+
+    displacements.setZero(VERTICES_NUM, SPACE_DIM);
 }
 
 SMPLWrapper::State::~State()

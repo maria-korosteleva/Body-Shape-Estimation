@@ -6,6 +6,7 @@
 #include "ceres/ceres.h"
 #include "ceres/normal_prior.h"
 #include "glog/logging.h"
+#include "igl/signed_distance.h"
 
 #include <GeneralMesh/GeneralMesh.h>
 #include "SMPLWrapper.h"
@@ -50,6 +51,7 @@ private:
     void translationEstimation_(Solver::Options& options);
     void poseEstimation_(Solver::Options& options, ceres::Vector& prior_pose, const double parameter = 1.);
     void shapeEstimation_(Solver::Options& options, const double parameter = 1.);
+    void naiveDisplacement_();
 
     // utils
     void readAveragePose_deprecated_(const std::string);
