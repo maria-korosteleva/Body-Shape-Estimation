@@ -80,6 +80,13 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
         poseEstimation_(options, initial_pose_as_prior);
     }
 
+    // Refine diplacement
+    std::cout << "***********************" << std::endl
+        << "Displacement adjustment" << std::endl
+        << "***********************" << std::endl;
+    displacementEstimation_(options);
+
+
     auto end_time = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end_time - start_time;
     std::time_t end_time_t = std::chrono::system_clock::to_time_t(end_time);
@@ -88,13 +95,6 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
         << "Finished at " << std::ctime(&end_time_t) << std::endl
         << "Total time " << elapsed_seconds.count() << "s" << std::endl
         << "***********************" << std::endl;
-
-    // add naive diplacement
-    std::cout << "***********************" << std::endl
-        << "Adding displacement" << std::endl
-        << "***********************" << std::endl;
-    naiveDisplacement_();
-
 
     // cleanup
     if (callback != nullptr)
@@ -236,32 +236,55 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
     options.evaluation_callback = NULL;
 }
 
-void ShapeUnderClothOptimizer::naiveDisplacement_()
+void ShapeUnderClothOptimizer::displacementEstimation_(Solver::Options& options)
 {
-    E::MatrixXd verts = smpl_->calcModel();
-    E::MatrixXd signedDists, closest_points, normals_for_sign;
-    E::MatrixXi closest_face_ids;
+    std::cout << "-----------------------" << std::endl
+        << "          Displacement" << std::endl
+        << "-----------------------" << std::endl;
 
-    igl::SignedDistanceType type = igl::SIGNED_DISTANCE_TYPE_PSEUDONORMAL;
-    igl::signed_distance(verts, 
-        input_->getNormalizedVertices(), input_->getFaces(),
-        type,
-        signedDists, closest_face_ids, closest_points, normals_for_sign);
+    Problem problem;
 
-    E::MatrixXd displ = E::MatrixXd::Zero(verts.rows(), verts.cols());
-    for (int i = 0; i < displ.rows(); i++)
-    {
-        if (abs(signedDists(i)) < 0.01)
-        {
-            displ.row(i) = closest_points.row(i) - verts.row(i);
-        }
-        else
-        {
-            displ.row(i) = 0.01 * (closest_points.row(i) - verts.row(i)) / abs(signedDists(i));
-        }
-    }
+    // Main cost
+    AbsoluteDistanceBase* out_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
+        AbsoluteDistanceBase::DISPLACEMENT, AbsoluteDistanceBase::OUT_DIST, true,
+        shape_prune_threshold_);    // TODO recheck thresholding for displacements
+    AbsoluteDistanceBase* in_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
+        AbsoluteDistanceBase::DISPLACEMENT, AbsoluteDistanceBase::IN_DIST, true);  // no threshold
 
-    smpl_->setDisplacement(displ);
+    // add for performing pre-computation
+    options.evaluation_callback = out_cost_function;
+
+    // add Residuals 
+    problem.AddResidualBlock(out_cost_function, nullptr,
+        smpl_->getStatePointers().displacements.data());
+
+    LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.1, ceres::TAKE_OWNERSHIP);
+    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(0.033);
+    ceres::ComposedLoss* composed_loss = new ceres::ComposedLoss(
+        scale_in_cost, ceres::TAKE_OWNERSHIP,
+        geman_mcclare_cost, ceres::TAKE_OWNERSHIP);
+    problem.AddResidualBlock(in_cost_function, composed_loss,
+        smpl_->getStatePointers().displacements.data());
+
+    // Regularization
+    CostFunction* prior = new NormalPrior(
+        Eigen::MatrixXd::Identity(smpl_->getStatePointers().displacements.size(), 
+            smpl_->getStatePointers().displacements.size()),
+        Eigen::VectorXd::Zero(smpl_->getStatePointers().displacements.size()));
+    LossFunction* scale_prior = new ScaledLoss(NULL, 1., ceres::TAKE_OWNERSHIP);
+    problem.AddResidualBlock(prior, scale_prior,
+        smpl_->getStatePointers().displacements.data());
+
+    // Run the solver!
+    Solver::Summary summary;
+    Solve(options, &problem, &summary);
+
+    // Print summary
+    std::cout << "Displacement estimation summary:" << std::endl;
+    std::cout << summary.FullReport() << std::endl;
+
+    // clear the options from the update for smooth future use
+    options.evaluation_callback = NULL;
 }
 
 void ShapeUnderClothOptimizer::readAveragePose_deprecated_(const std::string path)

@@ -25,6 +25,9 @@ AbsoluteDistanceBase::AbsoluteDistanceBase(SMPLWrapper* smpl, GeneralMesh * toMe
         case POSE:
             this->mutable_parameter_block_sizes()->push_back(SMPLWrapper::POSE_SIZE);
             break;
+        case DISPLACEMENT: 
+            this->mutable_parameter_block_sizes()->push_back(SMPLWrapper::VERTICES_NUM * SMPLWrapper::SPACE_DIM);
+            break;
         default:
             std::cout << "DistanceBase initialization::WARNING:: no parameter type specified\n";
     }
@@ -53,8 +56,9 @@ bool AbsoluteDistanceBase::Evaluate(double const * const * parameters, double * 
         distance_to_use = &last_result_;
         // TODO add the checks for the expected paramter size and the one used for calculating last_result
     }
-    else  // allow to run the code without EvaluationCallback calculations
+    else  // allow to run the code without EvaluationCallback calculations 
     {
+        // TODO check if this mode is needed
         immediate_distance_result = std::move(calcDistance(parameters[0], jacobians != NULL && jacobians[0] != NULL));
         distance_to_use = immediate_distance_result.get();
     }
@@ -79,6 +83,7 @@ bool AbsoluteDistanceBase::Evaluate(double const * const * parameters, double * 
             break;
         case SHAPE:
         case POSE:
+        case DISPLACEMENT:
             fillJac(*distance_to_use, residuals, jacobians[0]);
             break;
         default:
@@ -122,6 +127,10 @@ std::unique_ptr<AbsoluteDistanceBase::DistanceResult> AbsoluteDistanceBase::calc
                 parameter, smpl_->getStatePointers().shape);
         break;
 
+    case DISPLACEMENT:
+        // TODO add distance calculation
+        break;
+
     default:
         throw std::exception("DistanceBase Caclulation::WARNING:: no parameter type specified");
     }
@@ -155,6 +164,9 @@ void AbsoluteDistanceBase::updateDistanceCalculations(bool with_jacobian, Distan
             out_distance_result.verts = smpl_->calcModel(
                 smpl_->getStatePointers().translation, smpl_->getStatePointers().pose, smpl_->getStatePointers().shape,
                 &out_distance_result.jacobian[0], nullptr);
+            break;
+        case DISPLACEMENT:
+            // TODO add updating distance calculation
             break;
         default:
             throw std::exception("DistanceBase Update::WARNING:: no parameter type specified");

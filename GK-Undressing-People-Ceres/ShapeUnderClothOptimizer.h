@@ -51,7 +51,7 @@ private:
     void translationEstimation_(Solver::Options& options);
     void poseEstimation_(Solver::Options& options, ceres::Vector& prior_pose, const double parameter = 1.);
     void shapeEstimation_(Solver::Options& options, const double parameter = 1.);
-    void naiveDisplacement_();
+    void displacementEstimation_(Solver::Options& options);
 
     // utils
     void readAveragePose_deprecated_(const std::string);

@@ -13,7 +13,8 @@ public:
         BASE, 
         TRANSLATION, 
         SHAPE, 
-        POSE
+        POSE,
+        DISPLACEMENT
     };
     enum DistanceType {
         IN_DIST, 
