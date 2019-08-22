@@ -248,7 +248,20 @@ void ShapeUnderClothOptimizer::naiveDisplacement_()
         type,
         signedDists, closest_face_ids, closest_points, normals_for_sign);
 
-    smpl_->setDisplacement(closest_points - verts);
+    E::MatrixXd displ = E::MatrixXd::Zero(verts.rows(), verts.cols());
+    for (int i = 0; i < displ.rows(); i++)
+    {
+        if (abs(signedDists(i)) < 0.01)
+        {
+            displ.row(i) = closest_points.row(i) - verts.row(i);
+        }
+        else
+        {
+            displ.row(i) = 0.01 * (closest_points.row(i) - verts.row(i)) / abs(signedDists(i));
+        }
+    }
+
+    smpl_->setDisplacement(displ);
 }
 
 void ShapeUnderClothOptimizer::readAveragePose_deprecated_(const std::string path)
