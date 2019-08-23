@@ -20,7 +20,7 @@ void OpenPoseWrapper::runPoseEstimation()
 {
     try
     {
-        op::log("Starting OpenPose 3D pose estimation...", op::Priority::High);
+        op::log("Starting OpenPose 3DPose estimation", op::Priority::High);
         const auto opTimer = op::getTimerInit();
 
         // Configure OpenPose

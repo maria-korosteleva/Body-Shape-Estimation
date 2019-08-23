@@ -19,7 +19,7 @@ void CustomLogger::saveFinalModel(SMPLWrapper & smpl)
     smpl.saveShapedOnlyToObj(log_folder_name_ + final_3D_subfolder_ + "unposed_shaped.obj");
     smpl.savePosedOnlyToObj(log_folder_name_ + final_3D_subfolder_ + "posed_unshaped.obj");
     smpl.saveWithDisplacementToObj(log_folder_name_ + final_3D_subfolder_ + "posed_shaped_displaced.obj");
-
+    smpl.saveShapedWithDisplacementToObj(log_folder_name_ + final_3D_subfolder_ + "unposed_shaped_displaced.obj");
 }
 
 void CustomLogger::saveIterationsSMPLObjects(const SMPLWrapper & smpl, const std::vector<Eigen::MatrixXd>& vertices_vector)

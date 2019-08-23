@@ -23,6 +23,7 @@ TODO: - Add pose blendshape
 
 
 namespace E = Eigen;
+using ERMatrixXd = E::Matrix<double, -1, -1, E::RowMajor>;
 
 class SMPLWrapper
 {
@@ -31,7 +32,7 @@ public:
         double* pose = nullptr;
         double* shape = nullptr;
         double* translation = nullptr;
-        E::MatrixXd displacements;
+        ERMatrixXd displacements;
 
         State();
         ~State();
@@ -72,11 +73,15 @@ public:
 
     // re-calculates translation to move the posed/shaped mesh center to the specified point
     void translateTo(const E::VectorXd& center_point);
-    void setDisplacement(const E::MatrixXd& displ) { state_.displacements = displ; }
 
     // *_jacs are expected to have space for POSE_SIZE and SHAPE_SIZE Matrices
-    E::MatrixXd calcModel(const double * const translation, const double * const pose, const double * const shape,
-        E::MatrixXd * pose_jac = nullptr, E::MatrixXd * shape_jac = nullptr);
+    E::MatrixXd calcModel(const double * const translation, 
+        const double * const pose, 
+        const double * const shape,
+        const ERMatrixXd * displacement,
+        E::MatrixXd * pose_jac = nullptr, 
+        E::MatrixXd * shape_jac = nullptr,
+        E::MatrixXd * displacement_jac = nullptr);
     // calculate for the supplied vertices (calcModel output)
     E::MatrixXd calcVertexNormals(const E::MatrixXd* verts);
     // using current SMPLWrapper state
@@ -88,6 +93,7 @@ public:
     void saveWithDisplacementToObj(const std::string path);
     void savePosedOnlyToObj(const std::string path);
     void saveShapedOnlyToObj(const std::string path);
+    void saveShapedWithDisplacementToObj(const std::string path);
     void logParameters(const std::string path);
 
 private:
@@ -98,7 +104,7 @@ private:
     void readWeights_();
     void readHierarchy_();
 
-    void saveToObj_(const double * translation, const double * pose, const double* shape, const E::MatrixXd* displacements,
+    void saveToObj_(const double * translation, const double * pose, const double* shape, const ERMatrixXd* displacements,
         const std::string path);
 
     // For individual joint rotation calculation

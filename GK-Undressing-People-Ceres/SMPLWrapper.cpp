@@ -170,10 +170,17 @@ void SMPLWrapper::translateTo(const E::VectorXd & center_point)
 }
 
 E::MatrixXd SMPLWrapper::calcModel(const double * const translation, const double * const pose, const double * const shape,
-    E::MatrixXd * pose_jac, E::MatrixXd * shape_jac)
+    const ERMatrixXd * displacement,
+    E::MatrixXd * pose_jac, E::MatrixXd * shape_jac, E::MatrixXd * displacement_jac)
 {
     // assignment won't work without cast
     E::MatrixXd verts = verts_template_normalized_;
+    if (displacement != nullptr)
+    {
+        verts = verts + *displacement;  // should be able to combine row-major and col-major automatically
+        if (displacement_jac != nullptr)
+            *displacement_jac = E::MatrixXd::Ones(VERTICES_NUM, SPACE_DIM);
+    }
 
     if (shape != nullptr)
         shapeSMPL_(shape, verts, shape_jac);
@@ -185,6 +192,8 @@ E::MatrixXd SMPLWrapper::calcModel(const double * const translation, const doubl
         if (shape_jac != nullptr)
             for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; ++i)
                 this->poseSMPL_(pose, shape_jac[i]); // TODO: add the use of pre-computed LBS Matrices 
+        if (displacement_jac != nullptr)
+            this->poseSMPL_(pose, *displacement_jac);
     }
 
     if (translation != nullptr)
@@ -203,7 +212,7 @@ E::MatrixXd SMPLWrapper::calcVertexNormals(const E::MatrixXd * verts)
 
 E::MatrixXd SMPLWrapper::calcModel()
 {
-    return calcModel(state_.translation, state_.pose, state_.shape);
+    return calcModel(state_.translation, state_.pose, state_.shape, &state_.displacements);
 }
 
 E::MatrixXd SMPLWrapper::calcJointLocations()
@@ -212,14 +221,9 @@ E::MatrixXd SMPLWrapper::calcJointLocations()
 }
 
 void SMPLWrapper::saveToObj_(const double* translation, const double* pose, const double* shape, 
-    const E::MatrixXd* displacements, const std::string path)
+    const ERMatrixXd* displacements, const std::string path)
 {
-    E::MatrixXd verts = calcModel(translation, pose, shape);
-    if (displacements != nullptr)
-    {
-        verts = verts + *displacements;
-        verts = verts + *displacements;
-    }
+    E::MatrixXd verts = calcModel(translation, pose, shape, displacements);
 
     igl::writeOBJ(path, verts, faces_);
 }
@@ -242,6 +246,11 @@ void SMPLWrapper::savePosedOnlyToObj(const std::string path)
 void SMPLWrapper::saveShapedOnlyToObj(const std::string path) 
 {
     saveToObj_(state_.translation, nullptr, state_.shape, nullptr, path);
+}
+
+void SMPLWrapper::saveShapedWithDisplacementToObj(const std::string path)
+{
+    saveToObj_(state_.translation, nullptr, state_.shape, &state_.displacements, path);
 }
 
 void SMPLWrapper::logParameters(const std::string path)

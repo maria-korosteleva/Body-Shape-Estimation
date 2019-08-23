@@ -22,10 +22,11 @@ public:
         BOTH_DIST
     };
 
-    AbsoluteDistanceBase(SMPLWrapper*, GeneralMesh *, 
-        ParameterType parameter = BASE, DistanceType dist_type = BOTH_DIST, 
+    AbsoluteDistanceBase(SMPLWrapper*, GeneralMesh *,
+        ParameterType parameter = BASE, DistanceType dist_type = BOTH_DIST,
         bool use_pre_computation = false,
-        double pruning_threshold = 100.);
+        double pruning_threshold = 100.,
+        std::size_t vertex_id = 0);
     ~AbsoluteDistanceBase();
 
     // Callback to be called before the evaluation of the optimization step
@@ -56,6 +57,7 @@ protected:
     void calcSignedDistByVertecies(DistanceResult& out_distance_result) const;
 
     void fillJac(const DistanceResult& distance_res, const double* residuals, double * jacobian) const;
+    void fillDisplacementJac(const DistanceResult& distance_res, const double* residuals, double * jacobian) const;
     void fillTranslationJac(const DistanceResult& distance_res, const double* residuals, double * jacobian) const;
 
     // 
@@ -102,6 +104,7 @@ protected:
 
     // instance type
     ParameterType parameter_type_;
+    std::size_t vertex_id_for_displacement_ = 0;  // for the DISPLACEMENT only 
     DistanceType dist_evaluation_type_;
     bool use_evaluation_callback_;
 

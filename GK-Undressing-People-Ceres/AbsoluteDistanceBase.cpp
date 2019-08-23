@@ -5,28 +5,31 @@ AbsoluteDistanceBase::DistanceResult AbsoluteDistanceBase::last_result_;
 AbsoluteDistanceBase::AbsoluteDistanceBase(SMPLWrapper* smpl, GeneralMesh * toMesh,
     ParameterType parameter, DistanceType dist_type,
     bool use_pre_computation,
-    double pruning_threshold)
+    double pruning_threshold,
+    std::size_t vertex_id)
     : ceres::EvaluationCallback(),
     toMesh_(toMesh), smpl_(smpl),
     pruning_threshold_(pruning_threshold),
-    parameter_type_(parameter), dist_evaluation_type_(dist_type),
+    parameter_type_(parameter), vertex_id_for_displacement_(vertex_id), dist_evaluation_type_(dist_type),
     use_evaluation_callback_(use_pre_computation)
 {
-    this->set_num_residuals(SMPLWrapper::VERTICES_NUM);
-
     switch (parameter)
     {
         case TRANSLATION:
+            this->set_num_residuals(SMPLWrapper::VERTICES_NUM);
             this->mutable_parameter_block_sizes()->push_back(SMPLWrapper::SPACE_DIM);
             break;
         case SHAPE:
+            this->set_num_residuals(SMPLWrapper::VERTICES_NUM);
             this->mutable_parameter_block_sizes()->push_back(SMPLWrapper::SHAPE_SIZE);
             break;
         case POSE:
+            this->set_num_residuals(SMPLWrapper::VERTICES_NUM);
             this->mutable_parameter_block_sizes()->push_back(SMPLWrapper::POSE_SIZE);
             break;
         case DISPLACEMENT: 
-            this->mutable_parameter_block_sizes()->push_back(SMPLWrapper::VERTICES_NUM * SMPLWrapper::SPACE_DIM);
+            this->set_num_residuals(1);     // special case -- displacements are optimized per-vertex
+            this->mutable_parameter_block_sizes()->push_back(SMPLWrapper::SPACE_DIM);
             break;
         default:
             std::cout << "DistanceBase initialization::WARNING:: no parameter type specified\n";
@@ -58,20 +61,32 @@ bool AbsoluteDistanceBase::Evaluate(double const * const * parameters, double * 
     }
     else  // allow to run the code without EvaluationCallback calculations 
     {
-        // TODO check if this mode is needed
+        // TODO remove this mode
         immediate_distance_result = std::move(calcDistance(parameters[0], jacobians != NULL && jacobians[0] != NULL));
         distance_to_use = immediate_distance_result.get();
     }
 
-
     // fill resuduals
     const Eigen::MatrixXd& input_face_normals = toMesh_->getFaceNormals();
-    for (int i = 0; i < SMPLWrapper::VERTICES_NUM; ++i)
+    if (parameter_type_ == DISPLACEMENT)
     {
-        residuals[i] = residual_elem_(distance_to_use->signedDists(i),
-            distance_to_use->verts_normals.row(i),
-            input_face_normals.row(distance_to_use->closest_face_ids(i)));
+        // special case == only one residual
+        residuals[0] = residual_elem_(
+            distance_to_use->signedDists(vertex_id_for_displacement_),
+            distance_to_use->verts_normals.row(vertex_id_for_displacement_),
+            input_face_normals.row(distance_to_use->closest_face_ids(vertex_id_for_displacement_)));
+
     }
+    else
+    {
+        for (int i = 0; i < SMPLWrapper::VERTICES_NUM; ++i)
+        {
+            residuals[i] = residual_elem_(distance_to_use->signedDists(i),
+                distance_to_use->verts_normals.row(i),
+                input_face_normals.row(distance_to_use->closest_face_ids(i)));
+        }
+    }
+    
 
     // fill out jacobians
     if (jacobians != NULL && jacobians[0] != NULL)
@@ -83,8 +98,10 @@ bool AbsoluteDistanceBase::Evaluate(double const * const * parameters, double * 
             break;
         case SHAPE:
         case POSE:
-        case DISPLACEMENT:
             fillJac(*distance_to_use, residuals, jacobians[0]);
+            break;
+        case DISPLACEMENT:
+            fillDisplacementJac(*distance_to_use, residuals, jacobians[0]);
             break;
         default:
             throw std::exception("DistanceBase Caclulation::WARNING:: no parameter type specified");
@@ -105,26 +122,31 @@ std::unique_ptr<AbsoluteDistanceBase::DistanceResult> AbsoluteDistanceBase::calc
 
     switch (parameter_type_)
     {
+        // translation/pose/shape are calculated without accounting for displacement - for now
     case TRANSLATION:
-        distance_res->verts = smpl_->calcModel(parameter, smpl_->getStatePointers().pose, smpl_->getStatePointers().shape);
+        distance_res->verts = smpl_->calcModel(
+            parameter, 
+            smpl_->getStatePointers().pose, 
+            smpl_->getStatePointers().shape, 
+            nullptr);
         break;
 
     case SHAPE:
         if (with_jacobian)
             distance_res->verts = smpl_->calcModel(smpl_->getStatePointers().translation,
-                smpl_->getStatePointers().pose, parameter, nullptr, &distance_res->jacobian[0]);
+                smpl_->getStatePointers().pose, parameter, nullptr, nullptr, &distance_res->jacobian[0]);
         else
             distance_res->verts = smpl_->calcModel(smpl_->getStatePointers().translation,
-                smpl_->getStatePointers().pose, parameter);
+                smpl_->getStatePointers().pose, parameter, nullptr);
         break;
 
     case POSE:
         if (with_jacobian)
             distance_res->verts = smpl_->calcModel(smpl_->getStatePointers().translation,
-                parameter, smpl_->getStatePointers().shape, &distance_res->jacobian[0], nullptr);
+                parameter, smpl_->getStatePointers().shape, nullptr, &distance_res->jacobian[0], nullptr);
         else
             distance_res->verts = smpl_->calcModel(smpl_->getStatePointers().translation,
-                parameter, smpl_->getStatePointers().shape);
+                parameter, smpl_->getStatePointers().shape, nullptr);
         break;
 
     case DISPLACEMENT:
@@ -148,25 +170,42 @@ void AbsoluteDistanceBase::updateDistanceCalculations(bool with_jacobian, Distan
 {
     if (with_jacobian)
     {
-        out_distance_result.jacobian.resize(parameter_block_sizes()[0]);
+        if (parameter_type_ == DISPLACEMENT)    // special case -- need only one matrix to store jacs for every disp vector
+            out_distance_result.jacobian.resize(1);
+        else
+            out_distance_result.jacobian.resize(parameter_block_sizes()[0]);
 
         switch (parameter_type_)
         {
         case TRANSLATION:
             out_distance_result.verts = smpl_->calcModel(
-                smpl_->getStatePointers().translation, smpl_->getStatePointers().pose, smpl_->getStatePointers().shape);
+                smpl_->getStatePointers().translation, 
+                smpl_->getStatePointers().pose, 
+                smpl_->getStatePointers().shape, 
+                &smpl_->getStatePointers().displacements);
         case SHAPE:
             out_distance_result.verts = smpl_->calcModel(
-                smpl_->getStatePointers().translation, smpl_->getStatePointers().pose, smpl_->getStatePointers().shape, 
-                nullptr, &out_distance_result.jacobian[0]);
+                smpl_->getStatePointers().translation, 
+                smpl_->getStatePointers().pose, 
+                smpl_->getStatePointers().shape, 
+                &smpl_->getStatePointers().displacements,
+                nullptr, &out_distance_result.jacobian[0], nullptr);
             break;
         case POSE:
             out_distance_result.verts = smpl_->calcModel(
-                smpl_->getStatePointers().translation, smpl_->getStatePointers().pose, smpl_->getStatePointers().shape,
-                &out_distance_result.jacobian[0], nullptr);
+                smpl_->getStatePointers().translation, 
+                smpl_->getStatePointers().pose, 
+                smpl_->getStatePointers().shape,
+                &smpl_->getStatePointers().displacements,
+                &out_distance_result.jacobian[0], nullptr, nullptr);
             break;
         case DISPLACEMENT:
-            // TODO add updating distance calculation
+            out_distance_result.verts = smpl_->calcModel(
+                smpl_->getStatePointers().translation,
+                smpl_->getStatePointers().pose,
+                smpl_->getStatePointers().shape,
+                &smpl_->getStatePointers().displacements,
+                nullptr, nullptr, &out_distance_result.jacobian[0]);
             break;
         default:
             throw std::exception("DistanceBase Update::WARNING:: no parameter type specified");
@@ -175,7 +214,10 @@ void AbsoluteDistanceBase::updateDistanceCalculations(bool with_jacobian, Distan
     else
     {
         out_distance_result.verts = smpl_->calcModel(
-            smpl_->getStatePointers().translation, smpl_->getStatePointers().pose, smpl_->getStatePointers().shape);
+            smpl_->getStatePointers().translation, 
+            smpl_->getStatePointers().pose, 
+            smpl_->getStatePointers().shape, 
+            &smpl_->getStatePointers().displacements);
     }
     // get vertex normals
     out_distance_result.verts_normals = smpl_->calcVertexNormals(&out_distance_result.verts);
@@ -195,9 +237,9 @@ void AbsoluteDistanceBase::calcSignedDistByVertecies(DistanceResult & out_distan
         out_distance_result.closest_points,
         out_distance_result.normals_for_sign);
 
-    assert(distance_res->signedDists.size() == SMPLWrapper::VERTICES_NUM
+    assert(out_distance_result.signedDists.size() == SMPLWrapper::VERTICES_NUM
         && "Size of the set of distances should equal main parameters");
-    assert(distance_res->closest_points.rows() == SMPLWrapper::VERTICES_NUM
+    assert(out_distance_result.closest_points.rows() == SMPLWrapper::VERTICES_NUM
         && "Size of the set of distances should equal main parameters");
 }
 
@@ -213,6 +255,18 @@ void AbsoluteDistanceBase::fillJac(const DistanceResult& distance_res, const dou
                     residuals[v_id],
                     distance_res.jacobian[param_id].row(v_id));
         }
+    }
+}
+
+void AbsoluteDistanceBase::fillDisplacementJac(const DistanceResult & distance_res, const double * residuals, double * jacobian) const
+{
+    for (int param_id = 0; param_id < parameter_block_sizes()[0]; ++param_id)
+    {
+        jacobian[param_id]
+            = jac_elem_(distance_res.verts.row(vertex_id_for_displacement_),
+                distance_res.closest_points.row(vertex_id_for_displacement_),
+                residuals[0],
+                distance_res.jacobian[0].row(vertex_id_for_displacement_));
     }
 }
 

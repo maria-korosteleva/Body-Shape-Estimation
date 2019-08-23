@@ -4,10 +4,9 @@
 ShapeUnderClothOptimizer::ShapeUnderClothOptimizer(std::shared_ptr<SMPLWrapper> smpl, 
     std::shared_ptr<GeneralMesh> input, const std::string path_to_prior)
 {
+    // note: could be nullptr
     smpl_ = std::move(smpl);
     input_ = std::move(input);
-
-    assert(input->getVertices().cols() == SMPLWrapper::SPACE_DIM && "World dimentions should be equal for SMPL and input mesh");
 
     // read prior info
     std::string path(path_to_prior);
@@ -80,10 +79,7 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
         poseEstimation_(options, initial_pose_as_prior);
     }
 
-    // Refine diplacement
-    std::cout << "***********************" << std::endl
-        << "Displacement adjustment" << std::endl
-        << "***********************" << std::endl;
+    // Refine diplacement once
     displacementEstimation_(options);
 
 
@@ -244,36 +240,49 @@ void ShapeUnderClothOptimizer::displacementEstimation_(Solver::Options& options)
 
     Problem problem;
 
-    // Main cost
-    AbsoluteDistanceBase* out_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
-        AbsoluteDistanceBase::DISPLACEMENT, AbsoluteDistanceBase::OUT_DIST, true,
-        shape_prune_threshold_);    // TODO recheck thresholding for displacements
-    AbsoluteDistanceBase* in_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
-        AbsoluteDistanceBase::DISPLACEMENT, AbsoluteDistanceBase::IN_DIST, true);  // no threshold
-
-    // add for performing pre-computation
-    options.evaluation_callback = out_cost_function;
-
-    // add Residuals 
-    problem.AddResidualBlock(out_cost_function, nullptr,
-        smpl_->getStatePointers().displacements.data());
-
+    // prepare losses for inner distances
     LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.1, ceres::TAKE_OWNERSHIP);
     LossFunction* geman_mcclare_cost = new GemanMcClareLoss(0.033);
     ceres::ComposedLoss* composed_loss = new ceres::ComposedLoss(
         scale_in_cost, ceres::TAKE_OWNERSHIP,
         geman_mcclare_cost, ceres::TAKE_OWNERSHIP);
-    problem.AddResidualBlock(in_cost_function, composed_loss,
-        smpl_->getStatePointers().displacements.data());
 
-    // Regularization
+    // prepapre losses for regularization
     CostFunction* prior = new NormalPrior(
-        Eigen::MatrixXd::Identity(smpl_->getStatePointers().displacements.size(), 
-            smpl_->getStatePointers().displacements.size()),
-        Eigen::VectorXd::Zero(smpl_->getStatePointers().displacements.size()));
+        Eigen::MatrixXd::Identity(SMPLWrapper::SPACE_DIM, SMPLWrapper::SPACE_DIM),
+        Eigen::VectorXd::Zero(SMPLWrapper::SPACE_DIM));
     LossFunction* scale_prior = new ScaledLoss(NULL, 1., ceres::TAKE_OWNERSHIP);
-    problem.AddResidualBlock(prior, scale_prior,
-        smpl_->getStatePointers().displacements.data());
+
+    // Main cost -- for each vertex
+    bool eval_callback_added = false;
+    for (int v_id = 0; v_id < SMPLWrapper::VERTICES_NUM; v_id++)
+    {
+        AbsoluteDistanceBase* out_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
+            AbsoluteDistanceBase::DISPLACEMENT, AbsoluteDistanceBase::OUT_DIST, true,
+            shape_prune_threshold_, v_id);    // TODO recheck thresholding for displacements
+        AbsoluteDistanceBase* in_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
+            AbsoluteDistanceBase::DISPLACEMENT, AbsoluteDistanceBase::IN_DIST, 
+            true, 100., v_id);  // no threshold
+
+        // add for performing pre-computation
+        if (!eval_callback_added)
+        {
+            options.evaluation_callback = out_cost_function;
+            eval_callback_added = true;
+        }
+
+        // add out Residuals for corresponding vertex
+        problem.AddResidualBlock(out_cost_function, nullptr,
+            smpl_->getStatePointers().displacements.data() + v_id * SMPLWrapper::SPACE_DIM);
+
+        // add in residuals for corresponding vertex
+        problem.AddResidualBlock(in_cost_function, composed_loss,
+            smpl_->getStatePointers().displacements.data() + v_id * SMPLWrapper::SPACE_DIM);
+
+        // add regularization resuiduals
+        problem.AddResidualBlock(prior, scale_prior,
+            smpl_->getStatePointers().displacements.data() + v_id * SMPLWrapper::SPACE_DIM);
+    }
 
     // Run the solver!
     Solver::Summary summary;
