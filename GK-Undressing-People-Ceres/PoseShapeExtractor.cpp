@@ -26,6 +26,7 @@ PoseShapeExtractor::PoseShapeExtractor(const std::string& smpl_model_path,
     optimizer_shape_reg_weight_ = 0.01;
     optimizer_pose_reg_weight_ = 0.001;
     optimizer_shape_prune_threshold_ = 0.05;
+    optimizer_displacement_reg_weight_ = 1.;
 
     optimizer_ = std::make_shared<ShapeUnderClothOptimizer>(nullptr, nullptr, pose_prior_path_);
 
@@ -50,9 +51,9 @@ void PoseShapeExtractor::setupNewExperiment(std::shared_ptr<GeneralMesh> input, 
     smpl_ = std::make_shared<SMPLWrapper>(input_gender, smpl_model_path_);
 }
 
-void PoseShapeExtractor::setupNewShapeRegExperiment(std::shared_ptr<GeneralMesh> input, double weight, const std::string experiment_name)
+void PoseShapeExtractor::setupNewDistplacementRegExperiment(std::shared_ptr<GeneralMesh> input, double weight, const std::string experiment_name)
 {
-    optimizer_shape_reg_weight_ = weight;
+    optimizer_displacement_reg_weight_ = weight;
 
     setupNewExperiment(std::move(input),
         experiment_name + "_" + std::to_string((int)(weight * 100)));
@@ -248,6 +249,7 @@ void PoseShapeExtractor::runPoseShapeOptimization_()
     optimizer_->setShapeRegularizationWeight(optimizer_shape_reg_weight_);
     optimizer_->setPoseRegularizationWeight(optimizer_pose_reg_weight_);
     optimizer_->setShapePruningThreshold(optimizer_shape_prune_threshold_);
+    optimizer_->setDisplacementRegWeight(optimizer_displacement_reg_weight_);
 
     std::cout << "Starting optimization...\n";
 

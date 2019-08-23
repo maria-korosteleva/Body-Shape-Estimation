@@ -32,7 +32,7 @@ public:
     ~PoseShapeExtractor();
 
     void setupNewExperiment(std::shared_ptr<GeneralMesh> input, const std::string experiment_name = "");
-    void setupNewShapeRegExperiment(std::shared_ptr<GeneralMesh> input,
+    void setupNewDistplacementRegExperiment(std::shared_ptr<GeneralMesh> input,
         double weight, const std::string experiment_name = "");
     void setupNewShapePruningExperiment(std::shared_ptr<GeneralMesh> input,
         double threshold, const std::string experiment_name = "");
@@ -79,6 +79,7 @@ private:
     double optimizer_shape_reg_weight_;
     double optimizer_shape_prune_threshold_;
     double optimizer_pose_reg_weight_;
+    double optimizer_displacement_reg_weight_;
 
     // tools
     std::shared_ptr<OpenPoseWrapper> openpose_;

@@ -18,6 +18,7 @@ ShapeUnderClothOptimizer::ShapeUnderClothOptimizer(std::shared_ptr<SMPLWrapper> 
     // NOTE: the parameters might be reset from the outside
     shape_reg_weight_ = 0.01;
     pose_reg_weight_ = 0.001;
+    displacement_reg_weight_ = 1.;
     shape_prune_threshold_ = 0.05;
 }
 
@@ -251,7 +252,7 @@ void ShapeUnderClothOptimizer::displacementEstimation_(Solver::Options& options)
     CostFunction* prior = new NormalPrior(
         Eigen::MatrixXd::Identity(SMPLWrapper::SPACE_DIM, SMPLWrapper::SPACE_DIM),
         Eigen::VectorXd::Zero(SMPLWrapper::SPACE_DIM));
-    LossFunction* scale_prior = new ScaledLoss(NULL, 1., ceres::TAKE_OWNERSHIP);
+    LossFunction* scale_prior = new ScaledLoss(NULL, displacement_reg_weight_, ceres::TAKE_OWNERSHIP);
 
     // Main cost -- for each vertex
     bool eval_callback_added = false;
