@@ -72,7 +72,7 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
     for (int i = 0; i < 3; ++i)
     {
         std::cout << "***********************" << std::endl
-            << "    Cycle #" << i << std::endl
+            << "    Cycle Shape: #" << i << std::endl
             << "***********************" << std::endl;
         
         translationEstimation_(options);
@@ -80,8 +80,18 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
         poseEstimation_(options, initial_pose_as_prior);
     }
 
-    // Refine diplacement once
-    displacementEstimation_(options);
+    // make random initial guess for displacement
+    smpl_->getStatePointers().displacements.setRandom();
+    for (int i = 0; i < 4; ++i)
+    {
+        std::cout << "***********************" << std::endl
+            << "    Cycle Displacement: #" << i << std::endl
+            << "***********************" << std::endl;
+ 
+        displacementEstimation_(options);
+        translationEstimation_(options);
+        poseEstimation_(options, initial_pose_as_prior);
+    }
 
 
     auto end_time = std::chrono::system_clock::now();
