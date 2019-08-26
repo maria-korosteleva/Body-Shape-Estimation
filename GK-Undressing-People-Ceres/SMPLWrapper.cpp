@@ -175,11 +175,18 @@ E::MatrixXd SMPLWrapper::calcModel(const double * const translation, const doubl
 {
     // assignment won't work without cast
     E::MatrixXd verts = verts_template_normalized_;
+
     if (displacement != nullptr)
     {
         verts = verts + *displacement;  // should be able to combine row-major and col-major automatically
         if (displacement_jac != nullptr)
-            *displacement_jac = E::MatrixXd::Ones(VERTICES_NUM, SPACE_DIM);
+        {
+            for (int axis = 0; axis < SPACE_DIM; axis++)
+            {
+                displacement_jac[axis] = E::MatrixXd::Zero(VERTICES_NUM, SPACE_DIM);
+                displacement_jac[axis].col(axis).setOnes();
+            }
+        }
     }
 
     if (shape != nullptr)
@@ -189,11 +196,13 @@ E::MatrixXd SMPLWrapper::calcModel(const double * const translation, const doubl
     {
         poseSMPL_(pose, verts, pose_jac);
 
+        // should be updated for the given pose
         if (shape_jac != nullptr)
             for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; ++i)
                 this->poseSMPL_(pose, shape_jac[i]); // TODO: add the use of pre-computed LBS Matrices 
         if (displacement_jac != nullptr)
-            this->poseSMPL_(pose, *displacement_jac);
+            for (int axis = 0; axis < SPACE_DIM; axis++)
+                this->poseSMPL_(pose, displacement_jac[axis]);
     }
 
     if (translation != nullptr)

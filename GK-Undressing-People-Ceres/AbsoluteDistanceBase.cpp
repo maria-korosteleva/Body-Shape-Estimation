@@ -76,6 +76,15 @@ bool AbsoluteDistanceBase::Evaluate(double const * const * parameters, double * 
             distance_to_use->verts_normals.row(vertex_id_for_displacement_),
             input_face_normals.row(distance_to_use->closest_face_ids(vertex_id_for_displacement_)));
 
+        if (vertex_id_for_displacement_ == 1084)
+        {
+            std::cout << "Displ residual " << residuals[0] << std::endl;
+            std::cout << "Distance " << distance_to_use->signedDists(vertex_id_for_displacement_) << std::endl;
+            std::cout << "Distance vector "
+                << distance_to_use->closest_points.row(vertex_id_for_displacement_) - distance_to_use->verts.row(vertex_id_for_displacement_)
+                << std::endl;
+            std::cout << "Vert position " << distance_to_use->verts.row(vertex_id_for_displacement_) << std::endl;
+        }
     }
     else
     {
@@ -102,6 +111,14 @@ bool AbsoluteDistanceBase::Evaluate(double const * const * parameters, double * 
             break;
         case DISPLACEMENT:
             fillDisplacementJac(*distance_to_use, residuals, jacobians[0]);
+            if (vertex_id_for_displacement_ == 1084)
+            {
+                std::cout << "Displ Jac " 
+                    << jacobians[0][0] << " "
+                    << jacobians[0][1] << " "
+                    << jacobians[0][2] << " "
+                    << std::endl;
+            }
             break;
         default:
             throw std::exception("DistanceBase Caclulation::WARNING:: no parameter type specified");
@@ -170,10 +187,7 @@ void AbsoluteDistanceBase::updateDistanceCalculations(bool with_jacobian, Distan
 {
     if (with_jacobian)
     {
-        if (parameter_type_ == DISPLACEMENT)    // special case -- need only one matrix to store jacs for every disp vector
-            out_distance_result.jacobian.resize(1);
-        else
-            out_distance_result.jacobian.resize(parameter_block_sizes()[0]);
+        out_distance_result.jacobian.resize(parameter_block_sizes()[0]);
 
         switch (parameter_type_)
         {
@@ -260,13 +274,15 @@ void AbsoluteDistanceBase::fillJac(const DistanceResult& distance_res, const dou
 
 void AbsoluteDistanceBase::fillDisplacementJac(const DistanceResult & distance_res, const double * residuals, double * jacobian) const
 {
-    for (int param_id = 0; param_id < parameter_block_sizes()[0]; ++param_id)
+    double distance = abs(distance_res.signedDists(vertex_id_for_displacement_));
+    for (int axis_id = 0; axis_id < parameter_block_sizes()[0]; ++axis_id)
     {
-        jacobian[param_id]
+        jacobian[axis_id]
             = jac_elem_(distance_res.verts.row(vertex_id_for_displacement_),
                 distance_res.closest_points.row(vertex_id_for_displacement_),
                 residuals[0],
-                distance_res.jacobian[0].row(vertex_id_for_displacement_));
+                distance_res.jacobian[axis_id].row(vertex_id_for_displacement_));
+
     }
 }
 

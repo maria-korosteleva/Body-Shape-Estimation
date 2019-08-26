@@ -69,7 +69,7 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
 
     auto start_time = std::chrono::system_clock::now();
     // just some number of cycles
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 1; ++i)
     {
         std::cout << "***********************" << std::endl
             << "    Cycle Shape: #" << i << std::endl
@@ -81,16 +81,16 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
     }
 
     // make random initial guess for displacement
-    smpl_->getStatePointers().displacements.setRandom();
-    for (int i = 0; i < 4; ++i)
+    //smpl_->getStatePointers().displacements.setRandom();
+    for (int i = 0; i < 1; ++i)
     {
         std::cout << "***********************" << std::endl
             << "    Cycle Displacement: #" << i << std::endl
             << "***********************" << std::endl;
  
         displacementEstimation_(options);
-        translationEstimation_(options);
-        poseEstimation_(options, initial_pose_as_prior);
+        //translationEstimation_(options);
+        //poseEstimation_(options, initial_pose_as_prior);
     }
 
 
@@ -266,7 +266,7 @@ void ShapeUnderClothOptimizer::displacementEstimation_(Solver::Options& options)
 
     // Main cost -- for each vertex
     bool eval_callback_added = false;
-    for (int v_id = 0; v_id < SMPLWrapper::VERTICES_NUM; v_id++)
+    for (int v_id = 0; v_id < SMPLWrapper::VERTICES_NUM; v_id++) //int v_id = 1084;
     {
         AbsoluteDistanceBase* out_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
             AbsoluteDistanceBase::DISPLACEMENT, AbsoluteDistanceBase::OUT_DIST, true,
@@ -291,8 +291,8 @@ void ShapeUnderClothOptimizer::displacementEstimation_(Solver::Options& options)
             smpl_->getStatePointers().displacements.data() + v_id * SMPLWrapper::SPACE_DIM);
 
         // add regularization resuiduals
-        problem.AddResidualBlock(prior, scale_prior,
-            smpl_->getStatePointers().displacements.data() + v_id * SMPLWrapper::SPACE_DIM);
+        //problem.AddResidualBlock(prior, scale_prior,
+        //    smpl_->getStatePointers().displacements.data() + v_id * SMPLWrapper::SPACE_DIM);
     }
 
     // Run the solver!
