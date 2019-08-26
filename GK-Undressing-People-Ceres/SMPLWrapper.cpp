@@ -197,12 +197,13 @@ E::MatrixXd SMPLWrapper::calcModel(const double * const translation, const doubl
         poseSMPL_(pose, verts, pose_jac);
 
         // should be updated for the given pose
+        // TODO: use pre-calculated pose matrix?
         if (shape_jac != nullptr)
             for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; ++i)
                 this->poseSMPL_(pose, shape_jac[i]); // TODO: add the use of pre-computed LBS Matrices 
         if (displacement_jac != nullptr)
             for (int axis = 0; axis < SPACE_DIM; axis++)
-                this->poseSMPL_(pose, displacement_jac[axis]);
+                this->poseSMPL_(pose, displacement_jac[axis], nullptr, true, true);
     }
 
     if (translation != nullptr)
@@ -544,16 +545,20 @@ void SMPLWrapper::shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::
     }
 }
 
-void SMPLWrapper::poseSMPL_(const double * const pose, E::MatrixXd & verts, E::MatrixXd * pose_jac)
+void SMPLWrapper::poseSMPL_(const double * const pose, E::MatrixXd & verts, E::MatrixXd * pose_jac, 
+    bool use_previous_pose_matrix, bool ignore_translation)
 {
     E::SparseMatrix<double> LBSMat = this->getLBSMatrix_(verts);
 
-    E::MatrixXd jointLocations = this->jointRegressorMat_ * verts;
-    updateJointsFKTransforms_(pose, jointLocations, pose_jac != nullptr);
+    if (!use_previous_pose_matrix)
+    {
+        joint_locations_ = jointRegressorMat_ * verts;
+        updateJointsFKTransforms_(pose, joint_locations_, pose_jac != nullptr);
+    }
 
     E::MatrixXd joints_global_transform = extractLBSJointTransformFromFKTransform_(
-        fk_transforms_, jointLocations, 
-        &fk_derivatives_, pose_jac);
+        fk_transforms_, joint_locations_,
+        &fk_derivatives_, pose_jac, ignore_translation);
 
     verts = LBSMat * joints_global_transform;
 
@@ -629,7 +634,8 @@ E::MatrixXd SMPLWrapper::extractLBSJointTransformFromFKTransform_(
     const EHomoCoordMatrix(&fk_transform)[SMPLWrapper::JOINTS_NUM], 
     const E::MatrixXd & t_pose_joints_locations,
     const E::MatrixXd(*FKDerivatives)[SMPLWrapper::JOINTS_NUM][SMPLWrapper::POSE_SIZE],
-    E::MatrixXd * jacsTotal)
+    E::MatrixXd * jacsTotal, 
+    bool zero_out_translation)
 {
     E::MatrixXd joints_transform(HOMO_SIZE * SMPLWrapper::JOINTS_NUM, SMPLWrapper::SPACE_DIM);
 
@@ -645,10 +651,19 @@ E::MatrixXd SMPLWrapper::extractLBSJointTransformFromFKTransform_(
     // Go over the fk_transform_ matrix and create LBS-compatible matrix
     for (int j = 0; j < JOINTS_NUM; j++)
     {
-        // inverse is needed to transform verts coordinates to local coordinate system
-        inverse_t_pose_translate = get3DTranslationMat_(-t_pose_joints_locations.row(j));
-        
-        tmpPointGlobalTransform = fk_transform[j] * inverse_t_pose_translate;
+        tmpPointGlobalTransform = fk_transform[j];
+        if (zero_out_translation)
+        {
+            // ignore translation part
+            tmpPointGlobalTransform.col(SPACE_DIM).setZero();
+        }
+        else
+        {
+            // inverse is needed to transform verts coordinates to local coordinate system
+            inverse_t_pose_translate = get3DTranslationMat_(-t_pose_joints_locations.row(j));
+            tmpPointGlobalTransform = fk_transform[j] * inverse_t_pose_translate;
+        }
+
         joints_transform.block(HOMO_SIZE * j, 0, HOMO_SIZE, SMPLWrapper::SPACE_DIM)
             = tmpPointGlobalTransform.transpose().leftCols(SMPLWrapper::SPACE_DIM);
 
