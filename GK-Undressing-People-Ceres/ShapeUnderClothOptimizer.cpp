@@ -133,8 +133,11 @@ void ShapeUnderClothOptimizer::translationEstimation_(Solver::Options & options)
     Problem problem;
 
     // send raw pointers because inner class were not refactored
-    CostFunction* cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(), 
+    AbsoluteDistanceBase* cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
         AbsoluteDistanceBase::TRANSLATION, AbsoluteDistanceBase::BOTH_DIST);
+    // for pre-computation
+    options.evaluation_callback = cost_function;
+    
     problem.AddResidualBlock(cost_function, nullptr, smpl_->getStatePointers().translation);
 
     // Run the solver!
@@ -144,6 +147,9 @@ void ShapeUnderClothOptimizer::translationEstimation_(Solver::Options & options)
     // Print summary
     std::cout << "Translation estimation summary:" << std::endl;
     std::cout << summary.FullReport() << std::endl;
+
+    // clear the options from the update for smooth future use
+    options.evaluation_callback = NULL;
 }
 
 void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, ceres::Vector& prior_pose, const double parameter)
@@ -157,9 +163,9 @@ void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, ceres::
     // Main cost
     // send raw pointers because inner class were not refactored
     AbsoluteDistanceBase* out_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
-        AbsoluteDistanceBase::POSE, AbsoluteDistanceBase::OUT_DIST, true);
+        AbsoluteDistanceBase::POSE, AbsoluteDistanceBase::OUT_DIST);
     AbsoluteDistanceBase* in_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
-        AbsoluteDistanceBase::POSE, AbsoluteDistanceBase::IN_DIST, true);
+        AbsoluteDistanceBase::POSE, AbsoluteDistanceBase::IN_DIST);
 
     // for pre-computation
     options.evaluation_callback = out_cost_function;
@@ -203,10 +209,9 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
 
     // Main cost
     AbsoluteDistanceBase* out_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
-        AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::OUT_DIST, true,
-        shape_prune_threshold_);
+        AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::OUT_DIST, shape_prune_threshold_);
     AbsoluteDistanceBase* in_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
-        AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::IN_DIST, true);  // no threshold
+        AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::IN_DIST);  // no threshold
 
     // add for performing pre-computation
     options.evaluation_callback = out_cost_function;
@@ -269,11 +274,11 @@ void ShapeUnderClothOptimizer::displacementEstimation_(Solver::Options& options)
     for (int v_id = 0; v_id < SMPLWrapper::VERTICES_NUM; v_id++) //int v_id = 1084;
     {
         AbsoluteDistanceBase* out_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
-            AbsoluteDistanceBase::DISPLACEMENT, AbsoluteDistanceBase::OUT_DIST, true,
+            AbsoluteDistanceBase::DISPLACEMENT, AbsoluteDistanceBase::OUT_DIST,
             shape_prune_threshold_, v_id);    // TODO recheck thresholding for displacements shape_prune_threshold_
         AbsoluteDistanceBase* in_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
             AbsoluteDistanceBase::DISPLACEMENT, AbsoluteDistanceBase::IN_DIST, 
-            true, 100., v_id);  // no threshold
+            100., v_id);  // no threshold
 
         // add for performing pre-computation
         if (!eval_callback_added)
