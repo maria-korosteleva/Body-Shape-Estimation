@@ -92,12 +92,12 @@ std::shared_ptr<SMPLWrapper> PoseShapeExtractor::runExtraction()
     if (input_ == nullptr)
         throw std::exception("PoseShapeExtractor: ERROR: You asked to run extraction before setting up the experiment.");
     // 1.
-    takePhotos_();
+    //takePhotos_();
     
     // 2.
-    estimateInitialPoseWithOP_();
-    smpl_->savePosedOnlyToObj(logger_->getOpenPoseGuessesPath() + "/smpl_op_posed.obj");
-    smpl_->logParameters(logger_->getOpenPoseGuessesPath() + "/smpl_op_posed_params.txt");
+    //estimateInitialPoseWithOP_();
+    //smpl_->savePosedOnlyToObj(logger_->getOpenPoseGuessesPath() + "/smpl_op_posed.obj");
+    //smpl_->logParameters(logger_->getOpenPoseGuessesPath() + "/smpl_op_posed_params.txt");
 
     // 3.
     runPoseShapeOptimization_();

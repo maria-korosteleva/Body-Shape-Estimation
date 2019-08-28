@@ -77,7 +77,7 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
         
         translationEstimation_(options);
         shapeEstimation_(options, parameter);
-        poseEstimation_(options, initial_pose_as_prior);
+        //poseEstimation_(options, initial_pose_as_prior);
     }
 
     // make random initial guess for displacement
@@ -270,7 +270,7 @@ void ShapeUnderClothOptimizer::displacementEstimation_(Solver::Options& options)
     {
         AbsoluteDistanceBase* out_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
             AbsoluteDistanceBase::DISPLACEMENT, AbsoluteDistanceBase::OUT_DIST, true,
-            shape_prune_threshold_, v_id);    // TODO recheck thresholding for displacements
+            100., v_id);    // TODO recheck thresholding for displacements shape_prune_threshold_
         AbsoluteDistanceBase* in_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
             AbsoluteDistanceBase::DISPLACEMENT, AbsoluteDistanceBase::IN_DIST, 
             true, 100., v_id);  // no threshold

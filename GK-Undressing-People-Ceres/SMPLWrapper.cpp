@@ -203,7 +203,7 @@ E::MatrixXd SMPLWrapper::calcModel(const double * const translation, const doubl
                 this->poseSMPL_(pose, shape_jac[i]); // TODO: add the use of pre-computed LBS Matrices 
         if (displacement_jac != nullptr)
             for (int axis = 0; axis < SPACE_DIM; axis++)
-                this->poseSMPL_(pose, displacement_jac[axis], nullptr, true, true);
+                this->poseSMPL_(pose, displacement_jac[axis], nullptr, true, false);
     }
 
     if (translation != nullptr)

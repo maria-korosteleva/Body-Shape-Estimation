@@ -76,7 +76,7 @@ bool AbsoluteDistanceBase::Evaluate(double const * const * parameters, double * 
             distance_to_use->verts_normals.row(vertex_id_for_displacement_),
             input_face_normals.row(distance_to_use->closest_face_ids(vertex_id_for_displacement_)));
 
-        if (vertex_id_for_displacement_ == 1084)
+        if (vertex_id_for_displacement_ == 2557)
         {
             std::cout << "Displ residual " << residuals[0] << std::endl;
             std::cout << "Distance " << distance_to_use->signedDists(vertex_id_for_displacement_) << std::endl;
@@ -111,7 +111,7 @@ bool AbsoluteDistanceBase::Evaluate(double const * const * parameters, double * 
             break;
         case DISPLACEMENT:
             fillDisplacementJac(*distance_to_use, residuals, jacobians[0]);
-            if (vertex_id_for_displacement_ == 1084)
+            if (vertex_id_for_displacement_ == 2557)
             {
                 std::cout << "Displ Jac " 
                     << jacobians[0][0] << " "
