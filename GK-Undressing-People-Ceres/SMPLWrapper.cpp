@@ -177,17 +177,7 @@ E::MatrixXd SMPLWrapper::calcModel(const double * const translation, const doubl
     E::MatrixXd verts = verts_template_normalized_;
 
     if (displacement != nullptr)
-    {
-        verts = verts + *displacement;  // should be able to combine row-major and col-major automatically
-        if (displacement_jac != nullptr)
-        {
-            for (int axis = 0; axis < SPACE_DIM; axis++)
-            {
-                displacement_jac[axis] = E::MatrixXd::Zero(VERTICES_NUM, SPACE_DIM);
-                displacement_jac[axis].col(axis).setOnes();
-            }
-        }
-    }
+        displaceSMPL_(*displacement, verts, displacement_jac);
 
     if (shape != nullptr)
         shapeSMPL_(shape, verts, shape_jac);
@@ -200,12 +190,10 @@ E::MatrixXd SMPLWrapper::calcModel(const double * const translation, const doubl
         // TODO: use pre-calculated pose matrix?
         if (shape_jac != nullptr)
             for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; ++i)
-                this->poseSMPL_(pose, shape_jac[i]); // TODO: add the use of pre-computed LBS Matrices 
+                poseSMPL_(pose, shape_jac[i]); // TODO: add the use of pre-computed LBS Matrices 
         if (displacement_jac != nullptr)
             for (int axis = 0; axis < SPACE_DIM; axis++)
-            {
-                this->poseSMPL_(pose, displacement_jac[axis], nullptr, true, false);
-            }
+                poseSMPL_(pose, displacement_jac[axis], nullptr, true);
     }
 
     if (translation != nullptr)
@@ -528,6 +516,20 @@ void SMPLWrapper::assignJointGlobalRotation_(int joint_id, E::VectorXd rotation,
     }
 }
 
+void SMPLWrapper::displaceSMPL_(const ERMatrixXd & displacement, E::MatrixXd & verts, E::MatrixXd * displacement_jac)
+{
+    verts = verts + displacement;  // should be able to combine row-major and col-major automatically
+
+    if (displacement_jac != nullptr)
+    {
+        for (int axis = 0; axis < SPACE_DIM; axis++)
+        {
+            displacement_jac[axis] = E::MatrixXd::Zero(VERTICES_NUM, SPACE_DIM);
+            displacement_jac[axis].col(axis).setOnes();
+    }
+}
+}
+
 void SMPLWrapper::shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::MatrixXd* shape_jac)
 {
 #ifdef DEBUG
@@ -548,7 +550,7 @@ void SMPLWrapper::shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::
 }
 
 void SMPLWrapper::poseSMPL_(const double * const pose, E::MatrixXd & verts, E::MatrixXd * pose_jac, 
-    bool use_previous_pose_matrix, bool ignore_translation)
+    bool use_previous_pose_matrix)
 {
     E::SparseMatrix<double> LBSMat = this->getLBSMatrix_(verts);
 
@@ -560,7 +562,7 @@ void SMPLWrapper::poseSMPL_(const double * const pose, E::MatrixXd & verts, E::M
 
     E::MatrixXd joints_global_transform = extractLBSJointTransformFromFKTransform_(
         fk_transforms_, joint_locations_,
-        &fk_derivatives_, pose_jac, ignore_translation);
+        &fk_derivatives_, pose_jac);
 
     verts = LBSMat * joints_global_transform;
 
@@ -636,8 +638,7 @@ E::MatrixXd SMPLWrapper::extractLBSJointTransformFromFKTransform_(
     const EHomoCoordMatrix(&fk_transform)[SMPLWrapper::JOINTS_NUM], 
     const E::MatrixXd & t_pose_joints_locations,
     const E::MatrixXd(*FKDerivatives)[SMPLWrapper::JOINTS_NUM][SMPLWrapper::POSE_SIZE],
-    E::MatrixXd * jacsTotal, 
-    bool zero_out_translation)
+    E::MatrixXd * jacsTotal)
 {
     E::MatrixXd joints_transform(HOMO_SIZE * SMPLWrapper::JOINTS_NUM, SMPLWrapper::SPACE_DIM);
 
@@ -653,18 +654,9 @@ E::MatrixXd SMPLWrapper::extractLBSJointTransformFromFKTransform_(
     // Go over the fk_transform_ matrix and create LBS-compatible matrix
     for (int j = 0; j < JOINTS_NUM; j++)
     {
-        tmpPointGlobalTransform = fk_transform[j];
-        if (zero_out_translation)
-        {
-            // ignore translation part
-            tmpPointGlobalTransform.col(SPACE_DIM).setZero();
-        }
-        else
-        {
-            // inverse is needed to transform verts coordinates to local coordinate system
-            inverse_t_pose_translate = get3DTranslationMat_(-t_pose_joints_locations.row(j));
-            tmpPointGlobalTransform = fk_transform[j] * inverse_t_pose_translate;
-        }
+        // inverse is needed to transform verts coordinates to local coordinate system
+        inverse_t_pose_translate = get3DTranslationMat_(-t_pose_joints_locations.row(j));
+        tmpPointGlobalTransform = fk_transform[j] * inverse_t_pose_translate;
 
         joints_transform.block(HOMO_SIZE * j, 0, HOMO_SIZE, SMPLWrapper::SPACE_DIM)
             = tmpPointGlobalTransform.transpose().leftCols(SMPLWrapper::SPACE_DIM);

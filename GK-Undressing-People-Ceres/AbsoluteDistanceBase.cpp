@@ -75,16 +75,6 @@ bool AbsoluteDistanceBase::Evaluate(double const * const * parameters, double * 
             distance_to_use->signedDists(vertex_id_for_displacement_),
             distance_to_use->verts_normals.row(vertex_id_for_displacement_),
             input_face_normals.row(distance_to_use->closest_face_ids(vertex_id_for_displacement_)));
-
-        if (vertex_id_for_displacement_ == 2557)
-        {
-            std::cout << "Displ residual " << residuals[0] << std::endl;
-            std::cout << "Distance " << distance_to_use->signedDists(vertex_id_for_displacement_) << std::endl;
-            std::cout << "Distance vector "
-                << distance_to_use->closest_points.row(vertex_id_for_displacement_) - distance_to_use->verts.row(vertex_id_for_displacement_)
-                << std::endl;
-            std::cout << "Vert position " << distance_to_use->verts.row(vertex_id_for_displacement_) << std::endl;
-        }
     }
     else
     {
@@ -95,7 +85,6 @@ bool AbsoluteDistanceBase::Evaluate(double const * const * parameters, double * 
                 input_face_normals.row(distance_to_use->closest_face_ids(i)));
         }
     }
-    
 
     // fill out jacobians
     if (jacobians != NULL && jacobians[0] != NULL)
@@ -111,14 +100,6 @@ bool AbsoluteDistanceBase::Evaluate(double const * const * parameters, double * 
             break;
         case DISPLACEMENT:
             fillDisplacementJac(*distance_to_use, residuals, jacobians[0]);
-            if (vertex_id_for_displacement_ == 2557)
-            {
-                std::cout << "Displ Jac " 
-                    << jacobians[0][0] << " "
-                    << jacobians[0][1] << " "
-                    << jacobians[0][2] << " "
-                    << std::endl;
-            }
             break;
         default:
             throw std::exception("DistanceBase Caclulation::WARNING:: no parameter type specified");
@@ -185,7 +166,13 @@ std::unique_ptr<AbsoluteDistanceBase::DistanceResult> AbsoluteDistanceBase::calc
 
 void AbsoluteDistanceBase::updateDistanceCalculations(bool with_jacobian, DistanceResult& out_distance_result)
 {
-    if (with_jacobian)
+    bool calc_jac = parameter_type_ == DISPLACEMENT && displacement_jac_evaluated
+        ? false : with_jacobian;
+
+    //if (parameter_type_ == DISPLACEMENT && displacement_jac_evaluated)
+    //    with_jacobian = false;  // force false to avoid recalculation of the constant jacobian
+
+    if (calc_jac)
     {
         out_distance_result.jacobian.resize(parameter_block_sizes()[0]);
 
@@ -220,6 +207,7 @@ void AbsoluteDistanceBase::updateDistanceCalculations(bool with_jacobian, Distan
                 smpl_->getStatePointers().shape,
                 &smpl_->getStatePointers().displacements,
                 nullptr, nullptr, &out_distance_result.jacobian[0]);
+            displacement_jac_evaluated = true;
             break;
         default:
             throw std::exception("DistanceBase Update::WARNING:: no parameter type specified");

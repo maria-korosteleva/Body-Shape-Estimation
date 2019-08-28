@@ -105,6 +105,7 @@ protected:
     // instance type
     ParameterType parameter_type_;
     std::size_t vertex_id_for_displacement_ = 0;  // for the DISPLACEMENT only 
+    bool displacement_jac_evaluated = false;      // for the DISPLACEMENT only
     DistanceType dist_evaluation_type_;
     bool use_evaluation_callback_;
 

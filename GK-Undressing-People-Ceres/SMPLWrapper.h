@@ -116,11 +116,12 @@ private:
         const EHomoCoordMatrix(&fk_transform)[SMPLWrapper::JOINTS_NUM]);
    
     // Model calculation
+    void displaceSMPL_(const ERMatrixXd &displacement, E::MatrixXd &verts, E::MatrixXd * displacement_jac = nullptr);
     // if not nullptr, shape_jac is expected to be an array of SHAPE_SIZE of MatrixXd, one matrix for each shape parameter
     void shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::MatrixXd* shape_jac = nullptr);
     // Careful with the use_previous_pose_matrix paramter when calling the posing for the first time!
     void poseSMPL_(const double * const pose, E::MatrixXd & verts, E::MatrixXd * pose_jac = nullptr, 
-        bool use_previous_pose_matrix = false, bool ignore_translation = false);
+        bool use_previous_pose_matrix = false);
     // Jaconian is not provided because it's always an identity: dv_i / d_tj == 1 => don't want to waste memory on it
     void translate_(const double * const translation, E::MatrixXd & verts);
 
@@ -134,8 +135,7 @@ private:
     static E::MatrixXd extractLBSJointTransformFromFKTransform_(
         const EHomoCoordMatrix (&fk_transform) [SMPLWrapper::JOINTS_NUM], const E::MatrixXd & t_pose_joints_locations,
         const E::MatrixXd (*FKDerivatives)[SMPLWrapper::JOINTS_NUM][SMPLWrapper::POSE_SIZE] = nullptr, 
-        E::MatrixXd * jacsTotal = nullptr, 
-        bool zero_out_translation = false);
+        E::MatrixXd * jacsTotal = nullptr);
 
     // Posing routines: all sssumes that SPACE_DIM == 3
     // Assumes the default joint angles to be all zeros
