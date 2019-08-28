@@ -187,10 +187,9 @@ E::MatrixXd SMPLWrapper::calcModel(const double * const translation, const doubl
         poseSMPL_(pose, verts, pose_jac);
 
         // should be updated for the given pose
-        // TODO: use pre-calculated pose matrix?
         if (shape_jac != nullptr)
             for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; ++i)
-                poseSMPL_(pose, shape_jac[i]); // TODO: add the use of pre-computed LBS Matrices 
+                poseSMPL_(pose, shape_jac[i], nullptr, true); // TODO: add the use of pre-computed LBS Matrices 
         if (displacement_jac != nullptr)
             for (int axis = 0; axis < SPACE_DIM; axis++)
                 poseSMPL_(pose, displacement_jac[axis], nullptr, true);

@@ -18,7 +18,7 @@ ShapeUnderClothOptimizer::ShapeUnderClothOptimizer(std::shared_ptr<SMPLWrapper> 
     // NOTE: the parameters might be reset from the outside
     shape_reg_weight_ = 0.01;
     pose_reg_weight_ = 0.001;
-    displacement_reg_weight_ = 1.;
+    displacement_reg_weight_ = 0.001;
     shape_prune_threshold_ = 0.05;
 }
 

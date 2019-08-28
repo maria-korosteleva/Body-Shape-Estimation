@@ -100,8 +100,8 @@ int main()
             "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources",
             output_path);
 
-        //extractor.setupNewExperiment(inputs[0], "djac_dbg_no_thresh_T_rand_both_nonormmatch_2557");
-        extractor.setupNewDistplacementRegExperiment(inputs[0], 0.001, "d_dbg");
+        extractor.setupNewExperiment(inputs[0], "pre_calc_pose_for_shape");
+        //extractor.setupNewDistplacementRegExperiment(inputs[0], 0.001, "d_dbg");
         extractor.setSaveIntermediateResults(true);
         extractor.runExtraction();
         extractor.viewIteratoinProcess();
