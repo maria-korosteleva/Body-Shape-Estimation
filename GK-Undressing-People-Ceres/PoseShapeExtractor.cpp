@@ -56,7 +56,7 @@ void PoseShapeExtractor::setupNewDistplacementRegExperiment(std::shared_ptr<Gene
     optimizer_displacement_reg_weight_ = weight;
 
     setupNewExperiment(std::move(input),
-        experiment_name + "_" + std::to_string((int)(weight * 100)));
+        experiment_name + "_" + std::to_string(weight));
 }
 
 void PoseShapeExtractor::setupNewShapePruningExperiment(std::shared_ptr<GeneralMesh> input, double threshold, const std::string experiment_name)
@@ -92,12 +92,12 @@ std::shared_ptr<SMPLWrapper> PoseShapeExtractor::runExtraction()
     if (input_ == nullptr)
         throw std::exception("PoseShapeExtractor: ERROR: You asked to run extraction before setting up the experiment.");
     // 1.
-    //takePhotos_();
+    takePhotos_();
     
     // 2.
-    //estimateInitialPoseWithOP_();
-    //smpl_->savePosedOnlyToObj(logger_->getOpenPoseGuessesPath() + "/smpl_op_posed.obj");
-    //smpl_->logParameters(logger_->getOpenPoseGuessesPath() + "/smpl_op_posed_params.txt");
+    estimateInitialPoseWithOP_();
+    smpl_->savePosedOnlyToObj(logger_->getOpenPoseGuessesPath() + "/smpl_op_posed.obj");
+    smpl_->logParameters(logger_->getOpenPoseGuessesPath() + "/smpl_op_posed_params.txt");
 
     // 3.
     runPoseShapeOptimization_();
