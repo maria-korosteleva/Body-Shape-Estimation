@@ -84,8 +84,8 @@ int main()
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_knees/00270.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_punching/00053.obj", GeneralMesh::FEMALE));
         inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Sexy Girl.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/casual-woman-walking.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/girl_nasi_pants.obj", GeneralMesh::FEMALE));
+        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/casual-woman-walking.obj", GeneralMesh::FEMALE));
+        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/girl_nasi_pants.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/jenya4.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/shan.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Web.obj", GeneralMesh::MALE));
@@ -100,30 +100,30 @@ int main()
             "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources",
             output_path);
 
-        extractor.setupNewExperiment(inputs[0], "no_jointloc_displ");
-        //extractor.setupNewDistplacementRegExperiment(inputs[0], 0.001, "d_dbg");
-        extractor.setSaveIntermediateResults(true);
-        extractor.runExtraction();
-        extractor.viewIteratoinProcess();
+        //extractor.setupNewExperiment(inputs[0], "no_jointloc_displ");
+        ////extractor.setupNewDistplacementRegExperiment(inputs[0], 0.001, "d_dbg");
+        //extractor.setSaveIntermediateResults(true);
+        //extractor.runExtraction();
+        //extractor.viewIteratoinProcess();
 
         //extractor.viewCameraSetupForPhotos();
         //extractor.viewFinalResult(true);
 
-        //for (auto&& input : inputs)
-        //{
-        //    for (const double& reg_weight : { 0.005, 0.01 })
-        //    {
-        //        try
-        //        {
-        //            extractor.setupNewDistplacementRegExperiment(input, reg_weight, "displ_reg");
-        //            extractor.runExtraction();
-        //        }
-        //        catch (std::exception& e)
-        //        {
-        //            std::cout << "exception encountered: " << e.what() << std::endl;
-        //        }
-        //    }
-        //}
+        for (auto&& input : inputs)
+        {
+            for (const double& reg_weight : { 0.005, 0.01, 0.1 })
+            {
+                try
+                {
+                    extractor.setupNewDistplacementRegExperiment(input, reg_weight, "displ_reg");
+                    extractor.runExtraction();
+                }
+                catch (std::exception& e)
+                {
+                    std::cout << "exception encountered: " << e.what() << std::endl;
+                }
+            }
+        }
     }
     catch (std::exception& e)
     {
