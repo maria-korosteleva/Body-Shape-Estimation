@@ -116,15 +116,15 @@ private:
         const EHomoCoordMatrix(&fk_transform)[SMPLWrapper::JOINTS_NUM]);
    
     // Model calculation
-    void displaceSMPL_(const ERMatrixXd &displacement, E::MatrixXd &verts, E::MatrixXd * displacement_jac = nullptr);
-    // if not nullptr, shape_jac is expected to be an array of SHAPE_SIZE of MatrixXd, one matrix for each shape parameter
+   // if not nullptr, shape_jac is expected to be an array of SHAPE_SIZE of MatrixXd, one matrix for each shape parameter
     void shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::MatrixXd* shape_jac = nullptr);
     // Careful with the use_previous_pose_matrix paramter when calling the posing for the first time!
-    void poseSMPL_(const double * const pose, E::MatrixXd & verts, E::MatrixXd * pose_jac = nullptr, 
+    void poseSMPL_(const double * const pose, E::MatrixXd & verts, const ERMatrixXd *displacement, E::MatrixXd * pose_jac = nullptr,
         bool use_previous_pose_matrix = false);
     // Jaconian is not provided because it's always an identity: dv_i / d_tj == 1 => don't want to waste memory on it
     void translate_(const double * const translation, E::MatrixXd & verts);
 
+    // don't account for displacement, because the jointRegressor was not designed for it
     E::MatrixXd calcJointLocations_(const double * translation = nullptr, 
         const double * shape = nullptr, const double * pose = nullptr);
 

@@ -176,24 +176,31 @@ E::MatrixXd SMPLWrapper::calcModel(const double * const translation, const doubl
     // assignment won't work without cast
     E::MatrixXd verts = verts_template_normalized_;
 
-    if (displacement != nullptr)
-        displaceSMPL_(*displacement, verts, displacement_jac);
-
     if (shape != nullptr)
         shapeSMPL_(shape, verts, shape_jac);
 
     if (pose != nullptr)
     {
-        poseSMPL_(pose, verts, pose_jac);
+        // will be displaced inside poseSMPL_ method
+        poseSMPL_(pose, verts, displacement, pose_jac);
 
         // should be updated for the given pose
         if (shape_jac != nullptr)
             for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; ++i)
-                poseSMPL_(pose, shape_jac[i]); // TODO: add the use of pre-computed LBS Matrices 
+                poseSMPL_(pose, shape_jac[i], displacement); // TODO: add the use of pre-computed LBS Matrices 
                                                 // Pose needs recalculation because joint positions at T are new
         if (displacement_jac != nullptr)
             for (int axis = 0; axis < SPACE_DIM; axis++)
-                poseSMPL_(pose, displacement_jac[axis], nullptr, true); // no pose recalculation
+            {
+                displacement_jac[axis] = E::MatrixXd::Zero(VERTICES_NUM, SPACE_DIM);
+                displacement_jac[axis].col(axis).setOnes();
+                poseSMPL_(pose, displacement_jac[axis], nullptr, nullptr, true); // no pose recalculation
+            }
+        // verts are displaced and posed
+    }
+    else if (displacement != nullptr)
+    {
+        verts = verts + *displacement;
     }
 
     if (translation != nullptr)
@@ -516,20 +523,6 @@ void SMPLWrapper::assignJointGlobalRotation_(int joint_id, E::VectorXd rotation,
     }
 }
 
-void SMPLWrapper::displaceSMPL_(const ERMatrixXd & displacement, E::MatrixXd & verts, E::MatrixXd * displacement_jac)
-{
-    verts = verts + displacement;  // should be able to combine row-major and col-major automatically
-
-    if (displacement_jac != nullptr)
-    {
-        for (int axis = 0; axis < SPACE_DIM; axis++)
-        {
-            displacement_jac[axis] = E::MatrixXd::Zero(VERTICES_NUM, SPACE_DIM);
-            displacement_jac[axis].col(axis).setOnes();
-    }
-}
-}
-
 void SMPLWrapper::shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::MatrixXd* shape_jac)
 {
 #ifdef DEBUG
@@ -549,13 +542,20 @@ void SMPLWrapper::shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::
     }
 }
 
-void SMPLWrapper::poseSMPL_(const double * const pose, E::MatrixXd & verts, E::MatrixXd * pose_jac, 
+void SMPLWrapper::poseSMPL_(const double * const pose, E::MatrixXd & verts, const ERMatrixXd *displacement, 
+    E::MatrixXd * pose_jac,
     bool use_previous_pose_matrix)
 {
-    E::SparseMatrix<double> LBSMat = this->getLBSMatrix_(verts);
+    E::SparseMatrix<double> LBSMat;
+    if (displacement != nullptr)
+        LBSMat = getLBSMatrix_(verts + *displacement);
+    else
+        LBSMat = getLBSMatrix_(verts);
 
     if (!use_previous_pose_matrix)
     {
+        // ! Impostant: don't use displacements to obtain joint_locations. 
+        // jointRegressor was only trained on the model data
         joint_locations_ = jointRegressorMat_ * verts;
         updateJointsFKTransforms_(pose, joint_locations_, pose_jac != nullptr);
     }
@@ -564,6 +564,7 @@ void SMPLWrapper::poseSMPL_(const double * const pose, E::MatrixXd & verts, E::M
         fk_transforms_, joint_locations_,
         &fk_derivatives_, pose_jac);
 
+    // displaced and posed
     verts = LBSMat * joints_global_transform;
 
     if (pose_jac != nullptr)
