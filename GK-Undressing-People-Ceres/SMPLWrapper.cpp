@@ -25,6 +25,17 @@ SMPLWrapper::SMPLWrapper(char gender, const std::string path)
     readHierarchy_();
 
     joint_locations_template_ = calcJointLocations();
+    fillVertsNeighbours_();
+
+    std::cout << "Calculated neigbours " << std::endl;
+    for (int i = 0; i < VERTICES_NUM; i++)
+    {
+        std::cout << i << ": ";
+        std::copy(verts_neighbours_[i].begin(),
+            verts_neighbours_[i].end(),
+            std::ostream_iterator<int>(std::cout, " "));
+        std::cout << std::endl;
+    }
 }
 
 SMPLWrapper::~SMPLWrapper()
@@ -294,6 +305,8 @@ void SMPLWrapper::logParameters(const std::string path)
     out.close();
 }
 
+/// PRIVATE
+
 void SMPLWrapper::readTemplate_()
 {
     std::string file_name = gender_path_ + gender_ + "_shapeAv.obj";
@@ -439,6 +452,27 @@ void SMPLWrapper::readHierarchy_()
     }
 
     inFile.close();
+}
+
+void SMPLWrapper::fillVertsNeighbours_()
+{
+    for (int face_id = 0; face_id < faces_.rows(); face_id++)
+    {
+        for (int corner_id = 0; corner_id < faces_.cols(); corner_id++)
+        {
+            int vert_id = faces_(face_id, corner_id);
+            for (int shift = 1; shift < faces_.cols(); shift++)
+            {
+                int neighbour_vert_id = faces_(face_id, (corner_id + shift) % faces_.cols());
+                // add if new
+                if (std::find(verts_neighbours_[vert_id].begin(), verts_neighbours_[vert_id].end(), neighbour_vert_id)
+                    == verts_neighbours_[vert_id].end())
+                {
+                    verts_neighbours_[vert_id].push_back(neighbour_vert_id);
+                }
+            }
+        }
+    }
 }
 
 E::Vector3d SMPLWrapper::angle_axis_(const E::Vector3d& from, const E::Vector3d& to)

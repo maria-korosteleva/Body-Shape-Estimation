@@ -103,6 +103,8 @@ private:
     void readShapes_();
     void readWeights_();
     void readHierarchy_();
+    // to be called after the faces are collected
+    void fillVertsNeighbours_();
 
     void saveToObj_(const double * translation, const double * pose, const double* shape, const ERMatrixXd* displacements,
         const std::string path);
@@ -165,6 +167,7 @@ private:
 
     // constant model info
     E::MatrixXi faces_;
+    std::array<std::vector<int>, VERTICES_NUM> verts_neighbours_;
     E::MatrixXd verts_template_;
     E::MatrixXd verts_template_normalized_;
     E::MatrixXd joint_locations_template_;
