@@ -111,7 +111,7 @@ int main()
 
         for (auto&& input : inputs)
         {
-            for (const double& reg_weight : { 0.005, 0.01, 0.1 })
+            for (const double& reg_weight : { 1 })
             {
                 try
                 {
