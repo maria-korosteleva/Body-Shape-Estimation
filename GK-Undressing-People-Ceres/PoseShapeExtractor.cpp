@@ -49,9 +49,7 @@ void PoseShapeExtractor::setupNewExperiment(std::shared_ptr<GeneralMesh> input, 
     openpose_ = nullptr;
     char input_gender = convertInputGenderToChar_(*input_.get());
 
-    logger_->startRedirectCoutToFile("smpl_neigbours.txt");
     smpl_ = std::make_shared<SMPLWrapper>(input_gender, smpl_model_path_);
-    logger_->endRedirectCoutToFile();
 }
 
 void PoseShapeExtractor::setupNewDistplacementRegExperiment(std::shared_ptr<GeneralMesh> input, double weight, const std::string experiment_name)

@@ -26,16 +26,6 @@ SMPLWrapper::SMPLWrapper(char gender, const std::string path)
 
     joint_locations_template_ = calcJointLocations();
     fillVertsNeighbours_();
-
-    std::cout << "Calculated neigbours " << std::endl;
-    for (int i = 0; i < VERTICES_NUM; i++)
-    {
-        std::cout << i << ": ";
-        std::copy(verts_neighbours_[i].begin(),
-            verts_neighbours_[i].end(),
-            std::ostream_iterator<int>(std::cout, " "));
-        std::cout << std::endl;
-    }
 }
 
 SMPLWrapper::~SMPLWrapper()
