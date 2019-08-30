@@ -16,7 +16,7 @@
 */
 
 
-static constexpr char output_path[] = "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Outputs/";
+static constexpr char output_path[] = "D:/GK-Undressing-Experiments/";
 static constexpr char smpl_model_path[] = "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources";
 
 void generateSMPLoutput()
