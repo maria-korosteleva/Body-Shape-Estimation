@@ -267,7 +267,8 @@ void ShapeUnderClothOptimizer::displacementEstimation_(Solver::Options& options)
     CostFunction* prior = new NormalPrior(
         Eigen::MatrixXd::Identity(SMPLWrapper::SPACE_DIM, SMPLWrapper::SPACE_DIM),
         Eigen::VectorXd::Zero(SMPLWrapper::SPACE_DIM));
-    LossFunction* scale_prior = new ScaledLoss(NULL, displacement_reg_weight_, ceres::TAKE_OWNERSHIP);
+    LossFunction* L2_scale_loss = new ScaledLoss(NULL, displacement_reg_weight_, ceres::TAKE_OWNERSHIP);
+    LossFunction* smoothing_scale_loss = new ScaledLoss(NULL, 0.1, ceres::TAKE_OWNERSHIP);
 
     // Main cost -- for each vertex
     bool eval_callback_added = false;
@@ -279,6 +280,9 @@ void ShapeUnderClothOptimizer::displacementEstimation_(Solver::Options& options)
         AbsoluteDistanceBase* in_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
             AbsoluteDistanceBase::DISPLACEMENT, AbsoluteDistanceBase::IN_DIST, 
             100., v_id);  // no threshold
+        // nothe that it requres the dispalacements params to be pushed to smpl object 
+        // -> evaluation callback of the out/in_cost_function will work
+        SmoothDisplacementCost* smoothing_cost_function = new SmoothDisplacementCost(smpl_, v_id);
 
         // add for performing pre-computation
         if (!eval_callback_added)
@@ -296,7 +300,9 @@ void ShapeUnderClothOptimizer::displacementEstimation_(Solver::Options& options)
             smpl_->getStatePointers().displacements.data() + v_id * SMPLWrapper::SPACE_DIM);
 
         // add regularization resuiduals
-        problem.AddResidualBlock(prior, scale_prior,
+        problem.AddResidualBlock(prior, L2_scale_loss,
+            smpl_->getStatePointers().displacements.data() + v_id * SMPLWrapper::SPACE_DIM);
+        problem.AddResidualBlock(smoothing_cost_function, smoothing_scale_loss,
             smpl_->getStatePointers().displacements.data() + v_id * SMPLWrapper::SPACE_DIM);
     }
 

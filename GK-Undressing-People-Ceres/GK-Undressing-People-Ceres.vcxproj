@@ -182,6 +182,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="PoseShapeExtractor.h" />
     <ClInclude Include="ShapeUnderClothOptimizer.h" />
+    <ClInclude Include="SmoothDisplacementCost.h" />
     <ClInclude Include="SMPLWrapper.h" />
   </ItemGroup>
   <ItemGroup>
@@ -198,6 +199,7 @@
     </ClCompile>
     <ClCompile Include="PoseShapeExtractor.cpp" />
     <ClCompile Include="ShapeUnderClothOptimizer.cpp" />
+    <ClCompile Include="SmoothDisplacementCost.cpp" />
     <ClCompile Include="SMPLWrapper.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -26,7 +26,7 @@ class SMPLWrapper
 {
 public:
     using ERMatrixXd = E::Matrix<double, -1, -1, E::RowMajor>;
-    using NeigboursList = std::vector<int>;
+    using NeighboursList = std::vector<int>;
 
     struct State {
         double* pose = nullptr;
@@ -64,7 +64,7 @@ public:
     const E::VectorXd& getTemplateMeanPoint() const  { return E::Vector3d(0, 0, 0); };
     // !! returns pointer to the inner arrays
     State& getStatePointers() { return state_; }
-    const NeigboursList& getVertNeighbours(int vert_id) const { return verts_neighbours_[vert_id]; }
+    const NeighboursList& getVertNeighbours(int vert_id) const { return verts_neighbours_[vert_id]; }
 
     void rotateLimbToDirection(const std::string joint_name, const E::Vector3d& direction);
     // Matching both directions exaclty is not guaranteed -- hips direction will be matched approximately
@@ -168,7 +168,7 @@ private:
 
     // constant model info
     E::MatrixXi faces_;
-    std::array<NeigboursList, VERTICES_NUM> verts_neighbours_;
+    std::array<NeighboursList, VERTICES_NUM> verts_neighbours_;
     E::MatrixXd verts_template_;
     E::MatrixXd verts_template_normalized_;
     E::MatrixXd joint_locations_template_;

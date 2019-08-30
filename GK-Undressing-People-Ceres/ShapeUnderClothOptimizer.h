@@ -12,6 +12,7 @@
 #include "SMPLWrapper.h"
 // cost functions
 #include "AbsoluteDistanceBase.h"
+#include "SmoothDisplacementCost.h"
 
 using ceres::AutoDiffCostFunction;
 using ceres::NumericDiffCostFunction;
@@ -76,6 +77,7 @@ private:
     double shape_prune_threshold_;
 
     // inner classes
+
     class GemanMcClareLoss : public ceres::LossFunction
     {
     public:

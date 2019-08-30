@@ -45,6 +45,9 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SmoothDisplacementCost.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GK-Undressing-People-Ceres.cpp">
@@ -72,6 +75,9 @@
       <Filter>Source Files\Optimization</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SmoothDisplacementCost.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
