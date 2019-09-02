@@ -1,6 +1,8 @@
 # Body shape and pose estimation on 3D scans of people in clothing using Ceres Solver
 
-This project is based on the paper of Zhang et al. "Detailed, accurate, human shape estimation from clothed 3D scan sequences" (https://arxiv.org/abs/1703.04454), but adapted to work on static 3D scans and with a better pose estimation. 
+This project is based on the paper of Zhang et al. "Detailed, accurate, human shape estimation from clothed 3D scan sequences" (https://arxiv.org/abs/1703.04454), but adapted to work on static 3D scans and with a better pose estimation. The project surves the research purposes only.
+
+The work heavily uses the SMPL body model (refer to http://smpl.is.tue.mpg.de/). 
 
 ## Disclaimer 
 
@@ -8,8 +10,6 @@ This is a work and progress which means that
 * the master branch is not guaranteed to work properly at any given moment;
 * VS solution is organized for the convenience of the developer and might take some time to adapt for running on the other computer;
 * the code style and some small architectural decisions might not be consistent throughout the project code (the developer tries out new tricks from time to time). 
-
-With any troubles of running the code, contact me here on GitHub or email me on mariako@kaist.ac.kr
 
 ## Inputs requirements
 * obj or ply format
