@@ -83,47 +83,59 @@ int main()
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_knees/00130.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_knees/00270.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_punching/00053.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Sexy Girl.obj", GeneralMesh::FEMALE));
+        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Sexy Girl.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/casual-woman-walking.obj", GeneralMesh::FEMALE));
-        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/girl_nasi_pants.obj", GeneralMesh::FEMALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/girl_nasi_pants.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/jenya4.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/shan.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Web.obj", GeneralMesh::MALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/reilly.obj", GeneralMesh::MALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Ivan Komarov.obj", GeneralMesh::MALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/casual-man.obj", GeneralMesh::MALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/isaac_processed_scaled.obj", GeneralMesh::MALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Tony_triangles_scaled.obj", GeneralMesh::MALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/JonOBJ_triangles.obj", GeneralMesh::MALE));
 
-        std::cout << "Inputs are loaded! " << std::endl;
+        //std::cout << "Inputs are loaded! " << std::endl;
 
-        PoseShapeExtractor extractor(smpl_model_path,
-            "C:/Users/Maria/MyDocs/libs/Installed_libs/ml_models/openpose",
-            "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources",
-            output_path);
+        SMPLWrapper smpl_experiment('f', smpl_model_path);
+        smpl_experiment.loadParametersFromFile(
+            "D:/GK-Undressing-Experiments/file_format_SketchFab-Sexy Girl_190916_10_45/smpl_params.txt");
 
-        extractor.setupNewExperiment(inputs[0], "smoothing");
+        CustomLogger logger(output_path, "loading_smpl");
+        smpl_experiment.logParameters(logger.getLogFolderPath() + "smpl_parameters.txt");
+        smpl_experiment.saveToObj(logger.getLogFolderPath() + "smpl_result.obj");
+
+        //PoseShapeExtractor extractor(smpl_model_path,
+        //    "C:/Users/Maria/MyDocs/libs/Installed_libs/ml_models/openpose",
+        //    "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources",
+        //    output_path);
+
+        //extractor.setupNewExperiment(inputs[0], "file_format");
         //extractor.setupNewDistplacementRegExperiment(inputs[0], 0.001, "d_dbg");
-        extractor.setSaveIntermediateResults(true);
-        extractor.runExtraction();
-        extractor.viewIteratoinProcess();
+        //extractor.setSaveIntermediateResults(true);
+        //extractor.runExtraction();
+        //extractor.viewIteratoinProcess();
 
         //extractor.viewCameraSetupForPhotos();
         //extractor.viewFinalResult(true);
 
-        /*for (auto&& input : inputs)
-        {
-            for (const double& reg_weight : { 1 })
-            {
-                try
-                {
-                    extractor.setupNewDistplacementRegExperiment(input, reg_weight, "displ_reg");
-                    extractor.runExtraction();
-                }
-                catch (std::exception& e)
-                {
-                    std::cout << "exception encountered: " << e.what() << std::endl;
-                }
-            }
-        }*/
+        //for (auto&& input : inputs)
+        //{
+        //    for (const double& reg_weight : { 1 })
+        //    {
+        //        try
+        //        {
+        //            extractor.setupNewExperiment(input, "fit");
+        //            //extractor.setupNewDistplacementRegExperiment(input, reg_weight, "displ_reg");
+        //            extractor.runExtraction();
+        //        }
+        //        catch (std::exception& e)
+        //        {
+        //            std::cout << "exception encountered: " << e.what() << std::endl;
+        //        }
+        //    }
+        //}
     }
     catch (std::exception& e)
     {

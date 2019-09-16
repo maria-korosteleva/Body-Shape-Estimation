@@ -170,6 +170,43 @@ void SMPLWrapper::translateTo(const E::VectorXd & center_point)
     }
 }
 
+void SMPLWrapper::loadParametersFromFile(const std::string filename)
+{
+    std::ifstream in(filename);
+    std::string trash;
+
+    // out << "Translation [ " << std::endl;
+    in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');   // skips one line
+    for (int i = 0; i < SMPLWrapper::SPACE_DIM; i++)
+        in >> state_.translation[i] >> trash;
+    in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    // out << "Pose params [ \n";
+    in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    for (int i = 0; i < SMPLWrapper::JOINTS_NUM; i++)
+    {
+        for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
+        {
+            in >> state_.pose[i * SMPLWrapper::SPACE_DIM + j] >> trash;
+        }
+    }
+    in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    // out << "Shape (betas) params [ " << std::endl;
+    in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; i++)
+        in >> state_.shape[i] >> trash;
+
+    // No need to read joints locations
+    in.close();
+
+    // recalculate model with updated paramters
+    // TODO check if needed
+    calcModel();
+}
+
 E::MatrixXd SMPLWrapper::calcModel(const double * const translation, const double * const pose, const double * const shape,
     const ERMatrixXd * displacement,
     E::MatrixXd * pose_jac, E::MatrixXd * shape_jac, E::MatrixXd * displacement_jac)
@@ -229,48 +266,48 @@ E::MatrixXd SMPLWrapper::calcJointLocations()
 }
 
 void SMPLWrapper::saveToObj_(const double* translation, const double* pose, const double* shape, 
-    const ERMatrixXd* displacements, const std::string path)
+    const ERMatrixXd* displacements, const std::string filename)
 {
     E::MatrixXd verts = calcModel(translation, pose, shape, displacements);
 
-    igl::writeOBJ(path, verts, faces_);
+    igl::writeOBJ(filename, verts, faces_);
 }
 
-void SMPLWrapper::saveToObj(const std::string path) 
+void SMPLWrapper::saveToObj(const std::string filename) 
 {
-    saveToObj_(state_.translation, state_.pose, state_.shape, nullptr, path);
+    saveToObj_(state_.translation, state_.pose, state_.shape, nullptr, filename);
 }
 
-void SMPLWrapper::saveWithDisplacementToObj(const std::string path)
+void SMPLWrapper::saveWithDisplacementToObj(const std::string filename)
 {
-    saveToObj_(state_.translation, state_.pose, state_.shape, &state_.displacements, path);
+    saveToObj_(state_.translation, state_.pose, state_.shape, &state_.displacements, filename);
 }
 
-void SMPLWrapper::savePosedOnlyToObj(const std::string path) 
+void SMPLWrapper::savePosedOnlyToObj(const std::string filename) 
 {
-    saveToObj_(state_.translation, state_.pose, nullptr, nullptr, path);
+    saveToObj_(state_.translation, state_.pose, nullptr, nullptr, filename);
 }
 
-void SMPLWrapper::saveShapedOnlyToObj(const std::string path) 
+void SMPLWrapper::saveShapedOnlyToObj(const std::string filename) 
 {
-    saveToObj_(state_.translation, nullptr, state_.shape, nullptr, path);
+    saveToObj_(state_.translation, nullptr, state_.shape, nullptr, filename);
 }
 
-void SMPLWrapper::saveShapedWithDisplacementToObj(const std::string path)
+void SMPLWrapper::saveShapedWithDisplacementToObj(const std::string filename)
 {
-    saveToObj_(state_.translation, nullptr, state_.shape, &state_.displacements, path);
+    saveToObj_(state_.translation, nullptr, state_.shape, &state_.displacements, filename);
 }
 
-void SMPLWrapper::logParameters(const std::string path)
+void SMPLWrapper::logParameters(const std::string filename)
 {
-    std::ofstream out(path);
+    std::ofstream out(filename);
 
-    out << "Translation \n[ ";
+    out << "Translation [ " << std::endl;
     for (int i = 0; i < SMPLWrapper::SPACE_DIM; i++)
         out << state_.translation[i] << " , ";
-    out << "]" << std::endl;
+    out << std::endl << "]" << std::endl;
 
-    out << std::endl << "Pose params [ \n";
+    out << "Pose params [ \n";
     for (int i = 0; i < SMPLWrapper::JOINTS_NUM; i++)
     {
         for (int j = 0; j < SMPLWrapper::SPACE_DIM; j++)
@@ -281,15 +318,13 @@ void SMPLWrapper::logParameters(const std::string path)
     }
     out << "]" << std::endl;
 
-    out << std::endl << "Shape (betas) params [ \n";
+    out << "Shape (betas) params [ " << std::endl;
     for (int i = 0; i < SMPLWrapper::SHAPE_SIZE; i++)
         out << state_.shape[i] << " , ";
     out << std::endl << "]" << std::endl;
 
-    out << std::endl << "Joints locations for posed and shaped model [\n";
-
+    out << "Joints locations for posed and shaped model [" << std::endl;
     out << calcJointLocations() << std::endl;
-
     out << "]" << std::endl;
 
     out.close();

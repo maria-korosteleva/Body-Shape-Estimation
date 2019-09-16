@@ -58,6 +58,7 @@ public:
     SMPLWrapper(char gender, const std::string path);
     ~SMPLWrapper();
 
+    // getters
     char getGender() const                    { return gender_; };
     const E::MatrixXi& getFaces() const              { return faces_; };
     const E::MatrixXd& getTemplateVertices() const   { return verts_template_normalized_; };
@@ -66,15 +67,18 @@ public:
     State& getStatePointers() { return state_; }
     const NeighboursList& getVertNeighbours(int vert_id) const { return verts_neighbours_[vert_id]; }
 
+    // modify state
     void rotateLimbToDirection(const std::string joint_name, const E::Vector3d& direction);
     // Matching both directions exaclty is not guaranteed -- hips direction will be matched approximately
     void rotateRoot(const E::Vector3d& body_up, const E::Vector3d& body_right_to_left);
     // shoulder_dir points from right to left 
     void twistBack(const E::Vector3d& shoulder_dir);
-
     // re-calculates translation to move the posed/shaped mesh center to the specified point
     void translateTo(const E::VectorXd& center_point);
+    // file structure has to follow the one in logParameters() method
+    void loadParametersFromFile(const std::string filename);
 
+    // calculate the model output mesh
     // *_jacs are expected to have space for POSE_SIZE and SHAPE_SIZE Matrices
     E::MatrixXd calcModel(const double * const translation, 
         const double * const pose, 
@@ -90,12 +94,12 @@ public:
     E::MatrixXd calcJointLocations();
 
     // using current SMPLWrapper state
-    void saveToObj(const std::string path);
-    void saveWithDisplacementToObj(const std::string path);
-    void savePosedOnlyToObj(const std::string path);
-    void saveShapedOnlyToObj(const std::string path);
-    void saveShapedWithDisplacementToObj(const std::string path);
-    void logParameters(const std::string path);
+    void saveToObj(const std::string filename);
+    void saveWithDisplacementToObj(const std::string filename);
+    void savePosedOnlyToObj(const std::string filename);
+    void saveShapedOnlyToObj(const std::string filename);
+    void saveShapedWithDisplacementToObj(const std::string filename);
+    void logParameters(const std::string filename);
 
 private:
     void readTemplate_();
