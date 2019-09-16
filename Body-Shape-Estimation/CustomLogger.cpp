@@ -15,7 +15,9 @@ std::string CustomLogger::getPhotosFolderPath()
 {
     if (!photos_dir_exist_)
     {
-        CreateDirectory((log_folder_name_ + photo_subfolder_).c_str(), NULL);
+        boost::filesystem::path log_dir((log_folder_name_ + photo_subfolder_).c_str());
+        if (!boost::filesystem::create_directory(log_dir))
+            throw std::runtime_error("CustomLogger:ERROR:failed to create logging directory");
         photos_dir_exist_ = true;
     }
     
@@ -25,8 +27,11 @@ std::string CustomLogger::getPhotosFolderPath()
 std::string CustomLogger::getOpenPoseGuessesPath()
 {
     if (!op_guesses_dir_exist_)
-    {
-        CreateDirectory((log_folder_name_ + op_guesses_subfolder_).c_str(), NULL);
+    {        
+        boost::filesystem::path log_dir((log_folder_name_ + op_guesses_subfolder_).c_str());
+        if (!boost::filesystem::create_directory(log_dir))
+            throw std::runtime_error("CustomLogger:ERROR:failed to create logging directory");
+
         op_guesses_dir_exist_ = true;
     }
     
@@ -38,8 +43,11 @@ void CustomLogger::saveFinalModel(SMPLWrapper & smpl)
     smpl.logParameters(log_folder_name_ + smpl_param_filename_);
 
     if (!final_obj_dir_exist_)
-    {
-        CreateDirectory((log_folder_name_ + final_3D_subfolder_).c_str(), NULL);
+    { 
+        boost::filesystem::path log_dir((log_folder_name_ + final_3D_subfolder_).c_str());
+        if (!boost::filesystem::create_directory(log_dir))
+            throw std::runtime_error("CustomLogger:ERROR:failed to create logging directory");
+        final_obj_dir_exist_ = true;
     }
 
     smpl.saveToObj(log_folder_name_ + final_3D_subfolder_ + "posed_shaped.obj");
@@ -53,7 +61,10 @@ void CustomLogger::saveIterationsSMPLObjects(const SMPLWrapper & smpl, const std
 {
     if (!iteration_obj_dir_exist_)
     {
-        CreateDirectory((log_folder_name_ + iterations_3D_subfolder_).c_str(), NULL);
+        boost::filesystem::path log_dir((log_folder_name_ + iterations_3D_subfolder_).c_str());
+        if (!boost::filesystem::create_directory(log_dir))
+            throw std::runtime_error("CustomLogger:ERROR:failed to create logging directory");
+
         iteration_obj_dir_exist_ = true;
     }
     
@@ -112,5 +123,7 @@ void CustomLogger::createNewLogFolder_()
     log_folder_name_ += buffer;
     log_folder_name_ += "/";
 
-    CreateDirectory(log_folder_name_.c_str(), NULL);
+    boost::filesystem::path log_dir(log_folder_name_.c_str());
+    if (!boost::filesystem::create_directory(log_dir))
+        throw std::runtime_error("CustomLogger:ERROR:failed to create logging directory");
 }

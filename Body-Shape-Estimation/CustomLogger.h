@@ -1,12 +1,8 @@
 #pragma once
 
-// WARNING! Uses win-specific features to create log directory 
-#define NOMINMAX
-#include <Windows.h>
-#undef THIS
-
 #include <iostream>
 #include <ctime>
+#include <boost/filesystem.hpp>
 #include <igl/writeOBJ.h>
 
 #include "SMPLWrapper.h"

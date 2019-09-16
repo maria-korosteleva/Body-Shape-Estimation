@@ -39,6 +39,7 @@ This is a work and progress which means that
 1. Ceres (http://ceres-solver.org/index.html) compiled to be used on x64 platform (same goes for the Ceres dependencies).
 1. OpenPose (https://github.com/CMU-Perceptual-Computing-Lab/openpose/). 
     1. *Important* The path to the OpenPose models should be set inside the program
+1. Boost.Filesystem module of Boost library (https://www.boost.org/).
 
 ## Tips for installing Ceres
 1. Make sure to use x64 compiler for all installations.
