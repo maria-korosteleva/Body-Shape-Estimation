@@ -19,8 +19,8 @@ public:
     ~CustomLogger();
 
     std::string getLogFolderPath() const { return log_folder_name_; }
-    std::string getPhotosFolderPath() const { return log_folder_name_ + photo_subfolder_; }
-    std::string getOpenPoseGuessesPath() const { return log_folder_name_ + op_guesses_subfolder_; }
+    std::string getPhotosFolderPath();
+    std::string getOpenPoseGuessesPath();
 
     void saveFinalModel(SMPLWrapper& smpl);
     void saveIterationsSMPLObjects(const SMPLWrapper& smpl, const std::vector<Eigen::MatrixXd>& vertices_vector);
@@ -48,5 +48,11 @@ private:
     std::ofstream redirecting_file_stream_;
     std::streambuf *coutbuf_;
     std::streambuf *stderrbuf_;
+
+    // subfolders creation flags
+    bool iteration_obj_dir_exist_ = false;
+    bool final_obj_dir_exist_ = false;
+    bool op_guesses_dir_exist_ = false;
+    bool photos_dir_exist_ = false;
 };
 

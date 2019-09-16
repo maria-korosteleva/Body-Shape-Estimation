@@ -11,9 +11,36 @@ CustomLogger::~CustomLogger()
 {
 }
 
+std::string CustomLogger::getPhotosFolderPath()
+{
+    if (!photos_dir_exist_)
+    {
+        CreateDirectory((log_folder_name_ + photo_subfolder_).c_str(), NULL);
+        photos_dir_exist_ = true;
+    }
+    
+    return log_folder_name_ + photo_subfolder_;
+}
+
+std::string CustomLogger::getOpenPoseGuessesPath()
+{
+    if (!op_guesses_dir_exist_)
+    {
+        CreateDirectory((log_folder_name_ + op_guesses_subfolder_).c_str(), NULL);
+        op_guesses_dir_exist_ = true;
+    }
+    
+    return log_folder_name_ + op_guesses_subfolder_;
+}
+
 void CustomLogger::saveFinalModel(SMPLWrapper & smpl)
 {
     smpl.logParameters(log_folder_name_ + smpl_param_filename_);
+
+    if (!final_obj_dir_exist_)
+    {
+        CreateDirectory((log_folder_name_ + final_3D_subfolder_).c_str(), NULL);
+    }
 
     smpl.saveToObj(log_folder_name_ + final_3D_subfolder_ + "posed_shaped.obj");
     smpl.saveShapedOnlyToObj(log_folder_name_ + final_3D_subfolder_ + "unposed_shaped.obj");
@@ -24,8 +51,12 @@ void CustomLogger::saveFinalModel(SMPLWrapper & smpl)
 
 void CustomLogger::saveIterationsSMPLObjects(const SMPLWrapper & smpl, const std::vector<Eigen::MatrixXd>& vertices_vector)
 {
-    CreateDirectory((log_folder_name_ + iterations_3D_subfolder_).c_str(), NULL);
-
+    if (!iteration_obj_dir_exist_)
+    {
+        CreateDirectory((log_folder_name_ + iterations_3D_subfolder_).c_str(), NULL);
+        iteration_obj_dir_exist_ = true;
+    }
+    
     std::string subfilename = log_folder_name_ + iterations_3D_subfolder_ + "/it_";
     for (int i = 0; i < vertices_vector.size(); ++i)
     {
@@ -82,7 +113,4 @@ void CustomLogger::createNewLogFolder_()
     log_folder_name_ += "/";
 
     CreateDirectory(log_folder_name_.c_str(), NULL);
-    CreateDirectory((log_folder_name_ + photo_subfolder_).c_str(), NULL);
-    CreateDirectory((log_folder_name_ + op_guesses_subfolder_).c_str(), NULL);
-    CreateDirectory((log_folder_name_ + final_3D_subfolder_).c_str(), NULL);
 }

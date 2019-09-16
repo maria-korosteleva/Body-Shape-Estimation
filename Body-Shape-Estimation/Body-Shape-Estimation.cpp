@@ -102,7 +102,7 @@ int main()
             "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources",
             output_path);
 
-        extractor.setupNewExperiment(inputs[0], "init_file_from_op");
+        extractor.setupNewExperiment(inputs[0], "no_empty_folders");
         //extractor.setupNewDistplacementRegExperiment(inputs[0], 0.001, "d_dbg");
         extractor.setSaveIntermediateResults(true);
         extractor.setupInitialization(PoseShapeExtractor::FILE, 
