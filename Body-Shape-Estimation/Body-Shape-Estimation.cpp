@@ -96,26 +96,19 @@ int main()
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Tony_triangles_scaled.obj", GeneralMesh::MALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/JonOBJ_triangles.obj", GeneralMesh::MALE));
 
-        //std::cout << "Inputs are loaded! " << std::endl;
+        std::cout << "Inputs are loaded! " << std::endl;
 
-        SMPLWrapper smpl_experiment('f', smpl_model_path);
-        smpl_experiment.loadParametersFromFile(
-            "D:/GK-Undressing-Experiments/file_format_SketchFab-Sexy Girl_190916_10_45/smpl_params.txt");
+        PoseShapeExtractor extractor(smpl_model_path,
+            "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources",
+            output_path);
 
-        CustomLogger logger(output_path, "loading_smpl");
-        smpl_experiment.logParameters(logger.getLogFolderPath() + "smpl_parameters.txt");
-        smpl_experiment.saveToObj(logger.getLogFolderPath() + "smpl_result.obj");
-
-        //PoseShapeExtractor extractor(smpl_model_path,
-        //    "C:/Users/Maria/MyDocs/libs/Installed_libs/ml_models/openpose",
-        //    "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources",
-        //    output_path);
-
-        //extractor.setupNewExperiment(inputs[0], "file_format");
+        extractor.setupNewExperiment(inputs[0], "init_file_from_op");
         //extractor.setupNewDistplacementRegExperiment(inputs[0], 0.001, "d_dbg");
-        //extractor.setSaveIntermediateResults(true);
-        //extractor.runExtraction();
-        //extractor.viewIteratoinProcess();
+        extractor.setSaveIntermediateResults(true);
+        extractor.setupInitialization(PoseShapeExtractor::FILE, 
+            "D:/GK-Undressing-Experiments/file_format_SketchFab-Sexy Girl_190916_10_45/OP_guesses/smpl_op_posed_params.txt");
+        extractor.runExtraction();
+        extractor.viewIteratoinProcess();
 
         //extractor.viewCameraSetupForPhotos();
         //extractor.viewFinalResult(true);

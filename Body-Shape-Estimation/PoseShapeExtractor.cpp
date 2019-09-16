@@ -7,16 +7,16 @@ std::shared_ptr <SMPLWrapper> PoseShapeExtractor::smpl_to_viz_;
 std::shared_ptr <GeneralMesh> PoseShapeExtractor::input_to_viz_;
 
 PoseShapeExtractor::PoseShapeExtractor(const std::string& smpl_model_path,
-    const std::string& open_pose_path,
     const std::string& pose_prior_path,
     const std::string& logging_path)
-    : smpl_model_path_(smpl_model_path), openpose_model_path_(open_pose_path), 
+    : smpl_model_path_(smpl_model_path),
     pose_prior_path_(pose_prior_path), logging_base_path_(logging_path)
 {
     smpl_ = nullptr;
     input_ = nullptr;
     logger_ = nullptr;
     openpose_ = nullptr;
+    initialization_type_ = NO_INITIALIZATION;
 
     // default parameter values -- supported by experiments I performed
     cameras_distance_ = 4.5f;
@@ -36,6 +36,25 @@ PoseShapeExtractor::PoseShapeExtractor(const std::string& smpl_model_path,
 
 PoseShapeExtractor::~PoseShapeExtractor()
 {}
+
+void PoseShapeExtractor::setupInitialization(InitializationType type, const std::string path)
+{
+    initialization_type_ = type;
+    switch (type)
+    {
+    case PoseShapeExtractor::NO_INITIALIZATION:
+        break;
+    case PoseShapeExtractor::OPENPOSE:
+        openpose_model_path_ = path;
+        break;
+    case PoseShapeExtractor::FILE:
+        smpl_file_initilization_path_ = path;
+        break;
+    default:
+        throw std::invalid_argument("PoseShapeExtractor:ERROR:Unknown initialization type");
+        break;
+    }
+}
 
 void PoseShapeExtractor::setupNewExperiment(std::shared_ptr<GeneralMesh> input, const std::string experiment_name)
 {
@@ -91,16 +110,30 @@ void PoseShapeExtractor::setupNewCameraExperiment(std::shared_ptr<GeneralMesh> i
 std::shared_ptr<SMPLWrapper> PoseShapeExtractor::runExtraction()
 {
     if (input_ == nullptr)
-        throw std::exception("PoseShapeExtractor: ERROR: You asked to run extraction before setting up the experiment.");
-    // 1.
-    takePhotos_();
-    
-    // 2.
-    estimateInitialPoseWithOP_();
-    smpl_->savePosedOnlyToObj(logger_->getOpenPoseGuessesPath() + "/smpl_op_posed.obj");
-    smpl_->logParameters(logger_->getOpenPoseGuessesPath() + "/smpl_op_posed_params.txt");
+        throw std::runtime_error("PoseShapeExtractor:ERROR:You asked to run extraction before setting up the experiment.");
 
-    // 3.
+    switch (initialization_type_)
+    {
+    case PoseShapeExtractor::NO_INITIALIZATION:
+        break;
+
+    case PoseShapeExtractor::OPENPOSE:
+        takePhotos_();
+
+        estimateInitialPoseWithOP_();
+        smpl_->savePosedOnlyToObj(logger_->getOpenPoseGuessesPath() + "/smpl_op_posed.obj");
+        smpl_->logParameters(logger_->getOpenPoseGuessesPath() + "/smpl_op_posed_params.txt");
+        break;
+
+    case PoseShapeExtractor::FILE:
+        smpl_->loadParametersFromFile(smpl_file_initilization_path_);
+        break;
+
+    default:
+        throw std::runtime_error("PoseShapeExtractor:ERROR:Unknown initialization type");
+        break;
+    }
+    
     runPoseShapeOptimization_();
 
     logger_->saveFinalModel(*smpl_);

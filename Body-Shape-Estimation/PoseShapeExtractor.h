@@ -25,11 +25,20 @@ using VertsVector = std::vector<Eigen::MatrixXd>;
 class PoseShapeExtractor
 {
 public:
+    enum InitializationType
+    {
+        NO_INITIALIZATION, 
+        OPENPOSE, 
+        FILE
+    };
+
     PoseShapeExtractor(const std::string& smpl_model_path,
-        const std::string& open_pose_path,
         const std::string& pose_prior_path,
         const std::string& logging_path = "");
     ~PoseShapeExtractor();
+
+    // pass path to openpose model or to smpl parameters file in accordance with the type
+    void setupInitialization(InitializationType type, const std::string path = "");
 
     void setupNewExperiment(std::shared_ptr<GeneralMesh> input, const std::string experiment_name = "");
     void setupNewDistplacementRegExperiment(std::shared_ptr<GeneralMesh> input,
@@ -69,6 +78,16 @@ private:
     std::shared_ptr<GeneralMesh> input_;
     std::shared_ptr<SMPLWrapper> smpl_;
     const std::string smpl_model_path_;
+    InitializationType initialization_type_;
+
+    // tools
+    std::string smpl_file_initilization_path_;
+    std::shared_ptr<OpenPoseWrapper> openpose_;
+    std::string openpose_model_path_;
+    std::shared_ptr<ShapeUnderClothOptimizer> optimizer_;
+    const std::string pose_prior_path_;
+    std::shared_ptr<CustomLogger> logger_;
+    const std::string logging_base_path_;
 
     // for photographer
     double cameras_distance_;
@@ -80,14 +99,6 @@ private:
     double optimizer_shape_prune_threshold_;
     double optimizer_pose_reg_weight_;
     double optimizer_displacement_reg_weight_;
-
-    // tools
-    std::shared_ptr<OpenPoseWrapper> openpose_;
-    const std::string openpose_model_path_;
-    std::shared_ptr<ShapeUnderClothOptimizer> optimizer_;
-    const std::string pose_prior_path_;
-    std::shared_ptr<CustomLogger> logger_;
-    const std::string logging_base_path_;
 
     // for visulaization
     VertsVector iteration_outputs_;
