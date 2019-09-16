@@ -9,7 +9,7 @@ SMPLWrapper::SMPLWrapper(char gender, const std::string path)
     {
         std::string message("Wrong gender supplied: ");
         message += gender;
-        throw std::exception(message.c_str());
+        throw std::invalid_argument(message.c_str());
     }
     this->gender_ = gender;
 
@@ -341,7 +341,7 @@ void SMPLWrapper::readTemplate_()
     {
         std::string message("Abort: Could not read SMPL template at ");
         message += file_name;
-        throw std::exception(message.c_str());
+        throw std::invalid_argument(message.c_str());
     }
 
     E::VectorXd mean_point = verts_template_.colwise().mean();
@@ -362,7 +362,7 @@ void SMPLWrapper::readJointMat_()
     inFile >> verts_n;
     // Sanity check
     if (joints_n != SMPLWrapper::JOINTS_NUM || verts_n != SMPLWrapper::VERTICES_NUM)
-        throw std::exception("Joint matrix info (number of joints and vertices) is incompatible with the model");
+        throw std::invalid_argument("Joint matrix info (number of joints and vertices) is incompatible with the model");
 
     this->jointRegressorMat_.resize(joints_n, verts_n);
     for (int i = 0; i < joints_n; i++)
@@ -384,7 +384,7 @@ void SMPLWrapper::readJointNames_()
     // Sanity check
     if (joints_n != JOINTS_NUM)
     {
-        throw std::exception("Number of joint names specified doesn't match current SMPLWrapper settings");
+        throw std::invalid_argument("Number of joint names specified doesn't match current SMPLWrapper settings");
     }
 
     std::string joint_name;
@@ -430,7 +430,7 @@ void SMPLWrapper::readWeights_()
     inFile >> verts_n;
     // Sanity check
     if (joints_n != SMPLWrapper::JOINTS_NUM || verts_n != SMPLWrapper::VERTICES_NUM)
-        throw std::exception("Weights info (number of joints and vertices) is incompatible with the model");
+        throw std::invalid_argument("Weights info (number of joints and vertices) is incompatible with the model");
 
     std::vector<E::Triplet<double>> tripletList;
     tripletList.reserve(verts_n * SMPLWrapper::WEIGHTS_BY_VERTEX);     // for faster filling performance
@@ -466,7 +466,7 @@ void SMPLWrapper::readHierarchy_()
     // Sanity check
     if (joints_n != SMPLWrapper::JOINTS_NUM)
     {
-        throw std::exception("Number of joints in joints hierarchy info is incompatible with the model");
+        throw std::invalid_argument("Number of joints in joints hierarchy info is incompatible with the model");
     }
     
     int tmpId;

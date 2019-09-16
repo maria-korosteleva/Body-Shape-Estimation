@@ -85,7 +85,7 @@ bool AbsoluteDistanceBase::Evaluate(double const * const * parameters, double * 
             fillDisplacementJac(distance_to_use, residuals, jacobians[0]);
             break;
         default:
-            throw std::exception("DistanceBase Caclulation::WARNING:: no parameter type specified");
+            throw std::invalid_argument("DistanceBase Caclulation::WARNING:: no parameter type specified");
         }
     }
 
@@ -130,7 +130,7 @@ void AbsoluteDistanceBase::updateDistanceCalculations(bool with_jacobian, Distan
             displacement_jac_evaluated = true;
             break;
         default:
-            throw std::exception("DistanceBase Update::WARNING:: no parameter type for Jac calculation specified");
+            throw std::invalid_argument("DistanceBase Update::WARNING:: no parameter type for Jac calculation specified");
         }
     }
     else

@@ -329,7 +329,7 @@ void ShapeUnderClothOptimizer::readAveragePose_deprecated_(const std::string pat
     inFile >> size;
     // Sanity check
     if (size != SMPLWrapper::POSE_SIZE - SMPLWrapper::SPACE_DIM)
-        throw std::exception("Striffness matrix size doesn't match the number of non-root pose parameters");
+        throw std::invalid_argument("Striffness matrix size doesn't match the number of non-root pose parameters");
     
     average_pose_deprecated_.resize(SMPLWrapper::POSE_SIZE);
     // For convinient use of the mean pose with full pose vectors, root rotation is set to zero
@@ -354,9 +354,9 @@ void ShapeUnderClothOptimizer::readStiffness_(const std::string path)
     inFile >> cols;
     // Sanity check
     if (rows != cols)
-        throw std::exception("Striffness matrix is not a square matrix");
+        throw std::invalid_argument("Striffness matrix is not a square matrix");
     if (rows != SMPLWrapper::POSE_SIZE - SMPLWrapper::SPACE_DIM)
-        throw std::exception("Striffness matrix size doesn't match the number of non-root pose parameters");
+        throw std::invalid_argument("Striffness matrix size doesn't match the number of non-root pose parameters");
 
     // To make matrix applicable to full pose vector
     this->stiffness_.resize(SMPLWrapper::POSE_SIZE, SMPLWrapper::POSE_SIZE);
@@ -417,7 +417,7 @@ void ShapeUnderClothOptimizer::checkCeresOptions(const Solver::Options & options
 {
     std::string error_text;
     if (!options.IsValid(&error_text))
-        throw std::exception(("Ceres Options Error: " + error_text).c_str());
+        throw std::runtime_error(("Ceres Options Error: " + error_text).c_str());
 }
 
 ceres::CallbackReturnType ShapeUnderClothOptimizer::SMPLVertsLoggingCallBack::operator()(const ceres::IterationSummary & summary)

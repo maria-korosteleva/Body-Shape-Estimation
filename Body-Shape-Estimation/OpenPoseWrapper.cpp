@@ -36,14 +36,14 @@ void OpenPoseWrapper::runPoseEstimation()
         // Save the last result
         bool success = opWrapper.waitAndPop(last_pose_datum_);
         if (!success)
-            throw std::exception("Processed datum could not be emplaced.");
+            throw std::runtime_error("Processed datum could not be emplaced.");
 
         op::log("Stopping thread(s)", op::Priority::High);
         opWrapper.stop();
 
         if (!checkCorrect3DDetection_(last_pose_datum_))
         {
-            throw std::exception("OpenPoseWrapper::ERROR::No keypoints detected!!");
+            throw std::runtime_error("OpenPoseWrapper::ERROR::No keypoints detected!!");
         }
 
         log3DKeypoints_(last_pose_datum_);
@@ -66,7 +66,7 @@ void OpenPoseWrapper::mapToSmpl(SMPLWrapper& smpl)
     {
         op::log("OpenPose::Error::request to match detected pose to smpl made before any pose was detected",
             op::Priority::High);
-        throw std::exception("OpenPose::Error::Request to match detected pose to smpl made before any pose was detected");
+        throw std::invalid_argument("OpenPose::Error::Request to match detected pose to smpl made before any pose was detected");
     }
 
     sendRootRotationToSMPL_(smpl);

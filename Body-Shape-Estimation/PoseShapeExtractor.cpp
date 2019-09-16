@@ -156,7 +156,7 @@ void PoseShapeExtractor::viewCameraSetupForPhotos()
 {
     if (input_ == nullptr)
     {
-        throw std::exception("PoseShapeExtractor: need some input specified to show the cameras scene. Sorry 0:)");
+        throw std::invalid_argument("PoseShapeExtractor: need some input specified to show the scene. Sorry 0:)");
     }
 
     Photographer photographer(input_.get());
@@ -186,7 +186,7 @@ void PoseShapeExtractor::viewFinalResult(bool withOpenPoseKeypoints)
     {
         if (openpose_ == nullptr)
         {
-            throw std::exception("PoseShapeExtractor: openpose keypoints are "
+            throw std::runtime_error("PoseShapeExtractor: openpose keypoints are "
                 " unavalible for Visualization. Run extraction first.");
         }
         Eigen::MatrixXd op_keypoints = openpose_->getKeypoints();
