@@ -27,6 +27,9 @@ SMPLWrapper::SMPLWrapper(char gender, const std::string path)
 
     joint_locations_template_ = calcJointLocations();
     fillVertsNeighbours_();
+
+    // initilize the model intermediate values
+    calcModel();
 }
 
 SMPLWrapper::~SMPLWrapper()
@@ -89,6 +92,9 @@ void SMPLWrapper::rotateLimbToDirection(const std::string joint_name, const E::V
 
     E::Vector3d fact_axis = angle_axis_(default_dir, new_dir);
     std::cout << "Fact Turned Angle: " << fact_axis.norm() * 180 / 3.1415 << std::endl;
+
+    // recalculate model with updated parameters
+    calcModel();
 }
 
 void SMPLWrapper::rotateRoot(const E::Vector3d& body_up, const E::Vector3d& body_right_to_left)
@@ -123,6 +129,9 @@ void SMPLWrapper::rotateRoot(const E::Vector3d& body_up, const E::Vector3d& body
         << "\n" << combined_rotation << std::endl;
 
     assignJointGlobalRotation_(0, combined_rotation, fk_transforms_);
+
+    // recalculate model with updated parameters
+    calcModel();
 }
 
 void SMPLWrapper::twistBack(const E::Vector3d& shoulder_dir)
@@ -158,6 +167,9 @@ void SMPLWrapper::twistBack(const E::Vector3d& shoulder_dir)
 
     updateJointsFKTransforms_(state_.pose, joint_locations_template_);
     assignJointGlobalRotation_(joint_names_.at("TopBack"), axis * angle / 3, fk_transforms_);
+
+    // recalculate model with updated parameters
+    calcModel();
 }
 
 void SMPLWrapper::translateTo(const E::VectorXd & center_point)
@@ -169,6 +181,9 @@ void SMPLWrapper::translateTo(const E::VectorXd & center_point)
     {
         state_.translation[i] = center_point(i) - mean_point(i);
     }
+
+    // recalculate model with updated parameters
+    calcModel();
 }
 
 void SMPLWrapper::loadParametersFromFile(const std::string filename)
@@ -203,8 +218,7 @@ void SMPLWrapper::loadParametersFromFile(const std::string filename)
     // No need to read joints locations
     in.close();
 
-    // recalculate model with updated paramters
-    // TODO check if needed
+    // recalculate model with updated parameters
     calcModel();
 }
 

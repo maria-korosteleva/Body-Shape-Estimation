@@ -167,6 +167,7 @@ private:
     // Inspired by igl::lbs_matrix(..)
     E::SparseMatrix<double> getLBSMatrix_(const E::MatrixXd & verts) const;
 
+    // ---------------- VARS -------------
     // initial info
     char gender_;
     std::string gender_path_;
