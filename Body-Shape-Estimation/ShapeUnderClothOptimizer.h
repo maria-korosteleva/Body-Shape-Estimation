@@ -28,12 +28,11 @@ using ceres::ScaledLoss;
 class ShapeUnderClothOptimizer
 {
 public:
-    ShapeUnderClothOptimizer(std::shared_ptr<SMPLWrapper> smpl, std::shared_ptr<GeneralMesh> input, const std::string path_to_prior);
+    ShapeUnderClothOptimizer(std::shared_ptr<SMPLWrapper> smpl, std::shared_ptr<GeneralMesh> input);
     ~ShapeUnderClothOptimizer();
     
     void setNewSMPLModel(std::shared_ptr<SMPLWrapper>);
     void setNewInput(std::shared_ptr<GeneralMesh>);
-    void setNewPriorPath(const char*);
     void setShapeRegularizationWeight(double weight) { shape_reg_weight_ = weight; };
     void setDisplacementRegWeight(double weight) { displacement_reg_weight_ = weight; };
     void setShapePruningThreshold(double value) { shape_prune_threshold_ = value; };
@@ -56,8 +55,6 @@ private:
     void displacementEstimation_(Solver::Options& options);
 
     // utils
-    void readAveragePose_deprecated_(const std::string);
-    void readStiffness_(const std::string);
     static void zeros_(double *, std::size_t);
     static void printArray_(double*, std::size_t);
     static ceres::Vector copyArray_(double*, std::size_t);
@@ -67,8 +64,6 @@ private:
     // use the shared_ptr to make sure objects won't dissapear in-between calls to this class
     std::shared_ptr<SMPLWrapper> smpl_ = nullptr;
     std::shared_ptr<GeneralMesh> input_ = nullptr;
-    ceres::Matrix stiffness_;
-    ceres::Vector average_pose_deprecated_;
 
     // parameters
     double shape_reg_weight_;

@@ -32,9 +32,7 @@ public:
         FILE
     };
 
-    PoseShapeExtractor(const std::string& smpl_model_path,
-        const std::string& pose_prior_path,
-        const std::string& logging_path = "");
+    PoseShapeExtractor(const std::string& smpl_model_path, const std::string& logging_path = "");
     ~PoseShapeExtractor();
 
     // pass path to openpose model or to smpl parameters file in accordance with the type
@@ -79,13 +77,12 @@ private:
     std::shared_ptr<SMPLWrapper> smpl_;
     const std::string smpl_model_path_;
     InitializationType initialization_type_;
+    std::string smpl_file_initilization_path_;
 
     // tools
-    std::string smpl_file_initilization_path_;
     std::shared_ptr<OpenPoseWrapper> openpose_;
     std::string openpose_model_path_;
     std::shared_ptr<ShapeUnderClothOptimizer> optimizer_;
-    const std::string pose_prior_path_;
     std::shared_ptr<CustomLogger> logger_;
     const std::string logging_base_path_;
 

@@ -98,11 +98,9 @@ int main()
 
         std::cout << "Inputs are loaded! " << std::endl;
 
-        PoseShapeExtractor extractor(smpl_model_path,
-            "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources",
-            output_path);
+        PoseShapeExtractor extractor(smpl_model_path, output_path);
 
-        extractor.setupNewExperiment(inputs[0], "exceptions");
+        extractor.setupNewExperiment(inputs[0], "move_stiffness");
         //extractor.setupNewDistplacementRegExperiment(inputs[0], 0.001, "d_dbg");
         extractor.setSaveIntermediateResults(true);
         extractor.setupInitialization(PoseShapeExtractor::FILE, 

@@ -63,6 +63,7 @@ public:
     const E::MatrixXi& getFaces() const              { return faces_; };
     const E::MatrixXd& getTemplateVertices() const   { return verts_template_normalized_; };
     const E::VectorXd& getTemplateMeanPoint() const  { return E::Vector3d(0, 0, 0); };
+    const E::MatrixXd& getPoseStiffness() const      { return pose_stiffness_; };
     // !! returns pointer to the inner arrays
     State& getStatePointers() { return state_; }
     const NeighboursList& getVertNeighbours(int vert_id) const { return verts_neighbours_[vert_id]; }
@@ -104,6 +105,7 @@ public:
 private:
     void readTemplate_();
     void readJointMat_();
+    void readPoseStiffnessMat_();
     void readJointNames_();
     void readShapes_();
     void readWeights_();
@@ -178,6 +180,7 @@ private:
     E::MatrixXd joint_locations_template_;
     E::MatrixXd shape_diffs_[10];  // store only differences between blendshapes and template
     E::MatrixXd jointRegressorMat_;
+    E::MatrixXd pose_stiffness_;
     static int joints_parents_[JOINTS_NUM];
     DictionaryInt joint_names_;
     E::SparseMatrix<double> weights_;

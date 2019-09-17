@@ -19,6 +19,7 @@ SMPLWrapper::SMPLWrapper(char gender, const std::string path)
 
     readTemplate_();
     readJointMat_();
+    readPoseStiffnessMat_();
     readJointNames_();
     readShapes_();
     readWeights_();
@@ -368,6 +369,36 @@ void SMPLWrapper::readJointMat_()
     for (int i = 0; i < joints_n; i++)
         for (int j = 0; j < verts_n; j++)
             inFile >> this->jointRegressorMat_(i, j);
+
+    inFile.close();
+}
+
+void SMPLWrapper::readPoseStiffnessMat_()
+{
+    std::string stiffness_filename = general_path_ + "stiffness.txt";
+
+    std::fstream inFile;
+    inFile.open(stiffness_filename, std::ios_base::in);
+    constexpr int NON_ROOT_POSE_SIZE = POSE_SIZE - SPACE_DIM;
+    int rows, cols;
+    inFile >> rows;
+    inFile >> cols;
+    // Sanity check
+    if (rows != cols)
+        throw std::invalid_argument("Striffness matrix is not a square matrix");
+    if (rows != SMPLWrapper::POSE_SIZE - SMPLWrapper::SPACE_DIM)
+        throw std::invalid_argument("Striffness matrix size doesn't match the number of non-root pose parameters");
+
+    // To make matrix applicable to full pose vector
+    pose_stiffness_.resize(SMPLWrapper::POSE_SIZE, SMPLWrapper::POSE_SIZE);
+    for (int i = 0; i < SMPLWrapper::SPACE_DIM; i++)
+        for (int j = 0; j < SMPLWrapper::POSE_SIZE; j++)
+            pose_stiffness_(i, j) = pose_stiffness_(j, i) = 0.;
+
+    // Now read from file
+    for (int i = SMPLWrapper::SPACE_DIM; i < SMPLWrapper::POSE_SIZE; i++)
+        for (int j = SMPLWrapper::SPACE_DIM; j < SMPLWrapper::POSE_SIZE; j++)
+            inFile >> pose_stiffness_(i, j);
 
     inFile.close();
 }

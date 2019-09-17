@@ -2,20 +2,14 @@
 
 
 ShapeUnderClothOptimizer::ShapeUnderClothOptimizer(std::shared_ptr<SMPLWrapper> smpl, 
-    std::shared_ptr<GeneralMesh> input, const std::string path_to_prior)
+    std::shared_ptr<GeneralMesh> input)
 {
     // note: could be nullptr
     smpl_ = std::move(smpl);
     input_ = std::move(input);
 
-    // read prior info
-    std::string path(path_to_prior);
-    path += '/';
-    readAveragePose_deprecated_(path);
-    readStiffness_(path);
-
     // parameters
-    // NOTE: the parameters might be reset from the outside
+    // NOTE: the parameters might be reset from the outside later on
     shape_reg_weight_ = 0.01;
     pose_reg_weight_ = 0.001;
     displacement_reg_weight_ = 0.001;
@@ -33,13 +27,6 @@ void ShapeUnderClothOptimizer::setNewSMPLModel(std::shared_ptr<SMPLWrapper> smpl
 void ShapeUnderClothOptimizer::setNewInput(std::shared_ptr<GeneralMesh> input)
 {
     input_ = std::move(input);
-}
-
-void ShapeUnderClothOptimizer::setNewPriorPath(const char * prior_path)
-{
-    std::string path(prior_path);
-    readAveragePose_deprecated_(path);
-    readStiffness_(path);
 }
 
 void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::MatrixXd>* iteration_results, const double parameter)
@@ -80,8 +67,6 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
         poseEstimation_(options, initial_pose_as_prior);
     }
 
-    // make random initial guess for displacement
-    //smpl_->getStatePointers().displacements.setRandom();
     for (int i = 0; i < 1; ++i)
     {
         std::cout << "***********************" << std::endl
@@ -92,7 +77,6 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
         translationEstimation_(options);
         poseEstimation_(options, initial_pose_as_prior);
     }
-
 
     auto end_time = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end_time - start_time;
@@ -182,7 +166,7 @@ void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, ceres::
         smpl_->getStatePointers().pose);
 
     // Regularizer
-    CostFunction* prior = new NormalPrior(stiffness_, prior_pose);
+    CostFunction* prior = new NormalPrior(smpl_->getPoseStiffness(), prior_pose);
     LossFunction* scale_prior = new ScaledLoss(NULL, pose_reg_weight_, ceres::TAKE_OWNERSHIP);    // 0.0007
     problem.AddResidualBlock(prior, scale_prior, 
         smpl_->getStatePointers().pose);
@@ -316,74 +300,6 @@ void ShapeUnderClothOptimizer::displacementEstimation_(Solver::Options& options)
 
     // clear the options from the update for smooth future use
     options.evaluation_callback = NULL;
-}
-
-void ShapeUnderClothOptimizer::readAveragePose_deprecated_(const std::string path)
-{
-    //std::string filename = path + "mean_pose.txt";
-    std::string filename = path + "A_pose.txt";
-
-    std::fstream inFile;
-    inFile.open(filename, std::ios_base::in);
-    int size;
-    inFile >> size;
-    // Sanity check
-    if (size != SMPLWrapper::POSE_SIZE - SMPLWrapper::SPACE_DIM)
-        throw std::invalid_argument("Striffness matrix size doesn't match the number of non-root pose parameters");
-    
-    average_pose_deprecated_.resize(SMPLWrapper::POSE_SIZE);
-    // For convinient use of the mean pose with full pose vectors, root rotation is set to zero
-    for (int i = 0; i < SMPLWrapper::SPACE_DIM; i++)
-        average_pose_deprecated_(i) = 0.;
-    // Now read from file
-    for (int i = SMPLWrapper::SPACE_DIM; i < SMPLWrapper::POSE_SIZE; i++)
-        inFile >> average_pose_deprecated_(i);
-
-    inFile.close();
-}
-
-void ShapeUnderClothOptimizer::readStiffness_(const std::string path)
-{
-    std::string stiffness_filename = path + "stiffness.txt";
-
-    std::fstream inFile;
-    inFile.open(stiffness_filename, std::ios_base::in);
-    constexpr int NON_ROOT_POSE_SIZE = SMPLWrapper::POSE_SIZE - SMPLWrapper::SPACE_DIM;
-    int rows, cols;
-    inFile >> rows;
-    inFile >> cols;
-    // Sanity check
-    if (rows != cols)
-        throw std::invalid_argument("Striffness matrix is not a square matrix");
-    if (rows != SMPLWrapper::POSE_SIZE - SMPLWrapper::SPACE_DIM)
-        throw std::invalid_argument("Striffness matrix size doesn't match the number of non-root pose parameters");
-
-    // To make matrix applicable to full pose vector
-    this->stiffness_.resize(SMPLWrapper::POSE_SIZE, SMPLWrapper::POSE_SIZE);
-    for (int i = 0; i < SMPLWrapper::SPACE_DIM; i++)
-        for (int j = 0; j < SMPLWrapper::POSE_SIZE; j++)
-            this->stiffness_(i, j) = this->stiffness_(j, i) = 0.;
-
-    // Now read from file
-    for (int i = SMPLWrapper::SPACE_DIM; i < SMPLWrapper::POSE_SIZE; i++)
-        for (int j = SMPLWrapper::SPACE_DIM; j < SMPLWrapper::POSE_SIZE; j++)
-            inFile >> this->stiffness_(i, j);
-
-    inFile.close();
-
-#ifdef DEBUG
-    std::cout << "Read stiffness matrix" << std::endl;
-    //for (int i = 0; i < SMPLWrapper::POSE_SIZE; i++)
-    //{
-    //    for (int j = 0; j < SMPLWrapper::POSE_SIZE; j++)
-    //    {
-    //        std::cout << this->stiffness_(i, j) << " ";
-    //    }
-    //    std::cout << std::endl;
-    //}
-    
-#endif // DEBUG
-
 }
 
 void ShapeUnderClothOptimizer::zeros_(double * arr, std::size_t size)

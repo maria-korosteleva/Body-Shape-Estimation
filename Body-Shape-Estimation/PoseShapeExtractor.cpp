@@ -6,11 +6,8 @@ VertsVector* PoseShapeExtractor::iteration_outputs_to_viz_;
 std::shared_ptr <SMPLWrapper> PoseShapeExtractor::smpl_to_viz_;
 std::shared_ptr <GeneralMesh> PoseShapeExtractor::input_to_viz_;
 
-PoseShapeExtractor::PoseShapeExtractor(const std::string& smpl_model_path,
-    const std::string& pose_prior_path,
-    const std::string& logging_path)
-    : smpl_model_path_(smpl_model_path),
-    pose_prior_path_(pose_prior_path), logging_base_path_(logging_path)
+PoseShapeExtractor::PoseShapeExtractor(const std::string& smpl_model_path, const std::string& logging_path)
+    : smpl_model_path_(smpl_model_path), logging_base_path_(logging_path)
 {
     smpl_ = nullptr;
     input_ = nullptr;
@@ -28,7 +25,7 @@ PoseShapeExtractor::PoseShapeExtractor(const std::string& smpl_model_path,
     optimizer_shape_prune_threshold_ = 0.05;
     optimizer_displacement_reg_weight_ = 0.001;
 
-    optimizer_ = std::make_shared<ShapeUnderClothOptimizer>(nullptr, nullptr, pose_prior_path_);
+    optimizer_ = std::make_shared<ShapeUnderClothOptimizer>(nullptr, nullptr);
 
     // as glog is used by class members
     google::InitGoogleLogging("PoseShapeExtractor");
