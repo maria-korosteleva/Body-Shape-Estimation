@@ -24,43 +24,43 @@ void generateSMPLoutput()
     SMPLWrapper new_smpl('f', smpl_model_path);
     SMPLWrapper::State& smpl_state_ptrs = new_smpl.getStatePointers();
 
-    std::vector<double> pose{
-        0.0651227 , 0.147299 , 0.0710667 ,
-        -0.21262 , 0.145289 , -0.23906 ,
-        0.309962 , 0.096978 , 0.138881 ,
-        -0.026791 , -0.0519696 , 0.0412594 ,
-        0.165091 , 0.353616 , 0.138207 ,
-        -0.241133 , 0.0853866 , -0.180021 ,
-        -0.156246 , -0.121236 , -0.0586891 ,
-        0.41172 , -0.655098 , -0.501557 ,
-        0.814726 , -0.370373 , 0.309268 ,
-        -0.0362064 , -0.154798 , -0.0802434 ,
-        0.0402412 , 0.13361 , 0.507384 ,
-        -0.21919 , -0.158187 , -0.629973 ,
-        0.0580983 , -0.262403 , 0.160539 ,
-        0.174705 , -0.0242574 , 0.0141313 ,
-        -0.0116324 , -0.0182904 , 0.0181343 ,
-        0.291841 , -0.184634 , -0.209186 ,
-        0.0936878 , 0.0989654 , -1.35397 ,
-        -0.00311836 , -0.0915279 , 1.3157 ,
-        0.155893 , -0.107155 , 0.0415009 ,
-        0.109932 , 1.01562 , 0.406998 ,
-        0.433999 , -0.313739 , -0.197886 ,
-        0.172167 , 0.255817 , -0.100458 ,
-        -0.114067 , 0.170656 , 0.193996 ,
-        -0.218555 , -0.262078 , -0.326749 ,
-    };
+    SMPLWrapper::ERMatrixXd pose(SMPLWrapper::JOINTS_NUM, SMPLWrapper::SPACE_DIM);
+    pose << -0.0848798, 0.315784, 0.00665184,
+        0.110782, 0.0117129, -0.129827,
+        -0.140488, 0.0135771, 0.00507199,
+        0.00119627, 0.00500833, -0.0532766,
+        -0.0434787, -0.0115501, 0.11333,
+        0.350265, 0.0119452, 0.00790079,
+        0.00119627, 0.00500833, -0.0532766,
+        0.447399, -0.110852, -0.144257,
+        0.448445, -0.0578055, 0.0610899,
+        0.00119627, 0.00500833, -0.0532766,
+        0, 0, 0,
+        0, 0, 0,
+        0.00984134, 0.00632115, -0.00853605,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        -0.0563716, 0.193721, -0.598922,
+        0.0188691, 0.720704, -0.700351,
+        0.0259416, -0.677862, -1.58839,
+        0.0484256, 0.50971, -2.11744,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0;
 
-    std::vector<double>  shape
-        { -1.35579 , 1.271845 , 0.262945 , 0.723132 , 0.0851556 , 1.80277 , 1.06419 , -0.67788 , 0.112532 , 0.670397 , };
+    Eigen::VectorXd shape(SMPLWrapper::SHAPE_SIZE);
+    shape << 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
 
-    std::vector<double> translation{ 0.00786991 , 0.22358 , 0.0107836 , };
+    Eigen::VectorXd translation(SMPLWrapper::SPACE_DIM);
+    translation << 0, 0, 0;
 
-    smpl_state_ptrs.pose = &pose[0];
-    smpl_state_ptrs.shape = &shape[0];
-    smpl_state_ptrs.translation = &translation[0];
+    smpl_state_ptrs.pose = pose;
+    smpl_state_ptrs.shape = shape;
+    smpl_state_ptrs.translation = translation;
 
-    CustomLogger logger(output_path, "cas_wom_modified");
+    CustomLogger logger(output_path, "smpl_op_guess_saved");
 
     logger.saveFinalModel(new_smpl);
 }
@@ -100,7 +100,7 @@ int main()
 
         PoseShapeExtractor extractor(smpl_model_path, output_path);
 
-        extractor.setupNewExperiment(inputs[0], "move_stiffness");
+        extractor.setupNewExperiment(inputs[0], "update_types");
         //extractor.setupNewDistplacementRegExperiment(inputs[0], 0.001, "d_dbg");
         extractor.setSaveIntermediateResults(true);
         extractor.setupInitialization(PoseShapeExtractor::FILE, 

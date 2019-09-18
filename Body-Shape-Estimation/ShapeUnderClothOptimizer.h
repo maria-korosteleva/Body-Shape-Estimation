@@ -50,14 +50,11 @@ private:
     // inidividual optimizers
     // expect the params to be initialized outside
     void translationEstimation_(Solver::Options& options);
-    void poseEstimation_(Solver::Options& options, ceres::Vector& prior_pose, const double parameter = 1.);
+    void poseEstimation_(Solver::Options& options, ceres::Matrix & prior_pose, const double parameter = 1.);
     void shapeEstimation_(Solver::Options& options, const double parameter = 1.);
     void displacementEstimation_(Solver::Options& options);
 
     // utils
-    static void zeros_(double *, std::size_t);
-    static void printArray_(double*, std::size_t);
-    static ceres::Vector copyArray_(double*, std::size_t);
     void checkCeresOptions(const Solver::Options& options);
 
     // data

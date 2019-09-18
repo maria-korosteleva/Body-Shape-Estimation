@@ -35,8 +35,7 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
     // smpl is moved to zero, because we use normalized input - equivalent to translation guess
     smpl_->translateTo(E::Vector3d(0., 0., 0.));
     // Put our trust into the initial pose
-    ceres::Vector initial_pose_as_prior 
-        = copyArray_(smpl_->getStatePointers().pose, SMPLWrapper::POSE_SIZE);
+    ceres::Matrix initial_pose_as_prior = smpl_->getStatePointers().pose;
 
     // Setup solvers options
     Solver::Options options;
@@ -122,7 +121,7 @@ void ShapeUnderClothOptimizer::translationEstimation_(Solver::Options & options)
     // for pre-computation
     options.evaluation_callback = cost_function;
     
-    problem.AddResidualBlock(cost_function, nullptr, smpl_->getStatePointers().translation);
+    problem.AddResidualBlock(cost_function, nullptr, smpl_->getStatePointers().translation.data());
 
     // Run the solver!
     Solver::Summary summary;
@@ -136,7 +135,7 @@ void ShapeUnderClothOptimizer::translationEstimation_(Solver::Options & options)
     options.evaluation_callback = NULL;
 }
 
-void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, ceres::Vector& prior_pose, const double parameter)
+void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, ceres::Matrix & prior_pose, const double parameter)
 {
     std::cout << "-----------------------" << std::endl
               << "          Pose" << std::endl
@@ -155,7 +154,7 @@ void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, ceres::
     options.evaluation_callback = out_cost_function;
 
     problem.AddResidualBlock(out_cost_function, nullptr,
-        smpl_->getStatePointers().pose);
+        smpl_->getStatePointers().pose.data());
 
     LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.1, ceres::TAKE_OWNERSHIP);
     LossFunction* geman_mcclare_cost = new GemanMcClareLoss(0.033);
@@ -163,13 +162,15 @@ void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, ceres::
         scale_in_cost, ceres::TAKE_OWNERSHIP,
         geman_mcclare_cost, ceres::TAKE_OWNERSHIP);
     problem.AddResidualBlock(in_cost_function, composed_loss,
-        smpl_->getStatePointers().pose);
+        smpl_->getStatePointers().pose.data());
 
     // Regularizer
-    CostFunction* prior = new NormalPrior(smpl_->getPoseStiffness(), prior_pose);
+    // Note that we exploit the row-major here!
+    ceres::Vector prior_pose_as_vector = Eigen::Map<Eigen::VectorXd>(prior_pose.data(), prior_pose.size());
+    CostFunction* prior = new NormalPrior(smpl_->getPoseStiffness(), prior_pose_as_vector);
     LossFunction* scale_prior = new ScaledLoss(NULL, pose_reg_weight_, ceres::TAKE_OWNERSHIP);    // 0.0007
     problem.AddResidualBlock(prior, scale_prior, 
-        smpl_->getStatePointers().pose);
+        smpl_->getStatePointers().pose.data());
 
     // Run the solver!
     Solver::Summary summary;
@@ -202,7 +203,7 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
 
     // add Residuals 
     problem.AddResidualBlock(out_cost_function, nullptr,
-        smpl_->getStatePointers().shape);
+        smpl_->getStatePointers().shape.data());
 
     LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.1, ceres::TAKE_OWNERSHIP);
     LossFunction* geman_mcclare_cost = new GemanMcClareLoss(0.033);
@@ -210,7 +211,7 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
         scale_in_cost, ceres::TAKE_OWNERSHIP,
         geman_mcclare_cost, ceres::TAKE_OWNERSHIP);
     problem.AddResidualBlock(in_cost_function, composed_loss,
-        smpl_->getStatePointers().shape);
+        smpl_->getStatePointers().shape.data());
 
     // Regularization
     CostFunction* prior = new NormalPrior(
@@ -218,7 +219,7 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
         Eigen::VectorXd::Zero(SMPLWrapper::SHAPE_SIZE));
     LossFunction* scale_prior = new ScaledLoss(NULL, shape_reg_weight_, ceres::TAKE_OWNERSHIP);
     problem.AddResidualBlock(prior, scale_prior,
-        smpl_->getStatePointers().shape);
+        smpl_->getStatePointers().shape.data());
 
     // Run the solver!
     Solver::Summary summary;
@@ -300,33 +301,6 @@ void ShapeUnderClothOptimizer::displacementEstimation_(Solver::Options& options)
 
     // clear the options from the update for smooth future use
     options.evaluation_callback = NULL;
-}
-
-void ShapeUnderClothOptimizer::zeros_(double * arr, std::size_t size)
-{
-    for (int i = 0; i < size; i++)
-    {
-        arr[i] = 0.;
-    }
-}
-
-void ShapeUnderClothOptimizer::printArray_(double * arr, std::size_t size)
-{
-    for (int i = 0; i < size; i++)
-    {
-        std::cout << arr[i] << "; ";
-    }
-    std::cout << std::endl;
-}
-
-ceres::Vector ShapeUnderClothOptimizer::copyArray_(double * arr, std::size_t size)
-{
-    ceres::Vector copy(size);
-
-    for (int i = 0; i < size; ++i)
-        copy[i] = arr[i];
-
-    return copy;
 }
 
 void ShapeUnderClothOptimizer::checkCeresOptions(const Solver::Options & options)

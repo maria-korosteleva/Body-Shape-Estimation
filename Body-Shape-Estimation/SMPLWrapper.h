@@ -25,18 +25,6 @@ namespace E = Eigen;
 class SMPLWrapper
 {
 public:
-    using ERMatrixXd = E::Matrix<double, -1, -1, E::RowMajor>;
-    using NeighboursList = std::vector<int>;
-
-    struct State {
-        double* pose = nullptr;
-        double* shape = nullptr;
-        double* translation = nullptr;
-        ERMatrixXd displacements;
-
-        State();
-        ~State();
-    };
     static constexpr std::size_t SHAPE_SIZE = 10;
     static constexpr std::size_t SPACE_DIM = 3; // needs to be 3 for most of the routines to work
     static constexpr std::size_t HOMO_SIZE = SMPLWrapper::SPACE_DIM + 1;
@@ -45,6 +33,18 @@ public:
     static constexpr std::size_t VERTICES_NUM = 6890;
     static constexpr std::size_t WEIGHTS_BY_VERTEX = 4;     // number of joints each vertex depend on
 
+    using ERMatrixXd = E::Matrix<double, -1, -1, E::RowMajor>;
+    struct State {
+        ERMatrixXd pose;    // need row-major for nice alignment for further optimization
+        E::VectorXd shape;
+        E::VectorXd translation;
+        ERMatrixXd displacements;
+
+        State();
+        ~State() {};
+    };
+
+    using NeighboursList = std::vector<int>;
     using DictionaryInt = std::map<std::string, int>;
     using DictEntryInt = std::pair<std::string, int>;
     using EHomoCoordMatrix = E::Matrix<double, HOMO_SIZE, HOMO_SIZE>;
@@ -64,7 +64,7 @@ public:
     const E::MatrixXd& getTemplateVertices() const   { return verts_template_normalized_; };
     const E::VectorXd& getTemplateMeanPoint() const  { return E::Vector3d(0, 0, 0); };
     const E::MatrixXd& getPoseStiffness() const      { return pose_stiffness_; };
-    // !! returns pointer to the inner arrays
+    // !! gives access to the inner arrays
     State& getStatePointers() { return state_; }
     const NeighboursList& getVertNeighbours(int vert_id) const { return verts_neighbours_[vert_id]; }
 
@@ -81,11 +81,11 @@ public:
 
     // calculate the model output mesh
     // *_jacs are expected to have space for POSE_SIZE and SHAPE_SIZE Matrices
-    E::MatrixXd calcModel(const double * const translation, 
-        const double * const pose, 
-        const double * const shape,
+    E::MatrixXd calcModel(const E::VectorXd * translation, 
+        const ERMatrixXd * pose,
+        const E::VectorXd * shape,
         const ERMatrixXd * displacement,
-        E::MatrixXd * pose_jac = nullptr, 
+        E::MatrixXd * pose_jac = nullptr,
         E::MatrixXd * shape_jac = nullptr,
         E::MatrixXd * displacement_jac = nullptr);
     // calculate for the supplied vertices (calcModel output)
@@ -113,7 +113,8 @@ private:
     // to be called after the faces are collected
     void fillVertsNeighbours_();
 
-    void saveToObj_(const double * translation, const double * pose, const double* shape, const ERMatrixXd* displacements,
+    void saveToObj_(const E::VectorXd* translation, const ERMatrixXd * pose,
+        const E::VectorXd* shape, const ERMatrixXd* displacements,
         const std::string path);
 
     // For individual joint rotation calculation
@@ -126,16 +127,16 @@ private:
    
     // Model calculation
    // if not nullptr, shape_jac is expected to be an array of SHAPE_SIZE of MatrixXd, one matrix for each shape parameter
-    void shapeSMPL_(const double * const shape, E::MatrixXd &verts, E::MatrixXd* shape_jac = nullptr);
+    void shapeSMPL_(const E::VectorXd& shape, E::MatrixXd &verts, E::MatrixXd* shape_jac = nullptr);
     // Careful with the use_previous_pose_matrix paramter when calling the posing for the first time!
-    void poseSMPL_(const double * const pose, E::MatrixXd & verts, const ERMatrixXd *displacement, E::MatrixXd * pose_jac = nullptr,
+    void poseSMPL_(const ERMatrixXd& pose, E::MatrixXd & verts, const ERMatrixXd *displacement, E::MatrixXd * pose_jac = nullptr,
         bool use_previous_pose_matrix = false);
     // Jaconian is not provided because it's always an identity: dv_i / d_tj == 1 => don't want to waste memory on it
-    void translate_(const double * const translation, E::MatrixXd & verts);
+    void translate_(const E::VectorXd& translation, E::MatrixXd & verts);
 
     // don't account for displacement, because the jointRegressor was not designed for it
-    E::MatrixXd calcJointLocations_(const double * translation = nullptr, 
-        const double * shape = nullptr, const double * pose = nullptr);
+    E::MatrixXd calcJointLocations_(const E::VectorXd* translation = nullptr,
+        const E::VectorXd* shape = nullptr, const ERMatrixXd * pose = nullptr);
 
     // pass fk_transforms_ to be explicit of which version of fk_transforms is used for calculations
     static E::MatrixXd extractJointLocationFromFKTransform_(const EHomoCoordMatrix(&fk_transform)[SMPLWrapper::JOINTS_NUM]);
@@ -149,19 +150,18 @@ private:
     // Posing routines: all sssumes that SPACE_DIM == 3
     // Assumes the default joint angles to be all zeros
     // Updates fk_*
-    void updateJointsFKTransforms_(const double * const pose, 
+    void updateJointsFKTransforms_(const ERMatrixXd & pose,
         const E::MatrixXd & t_pose_joints_locations, bool calc_derivatives = false);
     
     static E::MatrixXd get3DLocalTransformMat_(
-        const double * const jointAxisAngleRotation, 
-        const E::MatrixXd & jointToParentDist);
+        const E::Vector3d & jointAxisAngleRotation, const E::Vector3d & jointToParentDist);
 
     static void get3DLocalTransformJac_(
-        const double * const jointAxisAngleRotation,
+        const E::Vector3d & jointAxisAngleRotation,
         const E::MatrixXd & transform_mat,
         E::MatrixXd* local_transform_jac_out);
 
-    static E::MatrixXd get3DTranslationMat_(const E::MatrixXd & translationVector);
+    static E::MatrixXd get3DTranslationMat_(const E::Vector3d & translationVector);
     
     // Composes weights (object local) and given vertices in the rest pose into (Sparse) LBSMatrix. 
     // Inspired by igl::lbs_matrix(..)

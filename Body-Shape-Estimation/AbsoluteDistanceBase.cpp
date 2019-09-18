@@ -106,25 +106,25 @@ void AbsoluteDistanceBase::updateDistanceCalculations(bool with_jacobian, Distan
         {
         case SHAPE:
             out_distance_result.verts = smpl_->calcModel(
-                smpl_->getStatePointers().translation, 
-                smpl_->getStatePointers().pose, 
-                smpl_->getStatePointers().shape, 
+                &smpl_->getStatePointers().translation, 
+                &smpl_->getStatePointers().pose, 
+                &smpl_->getStatePointers().shape, 
                 &smpl_->getStatePointers().displacements,
                 nullptr, &out_distance_result.jacobian[0], nullptr);
             break;
         case POSE:
             out_distance_result.verts = smpl_->calcModel(
-                smpl_->getStatePointers().translation, 
-                smpl_->getStatePointers().pose, 
-                smpl_->getStatePointers().shape,
+                &smpl_->getStatePointers().translation, 
+                &smpl_->getStatePointers().pose, 
+                &smpl_->getStatePointers().shape,
                 &smpl_->getStatePointers().displacements,
                 &out_distance_result.jacobian[0], nullptr, nullptr);
             break;
         case DISPLACEMENT:
             out_distance_result.verts = smpl_->calcModel(
-                smpl_->getStatePointers().translation,
-                smpl_->getStatePointers().pose,
-                smpl_->getStatePointers().shape,
+                &smpl_->getStatePointers().translation,
+                &smpl_->getStatePointers().pose,
+                &smpl_->getStatePointers().shape,
                 &smpl_->getStatePointers().displacements,
                 nullptr, nullptr, &out_distance_result.jacobian[0]);
             displacement_jac_evaluated = true;
@@ -136,9 +136,9 @@ void AbsoluteDistanceBase::updateDistanceCalculations(bool with_jacobian, Distan
     else
     {
         out_distance_result.verts = smpl_->calcModel(
-            smpl_->getStatePointers().translation, 
-            smpl_->getStatePointers().pose, 
-            smpl_->getStatePointers().shape, 
+            &smpl_->getStatePointers().translation, 
+            &smpl_->getStatePointers().pose, 
+            &smpl_->getStatePointers().shape, 
             &smpl_->getStatePointers().displacements);
     }
     // get vertex normals
