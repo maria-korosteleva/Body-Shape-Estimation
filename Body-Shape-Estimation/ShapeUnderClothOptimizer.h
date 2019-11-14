@@ -35,6 +35,7 @@ public:
     void setNewInput(std::shared_ptr<GeneralMesh>);
     void setShapeRegularizationWeight(double weight) { shape_reg_weight_ = weight; };
     void setDisplacementRegWeight(double weight) { displacement_reg_weight_ = weight; };
+    void setDisplacementSmoothingWeight(double weight) { displacement_smoothing_weight_ = weight; };
     void setShapePruningThreshold(double value) { shape_prune_threshold_ = value; };
     void setPoseRegularizationWeight(double weight) { pose_reg_weight_ = weight; };
 
@@ -65,6 +66,7 @@ private:
     // parameters
     double shape_reg_weight_;
     double displacement_reg_weight_;
+    double displacement_smoothing_weight_;
     double pose_reg_weight_;
     double shape_prune_threshold_;
 
