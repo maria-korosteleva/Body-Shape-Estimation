@@ -48,6 +48,9 @@
     <ClInclude Include="SmoothDisplacementCost.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="GeneralUtility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SMPLWrapper.cpp">
@@ -78,6 +81,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Body-Shape-Estimation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneralUtility.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

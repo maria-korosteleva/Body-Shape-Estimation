@@ -57,7 +57,7 @@ void PoseShapeExtractor::setupInitialization(InitializationType type, const std:
 void PoseShapeExtractor::setupNewExperiment(std::shared_ptr<GeneralMesh> input, const std::string experiment_name)
 {
     input_ = std::move(input);
-    logger_ = std::make_shared<CustomLogger>(logging_base_path_, experiment_name + "_" + input_->getName());
+    logger_ = std::make_shared<CustomLogger>(logging_base_path_, experiment_name + "_" + input_->getNameWithGroup());
 
     // for convenience
     input_->saveNormalizedMesh(logger_->getLogFolderPath());

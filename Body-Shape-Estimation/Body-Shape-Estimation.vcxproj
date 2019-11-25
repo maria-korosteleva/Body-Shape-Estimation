@@ -179,6 +179,7 @@
   <ItemGroup>
     <ClInclude Include="AbsoluteDistanceBase.h" />
     <ClInclude Include="CustomLogger.h" />
+    <ClInclude Include="GeneralUtility.h" />
     <ClInclude Include="OpenPoseWrapper.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PoseShapeExtractor.h" />
@@ -191,6 +192,7 @@
     <ClCompile Include="AbsoluteDistanceBase.cpp" />
     <ClCompile Include="CustomLogger.cpp" />
     <ClCompile Include="Body-Shape-Estimation.cpp" />
+    <ClCompile Include="GeneralUtility.cpp" />
     <ClCompile Include="OpenPoseWrapper.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
