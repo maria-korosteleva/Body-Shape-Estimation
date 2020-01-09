@@ -57,7 +57,10 @@ bool AbsoluteDistanceBase::Evaluate(double const * const * parameters, double * 
         residuals[0] = residual_elem_(
             distance_to_use.signedDists(vertex_id_for_displacement_),
             distance_to_use.verts_normals.row(vertex_id_for_displacement_),
-            input_face_normals.row(distance_to_use.closest_face_ids(vertex_id_for_displacement_)));
+            input_face_normals.row(distance_to_use.closest_face_ids(vertex_id_for_displacement_)), 
+            toMesh_->isClothSegmented() ?
+                toMesh_->getFacesClothProbabilities()[distance_to_use.closest_face_ids(vertex_id_for_displacement_)]
+                : 1.);
     }
     else
     {
@@ -65,7 +68,10 @@ bool AbsoluteDistanceBase::Evaluate(double const * const * parameters, double * 
         {
             residuals[i] = residual_elem_(distance_to_use.signedDists(i),
                 distance_to_use.verts_normals.row(i),
-                input_face_normals.row(distance_to_use.closest_face_ids(i)));
+                input_face_normals.row(distance_to_use.closest_face_ids(i)),
+                toMesh_->isClothSegmented() ? 
+                    toMesh_->getFacesClothProbabilities()[distance_to_use.closest_face_ids(i)] 
+                    : 1.);
         }
     }
 
@@ -175,7 +181,10 @@ void AbsoluteDistanceBase::fillJac(const DistanceResult& distance_res, const dou
                 = jac_elem_(distance_res.verts.row(v_id), 
                     distance_res.closest_points.row(v_id), 
                     residuals[v_id],
-                    distance_res.jacobian[param_id].row(v_id));
+                    distance_res.jacobian[param_id].row(v_id), 
+                    toMesh_->isClothSegmented() ?
+                        toMesh_->getFacesClothProbabilities()[distance_res.closest_face_ids(v_id)]
+                        : 1.);
         }
     }
 }
@@ -189,7 +198,10 @@ void AbsoluteDistanceBase::fillDisplacementJac(const DistanceResult & distance_r
             = jac_elem_(distance_res.verts.row(vertex_id_for_displacement_),
                 distance_res.closest_points.row(vertex_id_for_displacement_),
                 residuals[0],
-                distance_res.jacobian[axis_id].row(vertex_id_for_displacement_));
+                distance_res.jacobian[axis_id].row(vertex_id_for_displacement_), 
+                toMesh_->isClothSegmented() ?
+                    toMesh_->getFacesClothProbabilities()[distance_res.closest_face_ids(vertex_id_for_displacement_)]
+                    : 1.);
 
     }
 }

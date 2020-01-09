@@ -51,8 +51,15 @@ private:
     // inidividual optimizers
     // expect the params to be initialized outside
     void translationEstimation_(Solver::Options& options);
+
     void poseEstimation_(Solver::Options& options, ceres::Matrix & prior_pose, const double parameter = 1.);
+    void poseMainCostNoSegmetation_(Problem& problem, Solver::Options& options);
+    void poseMainCostClothAware_(Problem& problem, Solver::Options& options);
+
     void shapeEstimation_(Solver::Options& options, const double parameter = 1.);
+    void shapeMainCostNoSegmetation_(Problem& problem, Solver::Options& options);
+    void shapeMainCostClothAware_(Problem& problem, Solver::Options& options);
+
     void displacementEstimation_(Solver::Options& options);
 
     // utils

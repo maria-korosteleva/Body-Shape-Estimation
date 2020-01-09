@@ -19,7 +19,10 @@ public:
     enum DistanceType {
         IN_DIST, 
         OUT_DIST, 
-        BOTH_DIST
+        BOTH_DIST, 
+        CLOTH_IN, 
+        CLOTH_OUT, 
+        SKIN_BOTH
     };
 
     AbsoluteDistanceBase(SMPLWrapper*, GeneralMesh *,
@@ -61,17 +64,26 @@ protected:
     // 
     template<typename Row1, typename Row2>
     inline double residual_elem_(const double signed_dist, 
-        const Row1 vertex_normal, const Row2 input_normal) const
+        const Row1 vertex_normal, const Row2 input_normal, const double cloth_prob = 1.) const
     {
-        if (dist_evaluation_type_ == IN_DIST && signed_dist > 0     // is outside, want inside
-            || dist_evaluation_type_ == OUT_DIST && signed_dist < 0 // is inside, want outside
-            || abs(signed_dist) > pruning_threshold_                // too far
-            || vertex_normal.dot(input_normal) <= 0)                // looks the wrong way. Check last, as it's most expensive
+        if ((dist_evaluation_type_ == IN_DIST || dist_evaluation_type_ == CLOTH_IN) && signed_dist > 0       // is outside, want inside
+            || (dist_evaluation_type_ == OUT_DIST || dist_evaluation_type_ == CLOTH_OUT) && signed_dist < 0 // is inside, want outside
+            || abs(signed_dist) > pruning_threshold_            // too far
+            || vertex_normal.dot(input_normal) <= 0)            // looks the wrong way. Check last, as it's most expensive
         {
             return 0;
         }
 
-        return abs(signed_dist);
+        switch (dist_evaluation_type_)
+        {
+        case CLOTH_IN:
+        case CLOTH_OUT:
+            return cloth_prob * abs(signed_dist);
+        case SKIN_BOTH:
+            return (1. - cloth_prob) * abs(signed_dist);
+        default:
+            return abs(signed_dist);
+        }
     }
 
     // Jac values are set to zero whenever the residual is zero/close to zero
@@ -79,12 +91,23 @@ protected:
     inline double jac_elem_(const Row1&& vertex,
         const Row2&& closest_input_point,
         double abs_dist,
-        const Row3&& grad) const
+        const Row3&& grad, 
+        const double cloth_prob = 1.) const
     {
         double jac_entry = abs_dist < 1e-5
             ? 0
             : (vertex - closest_input_point).dot(grad) / abs_dist;
-        return jac_entry;
+        
+        switch (dist_evaluation_type_)
+        {
+        case CLOTH_IN:
+        case CLOTH_OUT:
+            return cloth_prob * jac_entry;
+        case SKIN_BOTH:
+            return (1. - cloth_prob) * jac_entry;
+        default:
+            return jac_entry;
+        }
     }
 
     inline double translation_jac_elem_(const double vert_coord,

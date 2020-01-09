@@ -67,7 +67,7 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
         poseEstimation_(options, initial_pose_as_prior);
     }
 
-    for (int i = 0; i < 1; ++i)
+    for (int i = 0; i < 0; ++i)
     {
         std::cout << "***********************" << std::endl
             << "    Cycle Displacement: #" << i << std::endl
@@ -145,25 +145,10 @@ void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, ceres::
     Problem problem;
 
     // Main cost
-    // send raw pointers because inner class were not refactored
-    AbsoluteDistanceBase* out_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
-        AbsoluteDistanceBase::POSE, AbsoluteDistanceBase::OUT_DIST);
-    AbsoluteDistanceBase* in_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
-        AbsoluteDistanceBase::POSE, AbsoluteDistanceBase::IN_DIST);
-
-    // for pre-computation
-    options.evaluation_callback = out_cost_function;
-
-    problem.AddResidualBlock(out_cost_function, nullptr,
-        smpl_->getStatePointers().pose.data());
-
-    LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.1, ceres::TAKE_OWNERSHIP);
-    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(0.033);
-    ceres::ComposedLoss* composed_loss = new ceres::ComposedLoss(
-        scale_in_cost, ceres::TAKE_OWNERSHIP,
-        geman_mcclare_cost, ceres::TAKE_OWNERSHIP);
-    problem.AddResidualBlock(in_cost_function, composed_loss,
-        smpl_->getStatePointers().pose.data());
+    if (input_->isClothSegmented())
+        poseMainCostClothAware_(problem, options);
+    else
+        poseMainCostNoSegmetation_(problem, options);
 
     // Regularizer
     // Note that we exploit the row-major here!
@@ -185,6 +170,59 @@ void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, ceres::
     options.evaluation_callback = NULL;
 }
 
+void ShapeUnderClothOptimizer::poseMainCostNoSegmetation_(Problem & problem, Solver::Options& options)
+{
+    // send raw pointers because inner class were not refactored
+    AbsoluteDistanceBase* out_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
+        AbsoluteDistanceBase::POSE, AbsoluteDistanceBase::OUT_DIST);
+    AbsoluteDistanceBase* in_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
+        AbsoluteDistanceBase::POSE, AbsoluteDistanceBase::IN_DIST);
+
+    problem.AddResidualBlock(out_cost_function, nullptr,
+        smpl_->getStatePointers().pose.data());
+
+    // in_verts distance needs scaling 
+    LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.1, ceres::TAKE_OWNERSHIP);
+    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(0.033);
+    ceres::ComposedLoss* composed_loss = new ceres::ComposedLoss(
+        scale_in_cost, ceres::TAKE_OWNERSHIP,
+        geman_mcclare_cost, ceres::TAKE_OWNERSHIP);
+    problem.AddResidualBlock(in_cost_function, composed_loss,
+        smpl_->getStatePointers().pose.data());
+
+    // set any of the defined costs for pre-computation
+    options.evaluation_callback = out_cost_function;
+}
+
+void ShapeUnderClothOptimizer::poseMainCostClothAware_(Problem & problem, Solver::Options& options)
+{
+    // send raw pointers because inner class was not refactored
+    AbsoluteDistanceBase* cloth_out_cost = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
+        AbsoluteDistanceBase::POSE, AbsoluteDistanceBase::CLOTH_OUT);
+    AbsoluteDistanceBase* cloth_in_cost = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
+        AbsoluteDistanceBase::POSE, AbsoluteDistanceBase::CLOTH_IN);
+    AbsoluteDistanceBase* skin_cost = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
+        AbsoluteDistanceBase::POSE, AbsoluteDistanceBase::SKIN_BOTH);
+
+    problem.AddResidualBlock(skin_cost, nullptr,
+        smpl_->getStatePointers().pose.data());
+
+    problem.AddResidualBlock(cloth_out_cost, nullptr,
+        smpl_->getStatePointers().pose.data());
+
+    // in_verts distance needs scaling 
+    LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.1, ceres::TAKE_OWNERSHIP);
+    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(0.033);
+    ceres::ComposedLoss* composed_loss = new ceres::ComposedLoss(
+        scale_in_cost, ceres::TAKE_OWNERSHIP,
+        geman_mcclare_cost, ceres::TAKE_OWNERSHIP);
+    problem.AddResidualBlock(cloth_in_cost, composed_loss,
+        smpl_->getStatePointers().pose.data());
+
+    // set any of the defined costs for pre-computation
+    options.evaluation_callback = cloth_out_cost;
+}
+
 void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const double gm_parameter)
 {
     std::cout << "-----------------------" << std::endl
@@ -194,25 +232,10 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
     Problem problem;
 
     // Main cost
-    AbsoluteDistanceBase* out_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
-        AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::OUT_DIST, shape_prune_threshold_);
-    AbsoluteDistanceBase* in_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
-        AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::IN_DIST);  // no threshold
-
-    // add for performing pre-computation
-    options.evaluation_callback = out_cost_function;
-
-    // add Residuals 
-    problem.AddResidualBlock(out_cost_function, nullptr,
-        smpl_->getStatePointers().shape.data());
-
-    LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.1, ceres::TAKE_OWNERSHIP);
-    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(0.033);
-    ceres::ComposedLoss* composed_loss = new ceres::ComposedLoss(
-        scale_in_cost, ceres::TAKE_OWNERSHIP,
-        geman_mcclare_cost, ceres::TAKE_OWNERSHIP);
-    problem.AddResidualBlock(in_cost_function, composed_loss,
-        smpl_->getStatePointers().shape.data());
+    if (input_->isClothSegmented())
+        shapeMainCostClothAware_(problem, options);
+    else
+        shapeMainCostNoSegmetation_(problem, options);
 
     // Regularization
     CostFunction* prior = new NormalPrior(
@@ -232,6 +255,58 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
 
     // clear the options from the update for smooth future use
     options.evaluation_callback = NULL;
+}
+
+void ShapeUnderClothOptimizer::shapeMainCostNoSegmetation_(Problem & problem, Solver::Options & options)
+{
+    AbsoluteDistanceBase* out_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
+        AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::OUT_DIST, shape_prune_threshold_);
+    AbsoluteDistanceBase* in_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
+        AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::IN_DIST);  // no threshold
+
+    // add Residuals 
+    problem.AddResidualBlock(out_cost_function, nullptr,
+        smpl_->getStatePointers().shape.data());
+
+    LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.1, ceres::TAKE_OWNERSHIP);
+    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(0.033);
+    ceres::ComposedLoss* composed_loss = new ceres::ComposedLoss(
+        scale_in_cost, ceres::TAKE_OWNERSHIP,
+        geman_mcclare_cost, ceres::TAKE_OWNERSHIP);
+    problem.AddResidualBlock(in_cost_function, composed_loss,
+        smpl_->getStatePointers().shape.data());
+
+    // set any of the defined costs for pre-computation
+    options.evaluation_callback = out_cost_function;
+}
+
+void ShapeUnderClothOptimizer::shapeMainCostClothAware_(Problem & problem, Solver::Options & options)
+{
+    // send raw pointers because inner class was not refactored
+    AbsoluteDistanceBase* cloth_out_cost = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
+        AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::CLOTH_OUT);
+    AbsoluteDistanceBase* cloth_in_cost = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
+        AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::CLOTH_IN);
+    AbsoluteDistanceBase* skin_cost = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
+        AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::SKIN_BOTH);
+
+    problem.AddResidualBlock(skin_cost, nullptr,
+        smpl_->getStatePointers().shape.data());
+
+    problem.AddResidualBlock(cloth_out_cost, nullptr,
+        smpl_->getStatePointers().shape.data());
+
+    // in_verts distance needs scaling 
+    LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.1, ceres::TAKE_OWNERSHIP);
+    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(0.033);
+    ceres::ComposedLoss* composed_loss = new ceres::ComposedLoss(
+        scale_in_cost, ceres::TAKE_OWNERSHIP,
+        geman_mcclare_cost, ceres::TAKE_OWNERSHIP);
+    problem.AddResidualBlock(cloth_in_cost, composed_loss,
+        smpl_->getStatePointers().shape.data());
+
+    // set any of the defined costs for pre-computation
+    options.evaluation_callback = cloth_out_cost;
 }
 
 void ShapeUnderClothOptimizer::displacementEstimation_(Solver::Options& options)
