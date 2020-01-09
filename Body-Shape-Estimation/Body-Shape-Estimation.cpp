@@ -90,21 +90,9 @@ int main()
 {
     try
     {
-        std::vector<std::shared_ptr<GeneralMesh>> inputs = setInputs("E:/HumanData/OBJ_Gender/");
-        // std::vector<pair<string, int>> ret = myfunc(, );
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/smpl_outs/smpl_3.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_jumping_jacks/00000.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/smpl_outs/pose_00048_270_dyna_thin.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/smpl_outs/pose_50004_knees_270_dyna_thin.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/smpl_outs/pose_50004_knees_270_dyna_fat.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/smpl_outs/pose_leg_up_knee_up.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/smpl_outs/pose_mean.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_jiggle_on_toes/00048.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_chicken_wings/00091.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_knees/00070.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_knees/00130.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_knees/00270.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/DYNA/50004_punching/00053.obj", GeneralMesh::FEMALE));
+        // std::vector<std::shared_ptr<GeneralMesh>> inputs = setInputs("E:/HumanData/OBJ_Gender/");
+
+        std::vector<std::shared_ptr<GeneralMesh>> inputs
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Sexy Girl.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Sexy_girl_90.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/casual-woman-walking.obj", GeneralMesh::FEMALE));
@@ -123,31 +111,6 @@ int main()
         //inputs.push_back(std::make_shared<GeneralMesh>(
         //    "D:/Data/From Mingi's purchase/rp_corey_posed_010_MAYA/scenes/rp_corey_posed_010_30k.obj", 
         //    GeneralMesh::MALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>(
-        //    "D:/Data/From Mingi's purchase/rp_ethan_posed_007_MAYA/scenes/rp_ethan_posed_007_30k.obj",
-        //    GeneralMesh::MALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>(
-        //    "D:/Data/From Mingi's purchase/rp_helen_posed_012_MAYA/scenes/rp_helen_posed_012_30k.obj",
-        //    GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>(
-        //    "D:/Data/From Mingi's purchase/rp_julia_posed_001_MAYA/scenes/rp_julia_posed_001_30k.obj",
-        //    GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>(
-        //    "D:/Data/From Mingi's purchase/rp_philip_posed_015_MAYA/scenes/rp_philip_posed_015_30k.obj",
-        //    GeneralMesh::MALE));
-        ////inputs.push_back(std::make_shared<GeneralMesh>(
-        ////    "D:/Data/From Mingi's purchase/rp_scott_posed_022_MAYA/scenes/rp_scott_posed_022_30k.obj",
-        ////    GeneralMesh::MALE));
-        //// Hi-res
-        //inputs.push_back(std::make_shared<GeneralMesh>(
-        //    "D:/Data/From Mingi's purchase/Female Vis Models/Female 3/OBJ/Female_03_100k.obj",
-        //    GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>(
-        //    "D:/Data/From Mingi's purchase/Female Vis Models/Female 11/OBJ/Female_011_100k.obj",
-        //    GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>(
-        //    "D:/Data/From Mingi's purchase/Female Vis Models/Female 8/OBJ/Female_08_100k.obj",
-        //    GeneralMesh::FEMALE));
 
 
         std::cout << "Inputs are loaded! " << std::endl;
@@ -160,10 +123,8 @@ int main()
         //extractor.setupNewExperiment(inputs[0], "fit");
         //extractor.setupNewDistplacementRegExperiment(inputs[0], 0.001, 0.5, "d_reg");
         //extractor.setSaveIntermediateResults(true);
-        // save a copy of parameters to the input folder
         
         //extractor.viewIteratoinProcess();
-
         //extractor.viewCameraSetupForPhotos();
         //extractor.viewFinalResult(true);
 
@@ -180,9 +141,8 @@ int main()
                     {
                         extractor.setupNewExperiment(input, "mingi");
                         //extractor.setupNewDistplacementRegExperiment(input, l2_weight, smooth_weight, "displ_reg");
-                        //extractor.runExtraction();
                         std::shared_ptr<SMPLWrapper> smpl_estimated = std::move(extractor.runExtraction());
-                        smpl_estimated->logParameters(input->getPath() + "/" + input->getName() + "_smpl_params.txt");
+                        //smpl_estimated->logParameters(input->getPath() + "/" + input->getName() + "_smpl_params.txt");
                     }
                     catch (std::exception& e)
                     {

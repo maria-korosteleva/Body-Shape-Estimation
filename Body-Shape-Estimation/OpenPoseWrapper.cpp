@@ -84,6 +84,7 @@ void OpenPoseWrapper::openPoseConfiguration_(op::Wrapper& opWrapper)
         wrapperStructPose.modelFolder = models_path_;
         wrapperStructPose.enableGoogleLogging = false; // !!!!! Conflicts when run with ceres. Not very much needed anyway
         wrapperStructPose.numberPeopleMax = 1;  // required for 3D estimation
+        wrapperStructPose.netInputSize = op::Point<int>(-1, 368); // same as default
         opWrapper.configure(wrapperStructPose);
 
         // Disable Face and Hand configuration 
