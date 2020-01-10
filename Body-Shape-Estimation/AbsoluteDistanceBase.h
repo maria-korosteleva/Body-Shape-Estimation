@@ -78,9 +78,9 @@ protected:
         {
         case CLOTH_IN:
         case CLOTH_OUT:
-            return cloth_prob * abs(signed_dist);
+            return sqrt(cloth_prob) * abs(signed_dist);
         case SKIN_BOTH:
-            return (1. - cloth_prob) * abs(signed_dist);
+            return sqrt(1. - cloth_prob) * abs(signed_dist);
         default:
             return abs(signed_dist);
         }
@@ -102,9 +102,9 @@ protected:
         {
         case CLOTH_IN:
         case CLOTH_OUT:
-            return cloth_prob * jac_entry;
+            return sqrt(cloth_prob) * jac_entry;
         case SKIN_BOTH:
-            return (1. - cloth_prob) * jac_entry;
+            return sqrt(1. - cloth_prob) * jac_entry;
         default:
             return jac_entry;
         }

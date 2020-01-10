@@ -125,7 +125,7 @@ int main()
             "D:/GK-Undressing-Experiments/segm_isaac_low-isaac_low_scan_200109_16_51/OP_guesses/smpl_op_posed_params.txt");
         //extractor.setupInitialization(PoseShapeExtractor::OPENPOSE, "C:/Users/Maria/MyDocs/libs/Installed_libs/ml_models/openpose");
 
-        extractor.setupNewExperiment(inputs[0], "segm_shape");
+        extractor.setupNewExperiment(inputs[0], "segm_sqrt_inshape_0.1");
         //extractor.setupNewDistplacementRegExperiment(inputs[0], 0.001, 0.5, "d_reg");
         extractor.setSaveIntermediateResults(true);
         extractor.runExtraction();
