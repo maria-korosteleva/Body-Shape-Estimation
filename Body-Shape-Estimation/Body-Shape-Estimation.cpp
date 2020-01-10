@@ -112,16 +112,20 @@ int main()
             "C:/Users/Maria/MyDocs/GigaKorea/Seoungbae projects/cloth_data/isaac_low/isaac_low_scan.obj", 
             GeneralMesh::MALE, 
             "C:/Users/Maria/MyDocs/GigaKorea/Seoungbae projects/cloth_data/isaac_low/isaac_low_scan_scalar.txt"));
+        /*inputs.push_back(std::make_shared<GeneralMesh>(
+            "C:/Users/Maria/MyDocs/GigaKorea/Seoungbae projects/cloth_data/Web_low/Web_low_scan.obj",
+            GeneralMesh::MALE,
+            "C:/Users/Maria/MyDocs/GigaKorea/Seoungbae projects/cloth_data/Web_low/Web_low_scan_scalar.txt"));*/
 
 
         std::cout << "Inputs are loaded! " << std::endl;
 
         PoseShapeExtractor extractor(smpl_model_path, output_path);
-        //extractor.setupInitialization(PoseShapeExtractor::FILE,
-        //    "D:/GK-Undressing-Experiments/file_format_SketchFab-Sexy Girl_190916_10_45/OP_guesses/smpl_op_posed_params.txt");
-        extractor.setupInitialization(PoseShapeExtractor::OPENPOSE, "C:/Users/Maria/MyDocs/libs/Installed_libs/ml_models/openpose");
+        extractor.setupInitialization(PoseShapeExtractor::FILE,
+            "D:/GK-Undressing-Experiments/segm_isaac_low-isaac_low_scan_200109_16_51/OP_guesses/smpl_op_posed_params.txt");
+        //extractor.setupInitialization(PoseShapeExtractor::OPENPOSE, "C:/Users/Maria/MyDocs/libs/Installed_libs/ml_models/openpose");
 
-        extractor.setupNewExperiment(inputs[0], "segm");
+        extractor.setupNewExperiment(inputs[0], "segm_shape");
         //extractor.setupNewDistplacementRegExperiment(inputs[0], 0.001, 0.5, "d_reg");
         extractor.setSaveIntermediateResults(true);
         extractor.runExtraction();

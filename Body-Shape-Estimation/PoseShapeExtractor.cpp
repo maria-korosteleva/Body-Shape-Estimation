@@ -182,11 +182,11 @@ void PoseShapeExtractor::viewFinalResult(bool withOpenPoseKeypoints)
         closest_face_ids, closest_points);
     viewer.data().add_edges(verts, closest_points, Eigen::RowVector3d(1., 0., 0.));
 
-    if (withOpenPoseKeypoints)
+    if (withOpenPoseKeypoints && initialization_type_ == PoseShapeExtractor::OPENPOSE)
     {
         if (openpose_ == nullptr)
         {
-            throw std::runtime_error("PoseShapeExtractor: openpose keypoints are "
+            throw std::runtime_error("PoseShapeExtractor Visualization: openpose keypoints are "
                 " unavalible for Visualization. Run extraction first.");
         }
         Eigen::MatrixXd op_keypoints = openpose_->getKeypoints();
@@ -194,6 +194,9 @@ void PoseShapeExtractor::viewFinalResult(bool withOpenPoseKeypoints)
 
         viewer.data().set_points(op_keypoints, Eigen::RowVector3d(1., 1., 0.));
     }
+    else if (withOpenPoseKeypoints && initialization_type_ != PoseShapeExtractor::OPENPOSE)
+        std::cout << "Warning::PoseShapeExtractor Visualization: "
+            " OpenPose not used, no keypoints are displayed" << std::endl;
     
     viewer.launch();
 }
