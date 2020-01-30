@@ -30,6 +30,7 @@ public:
     static constexpr std::size_t HOMO_SIZE = SMPLWrapper::SPACE_DIM + 1;
     static constexpr std::size_t POSE_SIZE = 72;
     static constexpr std::size_t JOINTS_NUM = POSE_SIZE / SPACE_DIM;
+    static constexpr std::size_t POSE_BLENDSHAPES_NUM = (JOINTS_NUM - 1) * SPACE_DIM * SPACE_DIM;
     static constexpr std::size_t VERTICES_NUM = 6890;
     static constexpr std::size_t WEIGHTS_BY_VERTEX = 4;     // number of joints each vertex depend on
 
@@ -54,8 +55,9 @@ public:
     that contains the files in a pre-defined structure.
     gender is either "f" or "m"
     The joints hierarchy is expectes to be so that the parent's id is always less than the child's
+    Pose blendshapes are memory exensive, so there is an option to turn them off
     */
-    SMPLWrapper(char gender, const std::string path);
+    SMPLWrapper(char gender, const std::string path, const bool pose_blendshapes = true);
     ~SMPLWrapper();
 
     // getters
@@ -108,6 +110,7 @@ private:
     void readPoseStiffnessMat_();
     void readJointNames_();
     void readShapes_();
+    void readPoseBlendshapes_();
     void readWeights_();
     void readHierarchy_();
     // to be called after the faces are collected
@@ -133,6 +136,7 @@ private:
         bool use_previous_pose_matrix = false);
     // Jaconian is not provided because it's always an identity: dv_i / d_tj == 1 => don't want to waste memory on it
     void translate_(const E::VectorXd& translation, E::MatrixXd & verts);
+    void applyPoseBlendshapes_(const EHomoCoordMatrix(&fk_transform)[SMPLWrapper::JOINTS_NUM], E::MatrixXd & verts);
 
     // don't account for displacement, because the jointRegressor was not designed for it
     E::MatrixXd calcJointLocations_(const E::VectorXd* translation = nullptr,
@@ -172,6 +176,7 @@ private:
     char gender_;
     std::string gender_path_;
     std::string general_path_;
+    bool use_pose_blendshapes_;
 
     // constant model info
     E::MatrixXi faces_;
@@ -180,6 +185,7 @@ private:
     E::MatrixXd verts_template_normalized_;
     E::MatrixXd joint_locations_template_;
     E::MatrixXd shape_diffs_[10];  // store only differences between blendshapes and template
+    E::MatrixXd pose_diffs_[POSE_BLENDSHAPES_NUM];  // store only differences between blendshapes and template
     E::MatrixXd jointRegressorMat_;
     E::MatrixXd pose_stiffness_;
     static int joints_parents_[JOINTS_NUM];

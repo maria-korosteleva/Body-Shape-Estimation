@@ -2,7 +2,8 @@
 
 int SMPLWrapper::joints_parents_[JOINTS_NUM];
 
-SMPLWrapper::SMPLWrapper(char gender, const std::string path)
+SMPLWrapper::SMPLWrapper(char gender, const std::string path, const bool pose_blendshapes)
+    : use_pose_blendshapes_(pose_blendshapes)
 {
     // set the info
     if (gender != 'f' && gender != 'm') 
@@ -22,6 +23,8 @@ SMPLWrapper::SMPLWrapper(char gender, const std::string path)
     readPoseStiffnessMat_();
     readJointNames_();
     readShapes_();
+    if (use_pose_blendshapes_)
+        readPoseBlendshapes_();
     readWeights_();
     readHierarchy_();
 
@@ -454,6 +457,25 @@ void SMPLWrapper::readShapes_()
     }
 }
 
+void SMPLWrapper::readPoseBlendshapes_()
+{
+    std::string file_path = gender_path_ + gender_ + "_pose_blendshapes/Pose";
+
+    Eigen::MatrixXi fakeFaces(SMPLWrapper::VERTICES_NUM, SMPLWrapper::SPACE_DIM);
+
+    for (int i = 0; i < SMPLWrapper::POSE_BLENDSHAPES_NUM; i++)
+    {
+        std::string file_name(file_path);
+        std::string id_str = std::to_string(i);
+        file_name += std::string(3 - id_str.size(), '0') + id_str;
+        file_name += ".obj";
+
+        igl::readOBJ(file_name, pose_diffs_[i], fakeFaces);
+
+        pose_diffs_[i] -= verts_template_;
+    }
+}
+
 void SMPLWrapper::readWeights_()
 {
     std::string file_name(this->gender_path_);
@@ -646,12 +668,6 @@ void SMPLWrapper::shapeSMPL_(const E::VectorXd& shape, E::MatrixXd &verts, E::Ma
 void SMPLWrapper::poseSMPL_(const ERMatrixXd& pose, E::MatrixXd & verts,
     const ERMatrixXd *displacement, E::MatrixXd * pose_jac, bool use_previous_pose_matrix)
 {
-    E::SparseMatrix<double> LBSMat;
-    if (displacement != nullptr)
-        LBSMat = getLBSMatrix_(verts + *displacement);
-    else
-        LBSMat = getLBSMatrix_(verts);
-
     if (!use_previous_pose_matrix)
     {
         // ! Impostant: don't use displacements to obtain joint_locations. 
@@ -663,6 +679,17 @@ void SMPLWrapper::poseSMPL_(const ERMatrixXd& pose, E::MatrixXd & verts,
     E::MatrixXd joints_global_transform = extractLBSJointTransformFromFKTransform_(
         fk_transforms_, joint_locations_,
         &fk_derivatives_, pose_jac);
+
+    // Apply pose blendshapes
+    if (use_pose_blendshapes_)
+        applyPoseBlendshapes_(fk_transforms_, verts);
+
+    // LBS Matrix
+    E::SparseMatrix<double> LBSMat;
+    if (displacement != nullptr)
+        LBSMat = getLBSMatrix_(verts + *displacement);
+    else
+        LBSMat = getLBSMatrix_(verts);
 
     // displaced and posed
     verts = LBSMat * joints_global_transform;
@@ -682,6 +709,28 @@ void SMPLWrapper::translate_(const E::VectorXd& translation, E::MatrixXd & verts
     verts.rowwise() += translation.transpose();
 
     // Jac w.r.t. translation is identity: dv_i / d_tj == 1 
+}
+
+void SMPLWrapper::applyPoseBlendshapes_(const EHomoCoordMatrix(&fk_transform)[SMPLWrapper::JOINTS_NUM], E::MatrixXd & verts)
+{
+    // no pose blendshapes for root
+    for (int joint = 1; joint < JOINTS_NUM; joint++)
+    {
+        // each element of rotatoin matrix - Identity
+        E::MatrixXd coeff = fk_transform[joint].block(0, 0, SPACE_DIM, SPACE_DIM)
+            - E::MatrixXd::Identity(SPACE_DIM, SPACE_DIM);
+
+        for (int col = 0; col < SPACE_DIM; col++)
+        {
+            for (int row = 0; row < SPACE_DIM; row++)
+            {
+                int blendshape_id = (joint - 1) * SPACE_DIM * SPACE_DIM + row * SPACE_DIM + col;
+                if (blendshape_id >= POSE_BLENDSHAPES_NUM)
+                    throw std::out_of_range("Error::applyPoseBlendshapes::requested non-existing blendshape id");
+                verts += coeff(row, col) * pose_diffs_[blendshape_id];
+            }
+        }
+    }
 }
 
 E::MatrixXd SMPLWrapper::calcJointLocations_(const E::VectorXd* translation,

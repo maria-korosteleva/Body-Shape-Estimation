@@ -18,7 +18,7 @@
 
 
 static constexpr char output_path[] = "D:/GK-Undressing-Experiments/";
-static constexpr char smpl_model_path[] = "C:/Users/Maria/MyDocs/GigaKorea/GK-Undressing-People-Ceres/Resources";
+static constexpr char smpl_model_path[] = "C:/Users/Maria/MyDocs/GigaKorea/Body-Shape-Estimation/Resources";
 
 void generateSMPLoutput()
 {
@@ -26,7 +26,31 @@ void generateSMPLoutput()
     SMPLWrapper::State& smpl_state_ptrs = new_smpl.getStatePointers();
 
     SMPLWrapper::ERMatrixXd pose(SMPLWrapper::JOINTS_NUM, SMPLWrapper::SPACE_DIM);
-    pose << -0.0848798, 0.315784, 0.00665184,
+    pose << 0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        -0.0563716, 0.193721, -0.598922,
+        0.0188691, 0.720704, -0.700351,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0;
+        /*-0.0848798, 0.315784, 0.00665184,
         0.110782, 0.0117129, -0.129827,
         -0.140488, 0.0135771, 0.00507199,
         0.00119627, 0.00500833, -0.0532766,
@@ -49,7 +73,7 @@ void generateSMPLoutput()
         0, 0, 0,
         0, 0, 0,
         0, 0, 0,
-        0, 0, 0;
+        0, 0, 0;*/
 
     Eigen::VectorXd shape(SMPLWrapper::SHAPE_SIZE);
     shape << 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
@@ -61,7 +85,7 @@ void generateSMPLoutput()
     smpl_state_ptrs.shape = shape;
     smpl_state_ptrs.translation = translation;
 
-    CustomLogger logger(output_path, "smpl_op_guess_saved");
+    CustomLogger logger(output_path, "smpl_pose_blendshapes_sexy_arms");
 
     logger.saveFinalModel(new_smpl);
 }
@@ -93,7 +117,7 @@ int main()
         // std::vector<std::shared_ptr<GeneralMesh>> inputs = setInputs("E:/HumanData/OBJ_Gender/");
 
         std::vector<std::shared_ptr<GeneralMesh>> inputs;
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Sexy Girl.obj", GeneralMesh::FEMALE));
+        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Sexy Girl.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Sexy_girl_90.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/casual-woman-walking.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/girl_nasi_pants.obj", GeneralMesh::FEMALE));
@@ -108,52 +132,53 @@ int main()
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/JonOBJ_triangles.obj", GeneralMesh::MALE));
 
         // Seoungbae files
-        inputs.push_back(std::make_shared<GeneralMesh>(
-            "C:/Users/Maria/MyDocs/GigaKorea/Seoungbae projects/cloth_data/isaac_low/isaac_low_scan.obj", 
-            GeneralMesh::MALE, 
-            "C:/Users/Maria/MyDocs/GigaKorea/Seoungbae projects/cloth_data/isaac_low/isaac_low_scan_scalar.txt"));
-        /*inputs.push_back(std::make_shared<GeneralMesh>(
-            "C:/Users/Maria/MyDocs/GigaKorea/Seoungbae projects/cloth_data/Web_low/Web_low_scan.obj",
-            GeneralMesh::MALE,
-            "C:/Users/Maria/MyDocs/GigaKorea/Seoungbae projects/cloth_data/Web_low/Web_low_scan_scalar.txt"));*/
-
+        //inputs.push_back(std::make_shared<GeneralMesh>(
+        //    "C:/Users/Maria/MyDocs/GigaKorea/Seoungbae projects/cloth_data/isaac_low/isaac_low_scan.obj", 
+        //    GeneralMesh::MALE, 
+        //    "C:/Users/Maria/MyDocs/GigaKorea/Seoungbae projects/cloth_data/isaac_low/isaac_low_scan_scalar.txt"));
 
         std::cout << "Inputs are loaded! " << std::endl;
+        inputs = setInputs("D:/Data/scan_data_for_paper/");
 
         PoseShapeExtractor extractor(smpl_model_path, output_path);
-        extractor.setupInitialization(PoseShapeExtractor::FILE,
-            "D:/GK-Undressing-Experiments/segm_isaac_low-isaac_low_scan_200109_16_51/OP_guesses/smpl_op_posed_params.txt");
-        //extractor.setupInitialization(PoseShapeExtractor::OPENPOSE, "C:/Users/Maria/MyDocs/libs/Installed_libs/ml_models/openpose");
+        //extractor.setupInitialization(PoseShapeExtractor::FILE,
+        //    "D:/GK-Undressing-Experiments/fit_new-sexy_girl_Female_200122_12_19/OP_guesses/smpl_op_posed_params.txt");
+        extractor.setupInitialization(PoseShapeExtractor::OPENPOSE, "C:/Users/Maria/MyDocs/libs/Installed_libs/ml_models/openpose");
 
-        extractor.setupNewExperiment(inputs[0], "segm_sqrt_inshape_0.1");
-        //extractor.setupNewDistplacementRegExperiment(inputs[0], 0.001, 0.5, "d_reg");
-        extractor.setSaveIntermediateResults(true);
-        extractor.runExtraction();
-        
-        //extractor.viewIteratoinProcess();
-        //extractor.viewCameraSetupForPhotos();
-        extractor.viewFinalResult(true);
+        //extractor.setupNewExperiment(inputs[0], "pbsh");
+        ////extractor.setupNewDistplacementRegExperiment(inputs[0], 0.001, 0.5, "d_reg");
+        //extractor.setSaveIntermediateResults(true);
+        //extractor.runExtraction();
+        //
+        ////extractor.viewIteratoinProcess();
+        ////extractor.viewCameraSetupForPhotos();
+        //extractor.viewFinalResult(true);
 
-        //for (auto&& input : inputs)
-        //{
-        //    //for (const double& l2_weight : { 0.1, 0.01, 0.001 })
-        //    //{
-        //    //    for (const double& smooth_weight : { 0.5, 1., 0.2 })
-        //    //    {
-        //            try
-        //            {
-        //                extractor.setupNewExperiment(input, "segm");
-        //                //extractor.setupNewDistplacementRegExperiment(input, l2_weight, smooth_weight, "displ_reg");
-        //                std::shared_ptr<SMPLWrapper> smpl_estimated = std::move(extractor.runExtraction());
-        //                //smpl_estimated->logParameters(input->getPath() + "/" + input->getName() + "_smpl_params.txt");
-        //            }
-        //            catch (std::exception& e)
-        //            {
-        //                std::cout << "exception encountered: " << e.what() << std::endl;
-        //            }
-        ////        }
-        ////    }
-        //}
+        std::ofstream fails;
+        fails.open("D:/Data/scan_data_for_paper/fails.txt");
+        for (auto&& input : inputs)
+        {
+            //for (const double& l2_weight : { 0.1, 0.01, 0.001 })
+            //{
+            //    for (const double& smooth_weight : { 0.5, 1., 0.2 })
+            //    {
+                    try
+                    {
+                        extractor.setupNewExperiment(input, "pbsh");
+                        //extractor.setupNewDistplacementRegExperiment(input, l2_weight, smooth_weight, "displ_reg");
+                        std::shared_ptr<SMPLWrapper> smpl_estimated = std::move(extractor.runExtraction());
+                        //smpl_estimated->logParameters(input->getPath() + "/" + input->getName() + "_smpl_params.txt");
+                        smpl_estimated->saveToObj(input->getPath() + "/" + input->getName() + "_smpl.obj");
+                        input->saveNormalizedMesh(input->getPath() + "/");
+                    }
+                    catch (std::exception& e)
+                    {
+                        std::cout << "exception encountered: " << e.what() << std::endl;
+                        fails << input->getPath() + "/" + input->getName() << std::endl;
+                    }
+        //        }
+        //    }
+        }
     }
     catch (std::exception& e)
     {
