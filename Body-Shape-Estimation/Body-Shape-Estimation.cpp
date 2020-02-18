@@ -18,7 +18,7 @@
 
 
 static constexpr char output_path[] = "D:/GK-Undressing-Experiments/";
-static constexpr char smpl_model_path[] = "C:/Users/Maria/MyDocs/GigaKorea/Body-Shape-Estimation/Resources";
+static constexpr char smpl_model_path[] = "D:/MyDocs/GigaKorea/Body-Shape-Estimation/Resources";
 
 void generateSMPLoutput()
 {
@@ -138,47 +138,47 @@ int main()
         //    "C:/Users/Maria/MyDocs/GigaKorea/Seoungbae projects/cloth_data/isaac_low/isaac_low_scan_scalar.txt"));
 
         std::cout << "Inputs are loaded! " << std::endl;
-        inputs = setInputs("D:/Data/scan_data_for_paper/");
+        //inputs = setInputs("D:/Data/scan_data_for_paper/");
 
         PoseShapeExtractor extractor(smpl_model_path, output_path);
         //extractor.setupInitialization(PoseShapeExtractor::FILE,
         //    "D:/GK-Undressing-Experiments/fit_new-sexy_girl_Female_200122_12_19/OP_guesses/smpl_op_posed_params.txt");
-        extractor.setupInitialization(PoseShapeExtractor::OPENPOSE, "C:/Users/Maria/MyDocs/libs/Installed_libs/ml_models/openpose");
+        extractor.setupInitialization(PoseShapeExtractor::OPENPOSE, "D:/MyDocs/libs/Installed_libs/ml_models/openpose");
 
-        //extractor.setupNewExperiment(inputs[0], "pbsh");
-        ////extractor.setupNewDistplacementRegExperiment(inputs[0], 0.001, 0.5, "d_reg");
-        //extractor.setSaveIntermediateResults(true);
-        //extractor.runExtraction();
-        //
-        ////extractor.viewIteratoinProcess();
-        ////extractor.viewCameraSetupForPhotos();
-        //extractor.viewFinalResult(true);
+        extractor.setupNewExperiment(inputs[0], "pbsh_with_jac");
+        //extractor.setupNewDistplacementRegExperiment(inputs[0], 0.001, 0.5, "d_reg");
+        extractor.setSaveIntermediateResults(true);
+        extractor.runExtraction();
+        
+        //extractor.viewIteratoinProcess();
+        //extractor.viewCameraSetupForPhotos();
+        extractor.viewFinalResult(true);
 
-        std::ofstream fails;
-        fails.open("D:/Data/scan_data_for_paper/fails.txt");
-        for (auto&& input : inputs)
-        {
-            //for (const double& l2_weight : { 0.1, 0.01, 0.001 })
-            //{
-            //    for (const double& smooth_weight : { 0.5, 1., 0.2 })
-            //    {
-                    try
-                    {
-                        extractor.setupNewExperiment(input, "pbsh");
-                        //extractor.setupNewDistplacementRegExperiment(input, l2_weight, smooth_weight, "displ_reg");
-                        std::shared_ptr<SMPLWrapper> smpl_estimated = std::move(extractor.runExtraction());
-                        //smpl_estimated->logParameters(input->getPath() + "/" + input->getName() + "_smpl_params.txt");
-                        smpl_estimated->saveToObj(input->getPath() + "/" + input->getName() + "_smpl.obj");
-                        input->saveNormalizedMesh(input->getPath() + "/");
-                    }
-                    catch (std::exception& e)
-                    {
-                        std::cout << "exception encountered: " << e.what() << std::endl;
-                        fails << input->getPath() + "/" + input->getName() << std::endl;
-                    }
-        //        }
-        //    }
-        }
+        //std::ofstream fails;
+        //fails.open("D:/Data/scan_data_for_paper/fails.txt");
+        //for (auto&& input : inputs)
+        //{
+        //    //for (const double& l2_weight : { 0.1, 0.01, 0.001 })
+        //    //{
+        //    //    for (const double& smooth_weight : { 0.5, 1., 0.2 })
+        //    //    {
+        //            try
+        //            {
+        //                extractor.setupNewExperiment(input, "pbsh");
+        //                //extractor.setupNewDistplacementRegExperiment(input, l2_weight, smooth_weight, "displ_reg");
+        //                std::shared_ptr<SMPLWrapper> smpl_estimated = std::move(extractor.runExtraction());
+        //                //smpl_estimated->logParameters(input->getPath() + "/" + input->getName() + "_smpl_params.txt");
+        //                smpl_estimated->saveToObj(input->getPath() + "/" + input->getName() + "_smpl.obj");
+        //                input->saveNormalizedMesh(input->getPath() + "/");
+        //            }
+        //            catch (std::exception& e)
+        //            {
+        //                std::cout << "exception encountered: " << e.what() << std::endl;
+        //                fails << input->getPath() + "/" + input->getName() << std::endl;
+        //            }
+        ////        }
+        ////    }
+        //}
     }
     catch (std::exception& e)
     {

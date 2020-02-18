@@ -681,8 +681,18 @@ void SMPLWrapper::poseSMPL_(const ERMatrixXd& pose, E::MatrixXd & verts,
         &fk_derivatives_, pose_jac);
 
     // Apply pose blendshapes
+    // TODO check if I need to re-use pose blendshapes derivatives
+    E::MatrixXd blendshapes_derivatives[POSE_SIZE];
     if (use_pose_blendshapes_)
-        applyPoseBlendshapes_(fk_transforms_, verts);
+    {
+        applyPoseBlendshapes_(local_rotations_, verts);
+        // get deritatives w.r.t. every pose parameter
+        if (pose_jac != nullptr)
+        {
+            calcPoseBlendshapesJac_(local_rotations_jac_, blendshapes_derivatives);
+        }
+
+    }
 
     // LBS Matrix
     E::SparseMatrix<double> LBSMat;
@@ -696,10 +706,18 @@ void SMPLWrapper::poseSMPL_(const ERMatrixXd& pose, E::MatrixXd & verts,
 
     if (pose_jac != nullptr)
     {
-        // pose_jac[i] at this point has the same structure as jointsTransformation
-        for (int i = 0; i < SMPLWrapper::POSE_SIZE; ++i)
+        // pose_jac[pose_component] at this point has the same structure as jointsTransformation
+        for (int pose_component = 0; pose_component < SMPLWrapper::POSE_SIZE; ++pose_component)
         {
-            pose_jac[i].applyOnTheLeft(LBSMat);
+            // Rotational component
+            pose_jac[pose_component].applyOnTheLeft(LBSMat);
+
+            // Pose blendshapes component
+            if (use_pose_blendshapes_)
+            {
+                E::SparseMatrix<double> blendshape_LBSMat = getLBSMatrix_(blendshapes_derivatives[pose_component]);
+                pose_jac[pose_component] += blendshape_LBSMat * joints_global_transform;
+            }
         }
     }
 }
@@ -711,14 +729,13 @@ void SMPLWrapper::translate_(const E::VectorXd& translation, E::MatrixXd & verts
     // Jac w.r.t. translation is identity: dv_i / d_tj == 1 
 }
 
-void SMPLWrapper::applyPoseBlendshapes_(const EHomoCoordMatrix(&fk_transform)[SMPLWrapper::JOINTS_NUM], E::MatrixXd & verts)
+void SMPLWrapper::applyPoseBlendshapes_(const E::MatrixXd local_rotations_[SMPLWrapper::JOINTS_NUM], E::MatrixXd & verts)
 {
     // no pose blendshapes for root
     for (int joint = 1; joint < JOINTS_NUM; joint++)
     {
-        // each element of rotatoin matrix - Identity
-        E::MatrixXd coeff = fk_transform[joint].block(0, 0, SPACE_DIM, SPACE_DIM)
-            - E::MatrixXd::Identity(SPACE_DIM, SPACE_DIM);
+        // substact T-pose rotation
+        E::MatrixXd coeff = local_rotations_[joint] - E::MatrixXd::Identity(SPACE_DIM, SPACE_DIM);
 
         for (int col = 0; col < SPACE_DIM; col++)
         {
@@ -731,6 +748,41 @@ void SMPLWrapper::applyPoseBlendshapes_(const EHomoCoordMatrix(&fk_transform)[SM
             }
         }
     }
+}
+
+void SMPLWrapper::calcPoseBlendshapesJac_(const E::MatrixXd local_rotations_jac_[SMPLWrapper::POSE_SIZE],
+    E::MatrixXd * blendshapes_jac)
+{
+    // initialize jac w.r.t. root to zero 
+    for (int dim = 0; dim < SPACE_DIM; dim++)
+    {
+        blendshapes_jac[0 + dim].setZero(VERTICES_NUM, SPACE_DIM);
+    }
+
+    // the rest of the joints
+    for (int joint = 1; joint < JOINTS_NUM; joint++)
+        for (int dim = 0; dim < SPACE_DIM; dim++)
+        {
+            int param_id = joint * SPACE_DIM + dim;
+            int blendshape_id_offset = (joint - 1) * SPACE_DIM * SPACE_DIM;
+
+            blendshapes_jac[param_id].setZero(VERTICES_NUM, SPACE_DIM);
+            E::MatrixXd rotation_derivative = local_rotations_jac_[param_id];
+
+            // apply pose blendshapes with rotations
+            // TODO remove duplicate code
+            for (int col = 0; col < SPACE_DIM; col++)
+            {
+                for (int row = 0; row < SPACE_DIM; row++)
+                {
+                    int blendshape_id = blendshape_id_offset + row * SPACE_DIM + col;
+                    if (blendshape_id >= POSE_BLENDSHAPES_NUM)
+                        throw std::out_of_range("Error::calcJacPoseBlendshapes::requested non-existing blendshape id");
+
+                    blendshapes_jac[param_id] += rotation_derivative(row, col) * pose_diffs_[blendshape_id];
+                }
+            }
+        }
 }
 
 E::MatrixXd SMPLWrapper::calcJointLocations_(const E::VectorXd* translation,
@@ -847,19 +899,24 @@ void SMPLWrapper::updateJointsFKTransforms_(
     // uses functions that assume input in 3D (see below)
     assert(SMPLWrapper::SPACE_DIM == 3 && "The function can only be used in 3D world");
 
+    // TODO make more elegant local rotation and local jacobian assertions
+
     // root as special case
     fk_transforms_[0] = get3DLocalTransformMat_(pose.row(0), t_pose_joints_locations.row(0));
+    local_rotations_[0] = fk_transforms_[0].block(0, 0, SPACE_DIM, SPACE_DIM); // remember for pose blendshapes
     if (calc_derivatives)
     {
         get3DLocalTransformJac_(pose.row(0), fk_transforms_[0], fk_derivatives_[0]);
+        for (int dim = 0; dim < SPACE_DIM; dim++)
+            local_rotations_jac_[dim] = fk_derivatives_[0][dim].block(0, 0, SPACE_DIM, SPACE_DIM);
     }
 
     E::MatrixXd localTransform, localTransformJac[SMPLWrapper::SPACE_DIM];
     for (int joint_id = 1; joint_id < SMPLWrapper::JOINTS_NUM; joint_id++)
     {
         localTransform = get3DLocalTransformMat_(pose.row(joint_id),
-
             t_pose_joints_locations.row(joint_id) - t_pose_joints_locations.row(joints_parents_[joint_id]));
+        local_rotations_[joint_id] = localTransform.block(0, 0, SPACE_DIM, SPACE_DIM);
 
         // Forward Kinematics Formula
         fk_transforms_[joint_id] = fk_transforms_[joints_parents_[joint_id]] * localTransform;
@@ -869,10 +926,12 @@ void SMPLWrapper::updateJointsFKTransforms_(
             get3DLocalTransformJac_(pose.row(joint_id), localTransform, localTransformJac);
 
             // jac w.r.t current joint rot coordinates
-            for (int j = 0; j < SMPLWrapper::SPACE_DIM; ++j)
+            for (int dim = 0; dim < SMPLWrapper::SPACE_DIM; ++dim)
             {
-                fk_derivatives_[joint_id][joint_id * SMPLWrapper::SPACE_DIM + j] = 
-                    fk_transforms_[joints_parents_[joint_id]] * localTransformJac[j];
+                fk_derivatives_[joint_id][joint_id * SMPLWrapper::SPACE_DIM + dim] = 
+                    fk_transforms_[joints_parents_[joint_id]] * localTransformJac[dim];
+                local_rotations_jac_[joint_id * SMPLWrapper::SPACE_DIM + dim] =
+                    localTransformJac[dim].block(0, 0, SPACE_DIM, SPACE_DIM);
             }
 
             // jac w.r.t. ancessors rotation coordinates         

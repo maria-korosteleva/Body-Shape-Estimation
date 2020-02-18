@@ -136,7 +136,9 @@ private:
         bool use_previous_pose_matrix = false);
     // Jaconian is not provided because it's always an identity: dv_i / d_tj == 1 => don't want to waste memory on it
     void translate_(const E::VectorXd& translation, E::MatrixXd & verts);
-    void applyPoseBlendshapes_(const EHomoCoordMatrix(&fk_transform)[SMPLWrapper::JOINTS_NUM], E::MatrixXd & verts);
+    void applyPoseBlendshapes_(const E::MatrixXd local_rotations_[SMPLWrapper::JOINTS_NUM], E::MatrixXd & verts);
+    void calcPoseBlendshapesJac_(const E::MatrixXd local_rotations_jac_[SMPLWrapper::POSE_SIZE],
+        E::MatrixXd* blendshapes_jac);
 
     // don't account for displacement, because the jointRegressor was not designed for it
     E::MatrixXd calcJointLocations_(const E::VectorXd* translation = nullptr,
@@ -199,6 +201,9 @@ private:
     // !! Params are allowed to be changed directly, so make sure it's fresh before using
     EHomoCoordMatrix fk_transforms_[SMPLWrapper::JOINTS_NUM];
     E::MatrixXd fk_derivatives_[SMPLWrapper::JOINTS_NUM][SMPLWrapper::POSE_SIZE];
+
+    E::MatrixXd local_rotations_[SMPLWrapper::JOINTS_NUM];
+    E::MatrixXd local_rotations_jac_[SMPLWrapper::POSE_SIZE];
     E::MatrixXd joint_locations_;
 
     //E::MatrixXd joints_global_transform_;
