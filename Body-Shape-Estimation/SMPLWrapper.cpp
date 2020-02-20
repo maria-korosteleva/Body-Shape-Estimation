@@ -668,6 +668,7 @@ void SMPLWrapper::shapeSMPL_(const E::VectorXd& shape, E::MatrixXd &verts, E::Ma
 void SMPLWrapper::poseSMPL_(const ERMatrixXd& pose, E::MatrixXd & verts,
     const ERMatrixXd *displacement, E::MatrixXd * pose_jac, bool use_previous_pose_matrix)
 {
+    // TODO make sure we don't end up with empty pose jac when reusing pose
     if (!use_previous_pose_matrix)
     {
         // ! Impostant: don't use displacements to obtain joint_locations. 
@@ -681,15 +682,13 @@ void SMPLWrapper::poseSMPL_(const ERMatrixXd& pose, E::MatrixXd & verts,
         &fk_derivatives_, pose_jac);
 
     // Apply pose blendshapes
-    // TODO check if I need to re-use pose blendshapes derivatives
-    E::MatrixXd blendshapes_derivatives[POSE_SIZE];
     if (use_pose_blendshapes_)
     {
-        applyPoseBlendshapes_(local_rotations_, verts);
-        // get deritatives w.r.t. every pose parameter
-        if (pose_jac != nullptr)
+        addPoseBlendshapes_(local_rotations_, verts);
+        // get blendshape deritatives w.r.t. every pose parameter
+        if (pose_jac != nullptr && !use_previous_pose_matrix)   // if the pose is reused, we can use previous derivatives
         {
-            calcPoseBlendshapesJac_(local_rotations_jac_, blendshapes_derivatives);
+            calcPoseBlendshapesJac_(local_rotations_jac_, blendshapes_derivatives_);
         }
 
     }
@@ -715,7 +714,7 @@ void SMPLWrapper::poseSMPL_(const ERMatrixXd& pose, E::MatrixXd & verts,
             // Pose blendshapes component
             if (use_pose_blendshapes_)
             {
-                E::SparseMatrix<double> blendshape_LBSMat = getLBSMatrix_(blendshapes_derivatives[pose_component]);
+                E::SparseMatrix<double> blendshape_LBSMat = getLBSMatrix_(blendshapes_derivatives_[pose_component]);
                 pose_jac[pose_component] += blendshape_LBSMat * joints_global_transform;
             }
         }
@@ -729,7 +728,21 @@ void SMPLWrapper::translate_(const E::VectorXd& translation, E::MatrixXd & verts
     // Jac w.r.t. translation is identity: dv_i / d_tj == 1 
 }
 
-void SMPLWrapper::applyPoseBlendshapes_(const E::MatrixXd local_rotations_[SMPLWrapper::JOINTS_NUM], E::MatrixXd & verts)
+void SMPLWrapper::addJointPoseBlendshape_(const int blendshape_id_offset, const E::MatrixXd & coeff, E::MatrixXd & verts)
+{
+    for (int col = 0; col < coeff.cols(); col++)
+    {
+        for (int row = 0; row < coeff.rows(); row++)
+        {
+            int blendshape_id = blendshape_id_offset + row * coeff.cols() + col;
+            if (blendshape_id >= POSE_BLENDSHAPES_NUM)
+                throw std::out_of_range("Error::applyPoseBlendshapes::requested non-existing blendshape id");
+            verts += coeff(row, col) * pose_diffs_[blendshape_id];
+        }
+    }
+}
+
+void SMPLWrapper::addPoseBlendshapes_(const E::MatrixXd local_rotations_[SMPLWrapper::JOINTS_NUM], E::MatrixXd & verts)
 {
     // no pose blendshapes for root
     for (int joint = 1; joint < JOINTS_NUM; joint++)
@@ -737,16 +750,7 @@ void SMPLWrapper::applyPoseBlendshapes_(const E::MatrixXd local_rotations_[SMPLW
         // substact T-pose rotation
         E::MatrixXd coeff = local_rotations_[joint] - E::MatrixXd::Identity(SPACE_DIM, SPACE_DIM);
 
-        for (int col = 0; col < SPACE_DIM; col++)
-        {
-            for (int row = 0; row < SPACE_DIM; row++)
-            {
-                int blendshape_id = (joint - 1) * SPACE_DIM * SPACE_DIM + row * SPACE_DIM + col;
-                if (blendshape_id >= POSE_BLENDSHAPES_NUM)
-                    throw std::out_of_range("Error::applyPoseBlendshapes::requested non-existing blendshape id");
-                verts += coeff(row, col) * pose_diffs_[blendshape_id];
-            }
-        }
+        addJointPoseBlendshape_((joint - 1) * SPACE_DIM * SPACE_DIM, coeff, verts);
     }
 }
 
@@ -761,28 +765,19 @@ void SMPLWrapper::calcPoseBlendshapesJac_(const E::MatrixXd local_rotations_jac_
 
     // the rest of the joints
     for (int joint = 1; joint < JOINTS_NUM; joint++)
+    {
+        int blendshape_id_offset = (joint - 1) * SPACE_DIM * SPACE_DIM;
         for (int dim = 0; dim < SPACE_DIM; dim++)
         {
             int param_id = joint * SPACE_DIM + dim;
-            int blendshape_id_offset = (joint - 1) * SPACE_DIM * SPACE_DIM;
-
             blendshapes_jac[param_id].setZero(VERTICES_NUM, SPACE_DIM);
-            E::MatrixXd rotation_derivative = local_rotations_jac_[param_id];
 
             // apply pose blendshapes with rotations
-            // TODO remove duplicate code
-            for (int col = 0; col < SPACE_DIM; col++)
-            {
-                for (int row = 0; row < SPACE_DIM; row++)
-                {
-                    int blendshape_id = blendshape_id_offset + row * SPACE_DIM + col;
-                    if (blendshape_id >= POSE_BLENDSHAPES_NUM)
-                        throw std::out_of_range("Error::calcJacPoseBlendshapes::requested non-existing blendshape id");
-
-                    blendshapes_jac[param_id] += rotation_derivative(row, col) * pose_diffs_[blendshape_id];
-                }
-            }
+            addJointPoseBlendshape_(blendshape_id_offset,
+                local_rotations_jac_[param_id],         // 
+                blendshapes_jac[param_id]);
         }
+    }
 }
 
 E::MatrixXd SMPLWrapper::calcJointLocations_(const E::VectorXd* translation,
