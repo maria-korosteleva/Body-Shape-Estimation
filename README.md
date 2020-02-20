@@ -22,7 +22,6 @@ This is a work and progress which means that
 ## System requirements
 * The project is developed under Windows 10, using Visual Studio 2017 x64, and have never been tested in other environments.
 * Uses some C++11 features
-* Uses Windows-specific functionality to work with the filesystem. If you are using other OS, you'd need to modify the CustomLogger
 
 ## Dependencies
 
