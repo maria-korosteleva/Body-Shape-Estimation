@@ -71,7 +71,7 @@ public:
     // modify state
     void rotateLimbToDirection(const std::string joint_name, const E::Vector3d& direction);
     // Matching both directions exaclty is not guaranteed -- hips direction will be matched approximately
-    void rotateRoot(const E::Vector3d& body_up, const E::Vector3d& body_right_to_left);
+    void rotateRoot(const E::Vector3d& body_up, const E::Vector3d& body_left_to_right);
     // shoulder_dir points from right to left 
     void twistBack(const E::Vector3d& shoulder_dir);
     // re-calculates translation to move the posed/shaped mesh center to the specified point

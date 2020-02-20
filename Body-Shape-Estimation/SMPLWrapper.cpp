@@ -100,13 +100,13 @@ void SMPLWrapper::rotateLimbToDirection(const std::string joint_name, const E::V
     calcModel();
 }
 
-void SMPLWrapper::rotateRoot(const E::Vector3d& body_up, const E::Vector3d& body_right_to_left)
+void SMPLWrapper::rotateRoot(const E::Vector3d& body_up, const E::Vector3d& body_left_to_right)
 {
     assert(SMPLWrapper::SPACE_DIM == 3 && "rotateRoot() can only be used in 3D world");
 
     std::cout << "----- Setting Root Rotation -----" << std::endl
         << "With UP (Y) to \n" << body_up << std::endl
-        << "With Right (X) to \n" << body_right_to_left << std::endl;
+        << "With Right (X) to \n" << body_left_to_right << std::endl;
 
     E::Vector3d default_Y(0., 1., 0.);
     E::Vector3d rotation_match_body_up = angle_axis_(default_Y, body_up);
@@ -119,10 +119,12 @@ void SMPLWrapper::rotateRoot(const E::Vector3d& body_up, const E::Vector3d& body
     
     // use rotation around Y + projection instead of the full vector
     // to gurantee the Y stays where it is and hips are matched as close as possible
-    E::Vector3d right_to_left_projected = body_right_to_left - body_right_to_left.dot(Y_matched) * Y_matched;
+    E::Vector3d left_to_right_projected = body_left_to_right - body_left_to_right.dot(Y_matched) * Y_matched;
+    E::Vector3d cross_product = X_updated.cross(left_to_right_projected);
+    int sin_sign = cross_product.dot(Y_matched) >= 0 ? 1 : -1;
     double angle = atan2(
-        X_updated.cross(right_to_left_projected).norm(), 
-        X_updated.dot(right_to_left_projected));
+        sin_sign * cross_product.norm(), // sin
+        X_updated.dot(left_to_right_projected));   // cos
 
     E::Vector3d rotation_match_hips = angle * Y_matched;
 
