@@ -98,7 +98,7 @@ private:
             double denominator = 1 + s * sigma_sqr;
 
             out[0] = s / denominator;
-            out[1] = 1 / denominator * denominator;
+            out[1] = 1 / (denominator * denominator);
             out[2] = -2 * sigma_sqr * out[1] / denominator;
         }
     private:
