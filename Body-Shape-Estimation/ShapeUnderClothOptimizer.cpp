@@ -10,13 +10,13 @@ ShapeUnderClothOptimizer::ShapeUnderClothOptimizer(std::shared_ptr<SMPLWrapper> 
 
     // parameters
     // NOTE: the parameters might be reset from the outside later on
-    shape_reg_weight_ = 0.01;
-    pose_reg_weight_ = 0.001;
-    displacement_reg_weight_ = 0.001;
-    displacement_smoothing_weight_ = 0.1;
-    shape_prune_threshold_ = 0.05;
-    gm_saturation_threshold_ = 0.033;
-    in_verts_scaling_weight_ = 0.1;
+    config_.shape_reg_weight = 0.01;
+    config_.pose_reg_weight = 0.001;
+    config_.displacement_reg_weight = 0.001;
+    config_.displacement_smoothing_weight = 0.1;
+    config_.shape_prune_threshold = 0.05;
+    config_.gm_saturation_threshold = 0.033;
+    config_.in_verts_scaling_weight = 0.1;
 }
 
 ShapeUnderClothOptimizer::~ShapeUnderClothOptimizer()
@@ -32,7 +32,7 @@ void ShapeUnderClothOptimizer::setNewInput(std::shared_ptr<GeneralMesh> input)
     input_ = std::move(input);
 }
 
-void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::MatrixXd>* iteration_results, const double parameter)
+void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::MatrixXd>* iteration_results)
 {
     // Use the current state of smpl_ as init parameter
     // smpl is moved to zero, because we use normalized input - equivalent to translation guess
@@ -40,21 +40,20 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
     // Put our trust into the initial pose
     ceres::Matrix initial_pose_as_prior = smpl_->getStatePointers().pose;
 
-    // Setup solvers options
-    Solver::Options options;
-    options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY; // analytic jacobian is dense
-    options.minimizer_progress_to_stdout = true;
-    options.max_num_iterations = 500;   // usually converges way faster
+    // Setup solver options
+    config_.ceres.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY; // analytic jacobian is dense
+    config_.ceres.minimizer_progress_to_stdout = true;
+    config_.ceres.max_num_iterations = 500;   // usually converges way faster
 
     SMPLVertsLoggingCallBack* callback = nullptr;
     if (iteration_results != nullptr)
     {
         callback = new SMPLVertsLoggingCallBack(smpl_, iteration_results);
-        options.callbacks.push_back(callback);
-        options.update_state_every_iteration = true;
+        config_.ceres.callbacks.push_back(callback);
+        config_.ceres.update_state_every_iteration = true;
     }
 
-    checkCeresOptions(options);
+    checkCeresOptions(config_.ceres);
 
     auto start_time = std::chrono::system_clock::now();
     // just some number of cycles
@@ -64,9 +63,9 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
             << "    Cycle Shape: #" << i << std::endl
             << "***********************" << std::endl;
         
-        translationEstimation_(options);
-        shapeEstimation_(options, parameter);
-        poseEstimation_(options, initial_pose_as_prior);
+        translationEstimation_(config_);
+        shapeEstimation_(config_);
+        poseEstimation_(config_, initial_pose_as_prior);
     }
 
     for (int i = 0; i < 0; ++i)
@@ -75,9 +74,9 @@ void ShapeUnderClothOptimizer::findOptimalSMPLParameters(std::vector<Eigen::Matr
             << "    Cycle Displacement: #" << i << std::endl
             << "***********************" << std::endl;
  
-        displacementEstimation_(options);
-        translationEstimation_(options);
-        poseEstimation_(options, initial_pose_as_prior);
+        displacementEstimation_(config_);
+        translationEstimation_(config_);
+        poseEstimation_(config_, initial_pose_as_prior);
     }
 
     auto end_time = std::chrono::system_clock::now();
@@ -110,7 +109,7 @@ void ShapeUnderClothOptimizer::gmLossTest()
     }
 }
 
-void ShapeUnderClothOptimizer::translationEstimation_(Solver::Options & options)
+void ShapeUnderClothOptimizer::translationEstimation_(OptimizationOptions& config)
 {
     std::cout << "-----------------------" << std::endl
               << "      Translation" << std::endl
@@ -122,23 +121,23 @@ void ShapeUnderClothOptimizer::translationEstimation_(Solver::Options & options)
     AbsoluteDistanceBase* cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
         AbsoluteDistanceBase::TRANSLATION, AbsoluteDistanceBase::BOTH_DIST);
     // for pre-computation
-    options.evaluation_callback = cost_function;
+    config.ceres.evaluation_callback = cost_function;
     
     problem.AddResidualBlock(cost_function, nullptr, smpl_->getStatePointers().translation.data());
 
     // Run the solver!
     Solver::Summary summary;
-    Solve(options, &problem, &summary);
+    Solve(config.ceres, &problem, &summary);
 
     // Print summary
     std::cout << "Translation estimation summary:" << std::endl;
     std::cout << summary.FullReport() << std::endl;
 
     // clear the options from the update for smooth future use
-    options.evaluation_callback = NULL;
+    config.ceres.evaluation_callback = NULL;
 }
 
-void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, ceres::Matrix & prior_pose, const double parameter)
+void ShapeUnderClothOptimizer::poseEstimation_(OptimizationOptions& config, ceres::Matrix & prior_pose)
 {
     std::cout << "-----------------------" << std::endl
               << "          Pose" << std::endl
@@ -148,31 +147,31 @@ void ShapeUnderClothOptimizer::poseEstimation_(Solver::Options& options, ceres::
 
     // Main cost
     if (input_->isClothSegmented())
-        poseMainCostClothAware_(problem, options);
+        poseMainCostClothAware_(problem, config);
     else
-        poseMainCostNoSegmetation_(problem, options);
+        poseMainCostNoSegmetation_(problem, config);
 
     // Regularizer
     // Note that we exploit the row-major here!
     ceres::Vector prior_pose_as_vector = Eigen::Map<Eigen::VectorXd>(prior_pose.data(), prior_pose.size());
     CostFunction* prior = new NormalPrior(smpl_->getPoseStiffness(), prior_pose_as_vector);
-    LossFunction* scale_prior = new ScaledLoss(NULL, pose_reg_weight_, ceres::TAKE_OWNERSHIP);    // 0.0007
+    LossFunction* scale_prior = new ScaledLoss(NULL, config.pose_reg_weight, ceres::TAKE_OWNERSHIP);    // 0.0007
     problem.AddResidualBlock(prior, scale_prior, 
         smpl_->getStatePointers().pose.data());
 
     // Run the solver!
     Solver::Summary summary;
-    Solve(options, &problem, &summary);
+    Solve(config.ceres, &problem, &summary);
 
     // Print summary
     std::cout << "Pose estimation summary:" << std::endl;
     std::cout << summary.FullReport() << std::endl;
 
     // clear the options from the update for smooth future use
-    options.evaluation_callback = NULL;
+    config.ceres.evaluation_callback = NULL;
 }
 
-void ShapeUnderClothOptimizer::poseMainCostNoSegmetation_(Problem & problem, Solver::Options& options)
+void ShapeUnderClothOptimizer::poseMainCostNoSegmetation_(Problem & problem, OptimizationOptions& config)
 {
     // send raw pointers because inner class were not refactored
     AbsoluteDistanceBase* out_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
@@ -184,19 +183,14 @@ void ShapeUnderClothOptimizer::poseMainCostNoSegmetation_(Problem & problem, Sol
         smpl_->getStatePointers().pose.data());
 
     // in_verts distance needs scaling 
-    LossFunction* scale_in_cost = new ScaledLoss(NULL, in_verts_scaling_weight_, ceres::TAKE_OWNERSHIP);
-    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(gm_saturation_threshold_);
-    ceres::ComposedLoss* composed_loss = new ceres::ComposedLoss(
-        scale_in_cost, ceres::TAKE_OWNERSHIP,
-        geman_mcclare_cost, ceres::TAKE_OWNERSHIP);
-    problem.AddResidualBlock(in_cost_function, composed_loss,
+    problem.AddResidualBlock(in_cost_function, innerVerticesLoss_(config),
         smpl_->getStatePointers().pose.data());
 
     // set any of the defined costs for pre-computation
-    options.evaluation_callback = out_cost_function;
+    config.ceres.evaluation_callback = out_cost_function;
 }
 
-void ShapeUnderClothOptimizer::poseMainCostClothAware_(Problem & problem, Solver::Options& options)
+void ShapeUnderClothOptimizer::poseMainCostClothAware_(Problem & problem, OptimizationOptions& config)
 {
     // send raw pointers because inner class was not refactored
     AbsoluteDistanceBase* cloth_out_cost = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
@@ -212,20 +206,14 @@ void ShapeUnderClothOptimizer::poseMainCostClothAware_(Problem & problem, Solver
     problem.AddResidualBlock(cloth_out_cost, nullptr,
         smpl_->getStatePointers().pose.data());
 
-    // in_verts distance needs scaling 
-    LossFunction* scale_in_cost = new ScaledLoss(NULL, in_verts_scaling_weight_, ceres::TAKE_OWNERSHIP);
-    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(gm_saturation_threshold_);
-    ceres::ComposedLoss* composed_loss = new ceres::ComposedLoss(
-        scale_in_cost, ceres::TAKE_OWNERSHIP,
-        geman_mcclare_cost, ceres::TAKE_OWNERSHIP);
-    problem.AddResidualBlock(cloth_in_cost, composed_loss,
+    problem.AddResidualBlock(cloth_in_cost, innerVerticesLoss_(config),
         smpl_->getStatePointers().pose.data());
 
     // set any of the defined costs for pre-computation
-    options.evaluation_callback = cloth_out_cost;
+    config.ceres.evaluation_callback = cloth_out_cost;
 }
 
-void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const double gm_parameter)
+void ShapeUnderClothOptimizer::shapeEstimation_(OptimizationOptions& config)
 {
     std::cout << "-----------------------" << std::endl
         << "          Shape" << std::endl
@@ -235,34 +223,34 @@ void ShapeUnderClothOptimizer::shapeEstimation_(Solver::Options & options, const
 
     // Main cost
     if (input_->isClothSegmented())
-        shapeMainCostClothAware_(problem, options);
+        shapeMainCostClothAware_(problem, config);
     else
-        shapeMainCostNoSegmetation_(problem, options);
+        shapeMainCostNoSegmetation_(problem, config);
 
     // Regularization
     CostFunction* prior = new NormalPrior(
         Eigen::MatrixXd::Identity(SMPLWrapper::SHAPE_SIZE, SMPLWrapper::SHAPE_SIZE), 
         Eigen::VectorXd::Zero(SMPLWrapper::SHAPE_SIZE));
-    LossFunction* scale_prior = new ScaledLoss(NULL, shape_reg_weight_, ceres::TAKE_OWNERSHIP);
+    LossFunction* scale_prior = new ScaledLoss(NULL, config.shape_reg_weight, ceres::TAKE_OWNERSHIP);
     problem.AddResidualBlock(prior, scale_prior,
         smpl_->getStatePointers().shape.data());
 
     // Run the solver!
     Solver::Summary summary;
-    Solve(options, &problem, &summary);
+    Solve(config.ceres, &problem, &summary);
 
     // Print summary
     std::cout << "Shape estimation summary:" << std::endl;
     std::cout << summary.FullReport() << std::endl;
 
     // clear the options from the update for smooth future use
-    options.evaluation_callback = NULL;
+    config.ceres.evaluation_callback = NULL;
 }
 
-void ShapeUnderClothOptimizer::shapeMainCostNoSegmetation_(Problem & problem, Solver::Options & options)
+void ShapeUnderClothOptimizer::shapeMainCostNoSegmetation_(Problem & problem, OptimizationOptions& config)
 {
     AbsoluteDistanceBase* out_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
-        AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::OUT_DIST, shape_prune_threshold_);
+        AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::OUT_DIST, config.shape_prune_threshold);
     AbsoluteDistanceBase* in_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
         AbsoluteDistanceBase::SHAPE, AbsoluteDistanceBase::IN_DIST);  // no threshold
 
@@ -270,19 +258,14 @@ void ShapeUnderClothOptimizer::shapeMainCostNoSegmetation_(Problem & problem, So
     problem.AddResidualBlock(out_cost_function, nullptr,
         smpl_->getStatePointers().shape.data());
 
-    LossFunction* scale_in_cost = new ScaledLoss(NULL, in_verts_scaling_weight_, ceres::TAKE_OWNERSHIP);
-    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(gm_saturation_threshold_);
-    ceres::ComposedLoss* composed_loss = new ceres::ComposedLoss(
-        scale_in_cost, ceres::TAKE_OWNERSHIP,
-        geman_mcclare_cost, ceres::TAKE_OWNERSHIP);
-    problem.AddResidualBlock(in_cost_function, composed_loss,
+    problem.AddResidualBlock(in_cost_function, innerVerticesLoss_(config),
         smpl_->getStatePointers().shape.data());
 
     // set any of the defined costs for pre-computation
-    options.evaluation_callback = out_cost_function;
+    config.ceres.evaluation_callback = out_cost_function;
 }
 
-void ShapeUnderClothOptimizer::shapeMainCostClothAware_(Problem & problem, Solver::Options & options)
+void ShapeUnderClothOptimizer::shapeMainCostClothAware_(Problem & problem, OptimizationOptions& config)
 {
     // send raw pointers because inner class was not refactored
     AbsoluteDistanceBase* cloth_out_cost = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
@@ -298,20 +281,14 @@ void ShapeUnderClothOptimizer::shapeMainCostClothAware_(Problem & problem, Solve
     problem.AddResidualBlock(cloth_out_cost, nullptr,
         smpl_->getStatePointers().shape.data());
 
-    // in_verts distance needs scaling 
-    LossFunction* scale_in_cost = new ScaledLoss(NULL, in_verts_scaling_weight_, ceres::TAKE_OWNERSHIP);
-    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(gm_saturation_threshold_);
-    ceres::ComposedLoss* composed_loss = new ceres::ComposedLoss(
-        scale_in_cost, ceres::TAKE_OWNERSHIP,
-        geman_mcclare_cost, ceres::TAKE_OWNERSHIP);
-    problem.AddResidualBlock(cloth_in_cost, composed_loss,
+    problem.AddResidualBlock(cloth_in_cost, innerVerticesLoss_(config),
         smpl_->getStatePointers().shape.data());
 
     // set any of the defined costs for pre-computation
-    options.evaluation_callback = cloth_out_cost;
+    config.ceres.evaluation_callback = cloth_out_cost;
 }
 
-void ShapeUnderClothOptimizer::displacementEstimation_(Solver::Options& options)
+void ShapeUnderClothOptimizer::displacementEstimation_(OptimizationOptions& config)
 {
     std::cout << "-----------------------" << std::endl
         << "          Displacement" << std::endl
@@ -319,19 +296,12 @@ void ShapeUnderClothOptimizer::displacementEstimation_(Solver::Options& options)
 
     Problem problem;
 
-    // prepare losses for inner distances
-    LossFunction* scale_in_cost = new ScaledLoss(NULL, in_verts_scaling_weight_, ceres::TAKE_OWNERSHIP);
-    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(gm_saturation_threshold_);
-    ceres::ComposedLoss* composed_loss = new ceres::ComposedLoss(
-        scale_in_cost, ceres::TAKE_OWNERSHIP,
-        geman_mcclare_cost, ceres::TAKE_OWNERSHIP);
-
     // prepapre losses for regularization
     CostFunction* prior = new NormalPrior(
         Eigen::MatrixXd::Identity(SMPLWrapper::SPACE_DIM, SMPLWrapper::SPACE_DIM),
         Eigen::VectorXd::Zero(SMPLWrapper::SPACE_DIM));
-    LossFunction* L2_scale_loss = new ScaledLoss(NULL, displacement_reg_weight_, ceres::TAKE_OWNERSHIP);
-    LossFunction* smoothing_scale_loss = new ScaledLoss(NULL, displacement_smoothing_weight_, ceres::TAKE_OWNERSHIP);
+    LossFunction* L2_scale_loss = new ScaledLoss(NULL, config.displacement_reg_weight, ceres::TAKE_OWNERSHIP);
+    LossFunction* smoothing_scale_loss = new ScaledLoss(NULL, config.displacement_smoothing_weight, ceres::TAKE_OWNERSHIP);
 
     // Main cost -- for each vertex
     bool eval_callback_added = false;
@@ -339,7 +309,7 @@ void ShapeUnderClothOptimizer::displacementEstimation_(Solver::Options& options)
     {
         AbsoluteDistanceBase* out_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
             AbsoluteDistanceBase::DISPLACEMENT, AbsoluteDistanceBase::OUT_DIST,
-            shape_prune_threshold_, v_id);    // TODO recheck thresholding for displacements shape_prune_threshold_
+            config.shape_prune_threshold, v_id);    // TODO recheck thresholding for displacements shape_prune_threshold_
         AbsoluteDistanceBase* in_cost_function = new AbsoluteDistanceBase(smpl_.get(), input_.get(),
             AbsoluteDistanceBase::DISPLACEMENT, AbsoluteDistanceBase::IN_DIST, 
             100., v_id);  // no threshold
@@ -350,7 +320,7 @@ void ShapeUnderClothOptimizer::displacementEstimation_(Solver::Options& options)
         // add for performing pre-computation
         if (!eval_callback_added)
         {
-            options.evaluation_callback = out_cost_function;
+            config.ceres.evaluation_callback = out_cost_function;
             eval_callback_added = true;
         }
 
@@ -359,7 +329,7 @@ void ShapeUnderClothOptimizer::displacementEstimation_(Solver::Options& options)
             smpl_->getStatePointers().displacements.data() + v_id * SMPLWrapper::SPACE_DIM);
 
         // add in residuals for corresponding vertex
-        problem.AddResidualBlock(in_cost_function, composed_loss,
+        problem.AddResidualBlock(in_cost_function, innerVerticesLoss_(config),
             smpl_->getStatePointers().displacements.data() + v_id * SMPLWrapper::SPACE_DIM);
 
         // add regularization resuiduals
@@ -371,14 +341,24 @@ void ShapeUnderClothOptimizer::displacementEstimation_(Solver::Options& options)
 
     // Run the solver!
     Solver::Summary summary;
-    Solve(options, &problem, &summary);
+    Solve(config.ceres, &problem, &summary);
 
     // Print summary
     std::cout << "Displacement estimation summary:" << std::endl;
     std::cout << summary.FullReport() << std::endl;
 
     // clear the options from the update for smooth future use
-    options.evaluation_callback = NULL;
+    config.ceres.evaluation_callback = NULL;
+}
+
+ceres::ComposedLoss* ShapeUnderClothOptimizer::innerVerticesLoss_(const OptimizationOptions& config)
+{
+    LossFunction* scale_in_cost = new ScaledLoss(NULL, config.in_verts_scaling_weight, ceres::TAKE_OWNERSHIP);
+    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(config.gm_saturation_threshold);
+
+    return new ceres::ComposedLoss(
+        scale_in_cost, ceres::TAKE_OWNERSHIP,
+        geman_mcclare_cost, ceres::TAKE_OWNERSHIP);
 }
 
 void ShapeUnderClothOptimizer::checkCeresOptions(const Solver::Options & options)

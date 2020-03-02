@@ -33,53 +33,60 @@ public:
     
     void setNewSMPLModel(std::shared_ptr<SMPLWrapper>);
     void setNewInput(std::shared_ptr<GeneralMesh>);
-    void setShapeRegularizationWeight(double weight) { shape_reg_weight_ = weight; };
-    void setDisplacementRegWeight(double weight) { displacement_reg_weight_ = weight; };
-    void setDisplacementSmoothingWeight(double weight) { displacement_smoothing_weight_ = weight; };
-    void setShapePruningThreshold(double value) { shape_prune_threshold_ = value; };
-    void setPoseRegularizationWeight(double weight) { pose_reg_weight_ = weight; };
-    void setGMSaturationThreshold(double threshold) { gm_saturation_threshold_ = threshold;  }
-    void setInScailingWeight(double weight) { in_verts_scaling_weight_ = weight; }
+    void setShapeRegularizationWeight(double weight) { config_.shape_reg_weight = weight; };
+    void setDisplacementRegWeight(double weight) { config_.displacement_reg_weight = weight; };
+    void setDisplacementSmoothingWeight(double weight) { config_.displacement_smoothing_weight = weight; };
+    void setShapePruningThreshold(double value) { config_.shape_prune_threshold = value; };
+    void setPoseRegularizationWeight(double weight) { config_.pose_reg_weight = weight; };
+    void setGMSaturationThreshold(double threshold) { config_.gm_saturation_threshold = threshold;  }
+    void setInScailingWeight(double weight) { config_.in_verts_scaling_weight = weight; }
 
     std::shared_ptr<SMPLWrapper> getLastSMPL() const { return smpl_; }
 
     // parameter is some parameter of the underlying procedures; used for experiments; the semantics should be controlled by the programmer
-    void findOptimalSMPLParameters(std::vector<Eigen::MatrixXd>* iteration_results = nullptr, const double parameter = 0.);
+    void findOptimalSMPLParameters(std::vector<Eigen::MatrixXd>* iteration_results = nullptr);
 
     // tmp
     void gmLossTest();
 
 private:
+    struct OptimizationOptions
+    {
+        Solver::Options ceres;
+
+        // hyperparams
+        double shape_reg_weight;
+        double displacement_reg_weight;
+        double displacement_smoothing_weight;
+        double pose_reg_weight;
+        double shape_prune_threshold;
+        double gm_saturation_threshold;
+        double in_verts_scaling_weight;
+    };
+
     // inidividual optimizers
     // expect the params to be initialized outside
-    void translationEstimation_(Solver::Options& options);
+    void translationEstimation_(OptimizationOptions& config);
 
-    void poseEstimation_(Solver::Options& options, ceres::Matrix & prior_pose, const double parameter = 1.);
-    void poseMainCostNoSegmetation_(Problem& problem, Solver::Options& options);
-    void poseMainCostClothAware_(Problem& problem, Solver::Options& options);
+    void poseEstimation_(OptimizationOptions& config, ceres::Matrix & prior_pose);
+    void poseMainCostNoSegmetation_(Problem& problem, OptimizationOptions& config);
+    void poseMainCostClothAware_(Problem& problem, OptimizationOptions& config);
 
-    void shapeEstimation_(Solver::Options& options, const double parameter = 1.);
-    void shapeMainCostNoSegmetation_(Problem& problem, Solver::Options& options);
-    void shapeMainCostClothAware_(Problem& problem, Solver::Options& options);
+    void shapeEstimation_(OptimizationOptions& config);
+    void shapeMainCostNoSegmetation_(Problem& problem, OptimizationOptions& config);
+    void shapeMainCostClothAware_(Problem& problem, OptimizationOptions& config);
 
-    void displacementEstimation_(Solver::Options& options);
+    void displacementEstimation_(OptimizationOptions& config);
 
     // utils
-    void checkCeresOptions(const Solver::Options& options);
+    ceres::ComposedLoss* innerVerticesLoss_(const OptimizationOptions& config);
+    void checkCeresOptions(const Solver::Options& config);
 
     // data
     // use the shared_ptr to make sure objects won't dissapear in-between calls to this class
     std::shared_ptr<SMPLWrapper> smpl_ = nullptr;
     std::shared_ptr<GeneralMesh> input_ = nullptr;
-
-    // parameters
-    double shape_reg_weight_;
-    double displacement_reg_weight_;
-    double displacement_smoothing_weight_;
-    double pose_reg_weight_;
-    double shape_prune_threshold_;
-    double gm_saturation_threshold_;
-    double in_verts_scaling_weight_;
+    OptimizationOptions config_;
 
     // inner classes
 

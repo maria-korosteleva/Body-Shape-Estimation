@@ -146,17 +146,16 @@ int main()
         //    "D:/GK-Undressing-Experiments/fit_new-sexy_girl_Female_200122_12_19/OP_guesses/smpl_op_posed_params.txt");
         extractor.setupInitialization(PoseShapeExtractor::OPENPOSE, "D:/MyDocs/libs/Installed_libs/ml_models/openpose");
 
-        //extractor.setupNewExperiment(inputs[0], "fix");
-        ////extractor.setupNewInnerVertsParamsExperiment(inputs[0], 1, 0.05, "in");
-        //extractor.setSaveIntermediateResults(true);
-        //extractor.runExtraction();
-        
-        //extractor.viewIteratoinProcess();
-        //extractor.viewCameraSetupForPhotos();
-        //extractor.viewFinalResult(true);
+#if 1   // ---- single test ----
+        extractor.setupNewExperiment(inputs[0], "refactor");
+        //extractor.setupNewInnerVertsParamsExperiment(inputs[0], 1, 0.05, "in");
+        extractor.setSaveIntermediateResults(true);
+        extractor.runExtraction();
+        extractor.viewIteratoinProcess();
 
-        //std::ofstream fails;
-        //fails.open("D:/Data/scan_data_for_paper/fails.txt");
+#else   // ---- batch experiment -----
+        std::ofstream fails;
+        fails.open("D:/GK-Undressing-Experiments/fails.txt");
         for (auto&& input : inputs)
         {
             for (const double& in_weight : { 1.0, 0.1, 0.01 })
@@ -167,20 +166,22 @@ int main()
                     {
                         //extractor.setupNewExperiment(input, "fit");
                         extractor.setupNewInnerVertsParamsExperiment(input, in_weight, gm_threshold, "in");
-                        extractor.runExtraction();
-                        //std::shared_ptr<SMPLWrapper> smpl_estimated = std::move(extractor.runExtraction());
+                        std::shared_ptr<SMPLWrapper> smpl_estimated = std::move(extractor.runExtraction());
+#if 0 // ---- save results in the original folder ----
                         //smpl_estimated->logParameters(input->getPath() + "/" + input->getName() + "_smpl_params.txt");
                         //smpl_estimated->saveToObj(input->getPath() + "/" + input->getName() + "_smpl.obj");
                         //input->saveNormalizedMesh(input->getPath() + "/");
+#endif
                     }
                     catch (std::exception& e)
                     {
                         std::cout << "exception encountered: " << e.what() << std::endl;
-                        //fails << input->getPath() + "/" + input->getName() << std::endl;
+                        fails << input->getPath() + "/" + input->getName() << std::endl;
                     }
                 }
             }
         }
+#endif
     }
     catch (std::exception& e)
     {

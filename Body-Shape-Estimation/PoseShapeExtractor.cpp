@@ -313,11 +313,11 @@ void PoseShapeExtractor::runPoseShapeOptimization_()
     iteration_outputs_.clear();
     if (collect_iteration_results_)
     {
-        optimizer_->findOptimalSMPLParameters(&iteration_outputs_, expetiment_param);
+        optimizer_->findOptimalSMPLParameters(&iteration_outputs_);
     }
     else
     {
-        optimizer_->findOptimalSMPLParameters(nullptr, expetiment_param);
+        optimizer_->findOptimalSMPLParameters(nullptr);
     }
     
     logger_->endRedirectCoutToFile();
