@@ -28,11 +28,37 @@ using ceres::ScaledLoss;
 class ShapeUnderClothOptimizer
 {
 public:
+    struct OptimizationOptions
+    {
+        Solver::Options ceres;
+
+        // hyperparams
+        double shape_reg_weight;
+        double displacement_reg_weight;
+        double displacement_smoothing_weight;
+        double pose_reg_weight;
+        double shape_prune_threshold;
+        double gm_saturation_threshold;
+        double in_verts_scaling_weight;
+
+        OptimizationOptions()
+        { // defaults
+            shape_reg_weight = 0.01;
+            pose_reg_weight = 0.001;
+            displacement_reg_weight = 0.001;
+            displacement_smoothing_weight = 0.1;
+            shape_prune_threshold = 0.05;
+            gm_saturation_threshold = 0.033;
+            in_verts_scaling_weight = 0.1;
+        }
+    };
+
     ShapeUnderClothOptimizer(std::shared_ptr<SMPLWrapper> smpl, std::shared_ptr<GeneralMesh> input);
     ~ShapeUnderClothOptimizer();
     
     void setNewSMPLModel(std::shared_ptr<SMPLWrapper>);
     void setNewInput(std::shared_ptr<GeneralMesh>);
+    void setConfig(const OptimizationOptions& config) { config_ = config; };
     void setShapeRegularizationWeight(double weight) { config_.shape_reg_weight = weight; };
     void setDisplacementRegWeight(double weight) { config_.displacement_reg_weight = weight; };
     void setDisplacementSmoothingWeight(double weight) { config_.displacement_smoothing_weight = weight; };
@@ -50,19 +76,6 @@ public:
     void gmLossTest();
 
 private:
-    struct OptimizationOptions
-    {
-        Solver::Options ceres;
-
-        // hyperparams
-        double shape_reg_weight;
-        double displacement_reg_weight;
-        double displacement_smoothing_weight;
-        double pose_reg_weight;
-        double shape_prune_threshold;
-        double gm_saturation_threshold;
-        double in_verts_scaling_weight;
-    };
 
     // inidividual optimizers
     // expect the params to be initialized outside

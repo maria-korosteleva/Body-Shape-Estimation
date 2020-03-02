@@ -160,23 +160,26 @@ int main()
         {
             for (const double& in_weight : { 1.0, 0.1, 0.01 })
             {
-                for (const double& gm_threshold : { 0.5, 0.25, 0.05 })
+                for (const double& prune_threshold : { 0.05 })  // 0.05 is the default
                 {
-                    try
+                    for (const double& gm_threshold : { 0.7, 1., 2., 100. })
                     {
-                        //extractor.setupNewExperiment(input, "fit");
-                        extractor.setupNewInnerVertsParamsExperiment(input, in_weight, gm_threshold, "in");
-                        std::shared_ptr<SMPLWrapper> smpl_estimated = std::move(extractor.runExtraction());
+                        try
+                        {
+                            //extractor.setupNewExperiment(input, "fit");
+                            extractor.setupNewInnerVertsParamsExperiment(input, in_weight, prune_threshold, gm_threshold, "in");
+                            std::shared_ptr<SMPLWrapper> smpl_estimated = std::move(extractor.runExtraction());
 #if 0 // ---- save results in the original folder ----
-                        //smpl_estimated->logParameters(input->getPath() + "/" + input->getName() + "_smpl_params.txt");
-                        //smpl_estimated->saveToObj(input->getPath() + "/" + input->getName() + "_smpl.obj");
-                        //input->saveNormalizedMesh(input->getPath() + "/");
+                            //smpl_estimated->logParameters(input->getPath() + "/" + input->getName() + "_smpl_params.txt");
+                            //smpl_estimated->saveToObj(input->getPath() + "/" + input->getName() + "_smpl.obj");
+                            //input->saveNormalizedMesh(input->getPath() + "/");
 #endif
-                    }
-                    catch (std::exception& e)
-                    {
-                        std::cout << "exception encountered: " << e.what() << std::endl;
-                        fails << input->getPath() + "/" + input->getName() << std::endl;
+                        }
+                        catch (std::exception& e)
+                        {
+                            std::cout << "exception encountered: " << e.what() << std::endl;
+                            fails << input->getPath() + "/" + input->getName() << std::endl;
+                        }
                     }
                 }
             }

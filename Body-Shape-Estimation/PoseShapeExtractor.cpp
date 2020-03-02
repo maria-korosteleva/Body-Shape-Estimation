@@ -7,7 +7,7 @@ std::shared_ptr <SMPLWrapper> PoseShapeExtractor::smpl_to_viz_;
 std::shared_ptr <GeneralMesh> PoseShapeExtractor::input_to_viz_;
 
 PoseShapeExtractor::PoseShapeExtractor(const std::string& smpl_model_path, const std::string& logging_path)
-    : smpl_model_path_(smpl_model_path), logging_base_path_(logging_path)
+    : smpl_model_path_(smpl_model_path), logging_base_path_(logging_path), optimizer_config_()
 {
     smpl_ = nullptr;
     input_ = nullptr;
@@ -19,14 +19,6 @@ PoseShapeExtractor::PoseShapeExtractor(const std::string& smpl_model_path, const
     cameras_distance_ = 4.5f;
     num_cameras_ = 7;
     cameras_elevation_ = 0.0;
-
-    optimizer_shape_reg_weight_ = 0.01;
-    optimizer_pose_reg_weight_ = 0.001;
-    optimizer_shape_prune_threshold_ = 0.05;
-    optimizer_displacement_reg_weight_ = 0.001;
-    optimizer_displacement_smoothing_weight_ = 0.1;
-    optimizer_gm_saturation_ = 0.033;
-    optimizer_in_verts_scaling_ = 0.1;
 
     optimizer_ = std::make_shared<ShapeUnderClothOptimizer>(nullptr, nullptr);
 
@@ -74,8 +66,8 @@ void PoseShapeExtractor::setupNewExperiment(std::shared_ptr<GeneralMesh> input, 
 void PoseShapeExtractor::setupNewDistplacementRegExperiment(std::shared_ptr<GeneralMesh> input, 
     double l2_weight, double smoothing_weight, const std::string experiment_name)
 {
-    optimizer_displacement_reg_weight_ = l2_weight;
-    optimizer_displacement_smoothing_weight_ = smoothing_weight;
+    optimizer_config_.displacement_reg_weight = l2_weight;
+    optimizer_config_.displacement_smoothing_weight = smoothing_weight;
 
     setupNewExperiment(std::move(input),
         experiment_name + "_" + std::to_string(l2_weight)+"_" + std::to_string(smoothing_weight));
@@ -83,25 +75,26 @@ void PoseShapeExtractor::setupNewDistplacementRegExperiment(std::shared_ptr<Gene
 
 void PoseShapeExtractor::setupNewShapePruningExperiment(std::shared_ptr<GeneralMesh> input, double threshold, const std::string experiment_name)
 {
-    optimizer_shape_prune_threshold_ = threshold;
+    optimizer_config_.shape_prune_threshold = threshold;
 
     setupNewExperiment(std::move(input),
         experiment_name + "_" + std::to_string(threshold));
 }
 
 void PoseShapeExtractor::setupNewInnerVertsParamsExperiment(std::shared_ptr<GeneralMesh> input, 
-    double inner_weight, double gm_saturation, const std::string experiment_name)
+    double inner_weight, double threshold, double gm_saturation, const std::string experiment_name)
 {
-    optimizer_in_verts_scaling_ = inner_weight;
-    optimizer_gm_saturation_ = gm_saturation;
+    optimizer_config_.in_verts_scaling_weight = inner_weight;
+    optimizer_config_.shape_prune_threshold = threshold;
+    optimizer_config_.gm_saturation_threshold = gm_saturation;
 
     setupNewExperiment(std::move(input),
-        experiment_name + "_" + std::to_string(inner_weight) + "_" + std::to_string(gm_saturation));
+        experiment_name + "_" + std::to_string(inner_weight) + "_" + std::to_string(threshold) + "_" + std::to_string(gm_saturation));
 }
 
 void PoseShapeExtractor::setupNewPoseRegExperiment(std::shared_ptr<GeneralMesh> input, double weight, const std::string experiment_name)
 {
-    optimizer_pose_reg_weight_ = weight;
+    optimizer_config_.pose_reg_weight = weight;
 
     setupNewExperiment(std::move(input),
         experiment_name + "_" + std::to_string(weight));
@@ -295,13 +288,7 @@ void PoseShapeExtractor::runPoseShapeOptimization_()
     // update the data in the oprimizer in case it changed
     optimizer_->setNewInput(input_);
     optimizer_->setNewSMPLModel(smpl_);
-    optimizer_->setShapeRegularizationWeight(optimizer_shape_reg_weight_);
-    optimizer_->setPoseRegularizationWeight(optimizer_pose_reg_weight_);
-    optimizer_->setShapePruningThreshold(optimizer_shape_prune_threshold_);
-    optimizer_->setDisplacementRegWeight(optimizer_displacement_reg_weight_);
-    optimizer_->setDisplacementSmoothingWeight(optimizer_displacement_smoothing_weight_);
-    optimizer_->setGMSaturationThreshold(optimizer_gm_saturation_);
-    optimizer_->setInScailingWeight(optimizer_in_verts_scaling_);
+    optimizer_->setConfig(optimizer_config_);
 
     std::cout << "Starting optimization...\n";
 

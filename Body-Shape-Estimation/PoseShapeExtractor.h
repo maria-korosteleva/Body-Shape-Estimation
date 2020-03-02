@@ -44,7 +44,7 @@ public:
     void setupNewShapePruningExperiment(std::shared_ptr<GeneralMesh> input,
         double threshold, const std::string experiment_name = "");
     void setupNewInnerVertsParamsExperiment(std::shared_ptr<GeneralMesh> input,
-        double inner_weight, double gm_saturation, const std::string experiment_name = "");
+        double inner_weight, double threshold, double gm_saturation, const std::string experiment_name = "");
     void setupNewPoseRegExperiment(std::shared_ptr<GeneralMesh> input,
         double weight, const std::string experiment_name = "");
     void setupNewCameraExperiment(std::shared_ptr<GeneralMesh> input, 
@@ -94,13 +94,7 @@ private:
     int num_cameras_;
 
     // for optimizer
-    double optimizer_shape_reg_weight_;
-    double optimizer_shape_prune_threshold_;
-    double optimizer_pose_reg_weight_;
-    double optimizer_displacement_reg_weight_;
-    double optimizer_displacement_smoothing_weight_;
-    double optimizer_gm_saturation_;
-    double optimizer_in_verts_scaling_;
+    ShapeUnderClothOptimizer::OptimizationOptions optimizer_config_;
 
     // for visulaization
     VertsVector iteration_outputs_;

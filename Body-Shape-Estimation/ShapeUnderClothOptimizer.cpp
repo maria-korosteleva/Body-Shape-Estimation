@@ -3,20 +3,11 @@
 
 ShapeUnderClothOptimizer::ShapeUnderClothOptimizer(std::shared_ptr<SMPLWrapper> smpl, 
     std::shared_ptr<GeneralMesh> input)
+    : config_()
 {
     // note: could be nullptr
     smpl_ = std::move(smpl);
     input_ = std::move(input);
-
-    // parameters
-    // NOTE: the parameters might be reset from the outside later on
-    config_.shape_reg_weight = 0.01;
-    config_.pose_reg_weight = 0.001;
-    config_.displacement_reg_weight = 0.001;
-    config_.displacement_smoothing_weight = 0.1;
-    config_.shape_prune_threshold = 0.05;
-    config_.gm_saturation_threshold = 0.033;
-    config_.in_verts_scaling_weight = 0.1;
 }
 
 ShapeUnderClothOptimizer::~ShapeUnderClothOptimizer()
