@@ -744,19 +744,19 @@ void SMPLWrapper::addJointPoseBlendshape_(const int blendshape_id_offset, const 
     }
 }
 
-void SMPLWrapper::addPoseBlendshapes_(const E::MatrixXd local_rotations_[SMPLWrapper::JOINTS_NUM], E::MatrixXd & verts)
+void SMPLWrapper::addPoseBlendshapes_(const E::MatrixXd local_rotations[SMPLWrapper::JOINTS_NUM], E::MatrixXd & verts)
 {
     // no pose blendshapes for root
     for (int joint = 1; joint < JOINTS_NUM; joint++)
     {
         // substact T-pose rotation
-        E::MatrixXd coeff = local_rotations_[joint] - E::MatrixXd::Identity(SPACE_DIM, SPACE_DIM);
+        E::MatrixXd coeff = local_rotations[joint] - E::MatrixXd::Identity(SPACE_DIM, SPACE_DIM);
 
         addJointPoseBlendshape_((joint - 1) * SPACE_DIM * SPACE_DIM, coeff, verts);
     }
 }
 
-void SMPLWrapper::calcPoseBlendshapesJac_(const E::MatrixXd local_rotations_jac_[SMPLWrapper::POSE_SIZE],
+void SMPLWrapper::calcPoseBlendshapesJac_(const E::MatrixXd local_rotations_jac[SMPLWrapper::POSE_SIZE],
     E::MatrixXd * blendshapes_jac)
 {
     // initialize jac w.r.t. root to zero 
@@ -776,7 +776,7 @@ void SMPLWrapper::calcPoseBlendshapesJac_(const E::MatrixXd local_rotations_jac_
 
             // apply pose blendshapes with rotations
             addJointPoseBlendshape_(blendshape_id_offset,
-                local_rotations_jac_[param_id],         // 
+                local_rotations_jac[param_id],         // 
                 blendshapes_jac[param_id]);
         }
     }

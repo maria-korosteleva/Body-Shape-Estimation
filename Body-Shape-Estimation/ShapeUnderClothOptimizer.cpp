@@ -15,6 +15,8 @@ ShapeUnderClothOptimizer::ShapeUnderClothOptimizer(std::shared_ptr<SMPLWrapper> 
     displacement_reg_weight_ = 0.001;
     displacement_smoothing_weight_ = 0.1;
     shape_prune_threshold_ = 0.05;
+    gm_saturation_threshold_ = 0.033;
+    in_verts_scaling_weight_ = 0.1;
 }
 
 ShapeUnderClothOptimizer::~ShapeUnderClothOptimizer()
@@ -182,8 +184,8 @@ void ShapeUnderClothOptimizer::poseMainCostNoSegmetation_(Problem & problem, Sol
         smpl_->getStatePointers().pose.data());
 
     // in_verts distance needs scaling 
-    LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.1, ceres::TAKE_OWNERSHIP);
-    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(0.033);
+    LossFunction* scale_in_cost = new ScaledLoss(NULL, in_verts_scaling_weight_, ceres::TAKE_OWNERSHIP);
+    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(gm_saturation_threshold_);
     ceres::ComposedLoss* composed_loss = new ceres::ComposedLoss(
         scale_in_cost, ceres::TAKE_OWNERSHIP,
         geman_mcclare_cost, ceres::TAKE_OWNERSHIP);
@@ -211,8 +213,8 @@ void ShapeUnderClothOptimizer::poseMainCostClothAware_(Problem & problem, Solver
         smpl_->getStatePointers().pose.data());
 
     // in_verts distance needs scaling 
-    LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.1, ceres::TAKE_OWNERSHIP);
-    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(0.033);
+    LossFunction* scale_in_cost = new ScaledLoss(NULL, in_verts_scaling_weight_, ceres::TAKE_OWNERSHIP);
+    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(gm_saturation_threshold_);
     ceres::ComposedLoss* composed_loss = new ceres::ComposedLoss(
         scale_in_cost, ceres::TAKE_OWNERSHIP,
         geman_mcclare_cost, ceres::TAKE_OWNERSHIP);
@@ -268,8 +270,8 @@ void ShapeUnderClothOptimizer::shapeMainCostNoSegmetation_(Problem & problem, So
     problem.AddResidualBlock(out_cost_function, nullptr,
         smpl_->getStatePointers().shape.data());
 
-    LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.1, ceres::TAKE_OWNERSHIP);
-    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(0.033);
+    LossFunction* scale_in_cost = new ScaledLoss(NULL, in_verts_scaling_weight_, ceres::TAKE_OWNERSHIP);
+    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(gm_saturation_threshold_);
     ceres::ComposedLoss* composed_loss = new ceres::ComposedLoss(
         scale_in_cost, ceres::TAKE_OWNERSHIP,
         geman_mcclare_cost, ceres::TAKE_OWNERSHIP);
@@ -297,8 +299,8 @@ void ShapeUnderClothOptimizer::shapeMainCostClothAware_(Problem & problem, Solve
         smpl_->getStatePointers().shape.data());
 
     // in_verts distance needs scaling 
-    LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.1, ceres::TAKE_OWNERSHIP);
-    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(0.033);
+    LossFunction* scale_in_cost = new ScaledLoss(NULL, in_verts_scaling_weight_, ceres::TAKE_OWNERSHIP);
+    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(gm_saturation_threshold_);
     ceres::ComposedLoss* composed_loss = new ceres::ComposedLoss(
         scale_in_cost, ceres::TAKE_OWNERSHIP,
         geman_mcclare_cost, ceres::TAKE_OWNERSHIP);
@@ -318,8 +320,8 @@ void ShapeUnderClothOptimizer::displacementEstimation_(Solver::Options& options)
     Problem problem;
 
     // prepare losses for inner distances
-    LossFunction* scale_in_cost = new ScaledLoss(NULL, 0.1, ceres::TAKE_OWNERSHIP);
-    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(0.033);
+    LossFunction* scale_in_cost = new ScaledLoss(NULL, in_verts_scaling_weight_, ceres::TAKE_OWNERSHIP);
+    LossFunction* geman_mcclare_cost = new GemanMcClareLoss(gm_saturation_threshold_);
     ceres::ComposedLoss* composed_loss = new ceres::ComposedLoss(
         scale_in_cost, ceres::TAKE_OWNERSHIP,
         geman_mcclare_cost, ceres::TAKE_OWNERSHIP);

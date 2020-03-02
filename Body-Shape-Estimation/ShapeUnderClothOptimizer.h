@@ -38,6 +38,8 @@ public:
     void setDisplacementSmoothingWeight(double weight) { displacement_smoothing_weight_ = weight; };
     void setShapePruningThreshold(double value) { shape_prune_threshold_ = value; };
     void setPoseRegularizationWeight(double weight) { pose_reg_weight_ = weight; };
+    void setGMSaturationThreshold(double threshold) { gm_saturation_threshold_ = threshold;  }
+    void setInScailingWeight(double weight) { in_verts_scaling_weight_ = weight; }
 
     std::shared_ptr<SMPLWrapper> getLastSMPL() const { return smpl_; }
 
@@ -76,6 +78,8 @@ private:
     double displacement_smoothing_weight_;
     double pose_reg_weight_;
     double shape_prune_threshold_;
+    double gm_saturation_threshold_;
+    double in_verts_scaling_weight_;
 
     // inner classes
 

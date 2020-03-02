@@ -25,6 +25,8 @@ PoseShapeExtractor::PoseShapeExtractor(const std::string& smpl_model_path, const
     optimizer_shape_prune_threshold_ = 0.05;
     optimizer_displacement_reg_weight_ = 0.001;
     optimizer_displacement_smoothing_weight_ = 0.1;
+    optimizer_gm_saturation_ = 0.033;
+    optimizer_in_verts_scaling_ = 0.1;
 
     optimizer_ = std::make_shared<ShapeUnderClothOptimizer>(nullptr, nullptr);
 
@@ -85,6 +87,16 @@ void PoseShapeExtractor::setupNewShapePruningExperiment(std::shared_ptr<GeneralM
 
     setupNewExperiment(std::move(input),
         experiment_name + "_" + std::to_string(threshold));
+}
+
+void PoseShapeExtractor::setupNewInnerVertsParamsExperiment(std::shared_ptr<GeneralMesh> input, 
+    double inner_weight, double gm_saturation, const std::string experiment_name)
+{
+    optimizer_in_verts_scaling_ = inner_weight;
+    optimizer_gm_saturation_ = gm_saturation;
+
+    setupNewExperiment(std::move(input),
+        experiment_name + "_" + std::to_string(inner_weight) + "_" + std::to_string(gm_saturation));
 }
 
 void PoseShapeExtractor::setupNewPoseRegExperiment(std::shared_ptr<GeneralMesh> input, double weight, const std::string experiment_name)
@@ -288,6 +300,8 @@ void PoseShapeExtractor::runPoseShapeOptimization_()
     optimizer_->setShapePruningThreshold(optimizer_shape_prune_threshold_);
     optimizer_->setDisplacementRegWeight(optimizer_displacement_reg_weight_);
     optimizer_->setDisplacementSmoothingWeight(optimizer_displacement_smoothing_weight_);
+    optimizer_->setGMSaturationThreshold(optimizer_gm_saturation_);
+    optimizer_->setInScailingWeight(optimizer_in_verts_scaling_);
 
     std::cout << "Starting optimization...\n";
 

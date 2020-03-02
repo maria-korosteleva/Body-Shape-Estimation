@@ -39,9 +39,12 @@ public:
     void setupInitialization(InitializationType type, const std::string path = "");
 
     void setupNewExperiment(std::shared_ptr<GeneralMesh> input, const std::string experiment_name = "");
-    void setupNewDistplacementRegExperiment(std::shared_ptr<GeneralMesh> input, double l2_weight, double smoothing_weight, const std::string experiment_name = "");
+    void setupNewDistplacementRegExperiment(std::shared_ptr<GeneralMesh> input, 
+        double l2_weight, double smoothing_weight, const std::string experiment_name = "");
     void setupNewShapePruningExperiment(std::shared_ptr<GeneralMesh> input,
         double threshold, const std::string experiment_name = "");
+    void setupNewInnerVertsParamsExperiment(std::shared_ptr<GeneralMesh> input,
+        double inner_weight, double gm_saturation, const std::string experiment_name = "");
     void setupNewPoseRegExperiment(std::shared_ptr<GeneralMesh> input,
         double weight, const std::string experiment_name = "");
     void setupNewCameraExperiment(std::shared_ptr<GeneralMesh> input, 
@@ -96,6 +99,8 @@ private:
     double optimizer_pose_reg_weight_;
     double optimizer_displacement_reg_weight_;
     double optimizer_displacement_smoothing_weight_;
+    double optimizer_gm_saturation_;
+    double optimizer_in_verts_scaling_;
 
     // for visulaization
     VertsVector iteration_outputs_;

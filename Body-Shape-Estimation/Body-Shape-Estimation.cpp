@@ -120,10 +120,10 @@ int main()
         inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Sexy Girl.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Sexy_girl_90.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/casual-woman-walking.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/girl_nasi_pants.obj", GeneralMesh::FEMALE));
+        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/girl_nasi_pants.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/jenya4.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/shan.obj", GeneralMesh::FEMALE));
-        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Web.obj", GeneralMesh::MALE));
+        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Web.obj", GeneralMesh::MALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/reilly.obj", GeneralMesh::MALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Ivan Komarov.obj", GeneralMesh::MALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/casual-man.obj", GeneralMesh::MALE));
@@ -136,6 +136,7 @@ int main()
         //    "C:/Users/Maria/MyDocs/GigaKorea/Seoungbae projects/cloth_data/isaac_low/isaac_low_scan.obj", 
         //    GeneralMesh::MALE, 
         //    "C:/Users/Maria/MyDocs/GigaKorea/Seoungbae projects/cloth_data/isaac_low/isaac_low_scan_scalar.txt"));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/scan_data_for_paper/new/Yoongwoon_Male.obj", GeneralMesh::MALE));
 
         std::cout << "Inputs are loaded! " << std::endl;
         //inputs = setInputs("D:/Data/scan_data_for_paper/");
@@ -145,8 +146,8 @@ int main()
         //    "D:/GK-Undressing-Experiments/fit_new-sexy_girl_Female_200122_12_19/OP_guesses/smpl_op_posed_params.txt");
         extractor.setupInitialization(PoseShapeExtractor::OPENPOSE, "D:/MyDocs/libs/Installed_libs/ml_models/openpose");
 
-        //extractor.setupNewExperiment(inputs[0], "pbsh_with_jac");
-        //extractor.setupNewDistplacementRegExperiment(inputs[0], 0.001, 0.5, "d_reg");
+        //extractor.setupNewExperiment(inputs[0], "fix");
+        ////extractor.setupNewInnerVertsParamsExperiment(inputs[0], 1, 0.05, "in");
         //extractor.setSaveIntermediateResults(true);
         //extractor.runExtraction();
         
@@ -158,15 +159,16 @@ int main()
         //fails.open("D:/Data/scan_data_for_paper/fails.txt");
         for (auto&& input : inputs)
         {
-            //for (const double& l2_weight : { 0.1, 0.01, 0.001 })
-            //{
-            //    for (const double& smooth_weight : { 0.5, 1., 0.2 })
-            //    {
+            for (const double& in_weight : { 1.0, 0.1, 0.01 })
+            {
+                for (const double& gm_threshold : { 0.5, 0.25, 0.05 })
+                {
                     try
                     {
-                        extractor.setupNewExperiment(input, "pbsh_no_deriv");
-                        //extractor.setupNewDistplacementRegExperiment(input, l2_weight, smooth_weight, "displ_reg");
-                        std::shared_ptr<SMPLWrapper> smpl_estimated = std::move(extractor.runExtraction());
+                        //extractor.setupNewExperiment(input, "fit");
+                        extractor.setupNewInnerVertsParamsExperiment(input, in_weight, gm_threshold, "in");
+                        extractor.runExtraction();
+                        //std::shared_ptr<SMPLWrapper> smpl_estimated = std::move(extractor.runExtraction());
                         //smpl_estimated->logParameters(input->getPath() + "/" + input->getName() + "_smpl_params.txt");
                         //smpl_estimated->saveToObj(input->getPath() + "/" + input->getName() + "_smpl.obj");
                         //input->saveNormalizedMesh(input->getPath() + "/");
@@ -176,8 +178,8 @@ int main()
                         std::cout << "exception encountered: " << e.what() << std::endl;
                         //fails << input->getPath() + "/" + input->getName() << std::endl;
                     }
-        //        }
-        //    }
+                }
+            }
         }
     }
     catch (std::exception& e)

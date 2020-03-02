@@ -62,9 +62,6 @@
     <ClCompile Include="ShapeUnderClothOptimizer.cpp">
       <Filter>Source Files\Optimization</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\my_modules\GeneralMesh\GeneralMesh.cpp">
-      <Filter>External source code</Filter>
-    </ClCompile>
     <ClCompile Include="CustomLogger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
