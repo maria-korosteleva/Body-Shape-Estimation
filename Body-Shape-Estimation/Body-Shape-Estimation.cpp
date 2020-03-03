@@ -117,7 +117,7 @@ int main()
         // std::vector<std::shared_ptr<GeneralMesh>> inputs = setInputs("E:/HumanData/OBJ_Gender/");
 
         std::vector<std::shared_ptr<GeneralMesh>> inputs;
-        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Sexy Girl.obj", GeneralMesh::FEMALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Sexy Girl.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Sexy_girl_90.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/casual-woman-walking.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/girl_nasi_pants.obj", GeneralMesh::FEMALE));
@@ -158,21 +158,24 @@ int main()
         fails.open("D:/GK-Undressing-Experiments/fails.txt");
         for (auto&& input : inputs)
         {
+//#define PARAM_TESTING
+#ifdef PARAM_TESTING
             for (const double& in_weight : { 0.1 })
             {
                 for (const double& prune_threshold : { 0.05 })  // 0.05 is the default
                 {
                     for (const double& gm_threshold : { 0.7, 1., 2., 100. })
                     {
+#endif
                         try
                         {
-                            //extractor.setupNewExperiment(input, "fit");
-                            extractor.setupNewInnerVertsParamsExperiment(input, in_weight, prune_threshold, gm_threshold, "in");
+                            extractor.setupNewExperiment(input, "fit");
+                            //extractor.setupNewInnerVertsParamsExperiment(input, in_weight, prune_threshold, gm_threshold, "in");
                             std::shared_ptr<SMPLWrapper> smpl_estimated = std::move(extractor.runExtraction());
-#if 0 // ---- save results in the original folder ----
-                            //smpl_estimated->logParameters(input->getPath() + "/" + input->getName() + "_smpl_params.txt");
-                            //smpl_estimated->saveToObj(input->getPath() + "/" + input->getName() + "_smpl.obj");
-                            //input->saveNormalizedMesh(input->getPath() + "/");
+#if 1 // ---- save results in the original folder ----
+                            smpl_estimated->logParameters(input->getPath() + "/" + input->getName() + "_smpl_params.txt");
+                            smpl_estimated->saveToObj(input->getPath() + "/" + input->getName() + "_smpl.obj");
+                            input->saveNormalizedMesh(input->getPath() + "/");
 #endif
                         }
                         catch (std::exception& e)
@@ -180,9 +183,11 @@ int main()
                             std::cout << "exception encountered: " << e.what() << std::endl;
                             fails << input->getPath() + "/" + input->getName() << std::endl;
                         }
+#ifdef PARAM_TESTING
                     }
                 }
             }
+#endif
         }
 #endif
     }
