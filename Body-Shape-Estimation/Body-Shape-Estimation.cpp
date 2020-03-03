@@ -120,10 +120,10 @@ int main()
         inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Sexy Girl.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Sexy_girl_90.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/casual-woman-walking.obj", GeneralMesh::FEMALE));
-        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/girl_nasi_pants.obj", GeneralMesh::FEMALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/girl_nasi_pants.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/jenya4.obj", GeneralMesh::FEMALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/shan.obj", GeneralMesh::FEMALE));
-        inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Web.obj", GeneralMesh::MALE));
+        //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Web.obj", GeneralMesh::MALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/reilly.obj", GeneralMesh::MALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/Ivan Komarov.obj", GeneralMesh::MALE));
         //inputs.push_back(std::make_shared<GeneralMesh>("D:/Data/SketchFab/casual-man.obj", GeneralMesh::MALE));
@@ -146,9 +146,9 @@ int main()
         //    "D:/GK-Undressing-Experiments/fit_new-sexy_girl_Female_200122_12_19/OP_guesses/smpl_op_posed_params.txt");
         extractor.setupInitialization(PoseShapeExtractor::OPENPOSE, "D:/MyDocs/libs/Installed_libs/ml_models/openpose");
 
-#if 1   // ---- single test ----
-        extractor.setupNewExperiment(inputs[0], "refactor");
-        //extractor.setupNewInnerVertsParamsExperiment(inputs[0], 1, 0.05, "in");
+#if 0   // ---- single test ----
+        //extractor.setupNewExperiment(inputs[0], "refactor");
+        extractor.setupNewInnerVertsParamsExperiment(inputs[0], 1, 0.05, 10., "in");
         extractor.setSaveIntermediateResults(true);
         extractor.runExtraction();
         extractor.viewIteratoinProcess();
@@ -158,7 +158,7 @@ int main()
         fails.open("D:/GK-Undressing-Experiments/fails.txt");
         for (auto&& input : inputs)
         {
-            for (const double& in_weight : { 1.0, 0.1, 0.01 })
+            for (const double& in_weight : { 0.1 })
             {
                 for (const double& prune_threshold : { 0.05 })  // 0.05 is the default
                 {

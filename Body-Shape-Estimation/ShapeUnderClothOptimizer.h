@@ -48,7 +48,7 @@ public:
             displacement_reg_weight = 0.001;
             displacement_smoothing_weight = 0.1;
             shape_prune_threshold = 0.05;
-            gm_saturation_threshold = 0.033;
+            gm_saturation_threshold = 2;
             in_verts_scaling_weight = 0.1;
         }
     };
