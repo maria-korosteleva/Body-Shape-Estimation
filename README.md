@@ -19,6 +19,15 @@ This is a work and progress which means that
 * the input is expected to be given on a metric scale (m, cm, dm, mm..), corresponding to the measurements of the person in a real world.
 * gender should be explicitly set
 
+### Example Input & output
+In the `./Example Output` we provide an example 3D model and the full logs of the system output when estimating body shape for this model. 
+* The provided sample is only given for the purpose of documenting the system output, and not to fully demonstrate the quality of estimations.
+    * For example, the estimated body is noticeably thinner that the input.This happens because the system assumes a clothed body and not the body model itself (as in the example).
+    * Unfortunately, we cannot provide an example with the body model with clothing due to the licensing terms.
+* The example input is a female SMPL body posed in A pose. We are using it under the [SMPL-Body license](https://smpl.is.tue.mpg.de/bodylicense). Please, comply with the license terms when working with this example.
+* We provide the SMPL model parameters in `.log` file for a reference. It's not used by the system in any way.
+
+
 ## System requirements
 * The project is developed under Windows 10, using Visual Studio 2017 x64, and have never been tested in other environments.
 * Uses some C++11 features

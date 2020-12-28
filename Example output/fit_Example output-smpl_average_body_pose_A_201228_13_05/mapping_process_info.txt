@@ -1,0 +1,207 @@
+D:/MyDocs/GigaKorea/Body-Shape-Estimation/Example output//fit_Example output-smpl_average_body_pose_A_201228_13_05/mapping_process_info.txt
+----- Setting Root Rotation -----
+With UP (Y) to 
+-0.00819942
+     0.4644
+ -0.0283023
+With Right (X) to 
+   0.234026
+-0.00102353
+  0.0198813
+Vertical Angle-axis rotation with angle_for_up 3.63065
+-0.0608622
+         0
+ 0.0176323
+Combined rotation with angle 6.01801
+ -0.059354
+-0.0836248
+ 0.0227048
+----- Setting shoulders -----
+To direction 
+   0.317582
+-0.00209123
+  0.0120297
+Default direction 
+  0.324976
+0.00977791
+ 0.0344007
+Angle-axis rotation with angle 4.40134
+0.00182618
+ 0.0675858
+-0.0364619
+OP Keypoint pair 1 -> 0
+----- Setting Bone Direction for joint Neck -----
+To direction 
+-0.0035835
+  0.196425
+   0.13625
+SMPL Joint pair 12 -> 15
+Default direction 
+0.00354339
+ 0.0650974
+ 0.0465475
+Difference with the target 
+ 1.38778e-17
+           0
+-1.11022e-16
+Fact Turned Angle: 3.4916
+OP Keypoint pair 2 -> 3
+----- Setting Bone Direction for joint RShoulder -----
+To direction 
+ -0.178197
+ -0.188008
+-0.0169004
+SMPL Joint pair 17 -> 19
+Default direction 
+ -0.245811
+-0.0115105
+-0.0231308
+Difference with the target 
+ 1.11022e-16
+ 1.11022e-16
+-1.38778e-17
+Fact Turned Angle: 43.7386
+OP Keypoint pair 3 -> 4
+----- Setting Bone Direction for joint RElbow -----
+To direction 
+ -0.168236
+ -0.171109
+-0.0314469
+SMPL Joint pair 19 -> 21
+Default direction 
+  -0.185088
+  -0.161046
+-0.00227683
+Difference with the target 
+ 1.11022e-16
+-1.11022e-16
+           0
+Fact Turned Angle: 8.2368
+OP Keypoint pair 5 -> 6
+----- Setting Bone Direction for joint LShoulder -----
+To direction 
+   0.17186
+ -0.184674
+-0.0235928
+SMPL Joint pair 16 -> 18
+Default direction 
+  0.251459
+-0.0164018
+-0.0229232
+Difference with the target 
+          0
+          0
+5.55112e-17
+Fact Turned Angle: 43.1356
+OP Keypoint pair 6 -> 7
+----- Setting Bone Direction for joint LElbow -----
+To direction 
+  0.158002
+ -0.172274
+-0.0283874
+SMPL Joint pair 18 -> 20
+Default direction 
+   0.178685
+  -0.157496
+0.000921975
+Difference with the target 
+ 1.11022e-16
+ 2.22045e-16
+-5.55112e-17
+Fact Turned Angle: 9.37385
+OP Keypoint pair 9 -> 10
+----- Setting Bone Direction for joint RHip -----
+To direction 
+  0.0221485
+  -0.416881
+-0.00421373
+SMPL Joint pair 2 -> 5
+Default direction 
+-0.0277627
+ -0.371347
+ 0.0101801
+Difference with the target 
+-6.93889e-18
+ 1.11022e-16
+ 1.04083e-17
+Fact Turned Angle: 7.62409
+OP Keypoint pair 10 -> 11
+----- Setting Bone Direction for joint RKnee -----
+To direction 
+-0.00810523
+  -0.377052
+ -0.0167748
+SMPL Joint pair 5 -> 8
+Default direction 
+ 0.0739848
+ -0.377687
+-0.0317573
+Difference with the target 
+-3.46945e-17
+ 1.11022e-16
+ 2.77556e-17
+Fact Turned Angle: 12.4797
+OP Keypoint pair 11 -> 22
+----- Setting Bone Direction for joint RAnkle -----
+To direction 
+ 0.0146671
+-0.0834432
+  0.142264
+SMPL Joint pair 8 -> 11
+Default direction 
+ -0.033158
+-0.0371168
+  0.118587
+Difference with the target 
+ 1.38778e-17
+-2.22045e-16
+-2.22045e-16
+Fact Turned Angle: 23.8178
+OP Keypoint pair 12 -> 13
+----- Setting Bone Direction for joint LHip -----
+To direction 
+-0.0331582
+ -0.417044
+-0.0111941
+SMPL Joint pair 1 -> 4
+Default direction 
+0.0384675
+-0.363093
+0.0178085
+Difference with the target 
+2.77556e-17
+          0
+1.73472e-17
+Fact Turned Angle: 11.4398
+OP Keypoint pair 13 -> 14
+----- Setting Bone Direction for joint LKnee -----
+To direction 
+0.00380703
+ -0.376639
+-0.0423842
+SMPL Joint pair 4 -> 7
+Default direction 
+-0.0706684
+ -0.376138
+-0.0500795
+Difference with the target 
+ 1.73472e-18
+-1.11022e-16
+-2.77556e-17
+Fact Turned Angle: 11.1855
+OP Keypoint pair 14 -> 19
+----- Setting Bone Direction for joint LAnkle -----
+To direction 
+0.00126443
+-0.0874526
+  0.152634
+SMPL Joint pair 7 -> 10
+Default direction 
+ 0.0131327
+-0.0539015
+  0.116333
+Difference with the target 
+2.94903e-17
+8.88178e-16
+3.33067e-16
+Fact Turned Angle: 7.3469
