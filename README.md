@@ -1,18 +1,18 @@
 # Body shape and pose estimation on 3D scans of people in clothing using Ceres Solver
 
-This project is based on the paper of Zhang et al. "Detailed, accurate, human shape estimation from clothed 3D scan sequences" (https://arxiv.org/abs/1703.04454), but adapted to work on static 3D scans and with a better pose estimation. The project surves the research purposes only.
+This project is based on the paper of Zhang et al. "Detailed, accurate, human shape estimation from clothed 3D scan sequences" (https://arxiv.org/abs/1703.04454), but adapted to work on static 3D scans and with a better pose estimation. The project surves the research purposes only. 
 
 The work heavily uses the SMPL body model (refer to http://smpl.is.tue.mpg.de/). 
 
-## Disclaimer 
+## Disclaimer & Licensing
 
-This is a work and progress which means that
-* The license terms are not decided yet. Please, contact the developer for any use other then reviewing, and refer to SMPL Licence agreements https://smpl.is.tue.mpg.de/modellicense, https://smpl.is.tue.mpg.de/bodylicense
-* The shape blenshapes are not included in the resources as they are not allowed for redistribution ( https://smpl.is.tue.mpg.de/modellicense, https://smpl.is.tue.mpg.de/bodylicense), but they are needed for the successful running of the present module. You could get them from SMPL website (non-commertial use only).
-* Pose blendshapes are not included as they are too large. You could get them from SMPL website, or run the tool without them (when creating SMPLWrapper object)
-* the master branch is not guaranteed to work properly at any given moment;
-* VS solution is organized for the convenience of the developer and might take some time to adapt for running on the other computer;
-* the code style and some small architectural decisions might not be consistent throughout the project code (the developer tries out new tricks from time to time). 
+* This project was created as personal and is not perfectly polished for external use. Please, raise issues if you ran into any problems.
+   * VS solution is organized for the convenience of the developer and might take some time to adapt for running on the other computer;
+   * the code style and some small architectural decisions might not be consistent throughout the project code (the developer tries out new tricks from time to time). 
+
+* We heavily rely on SMPL model, so please refer to SMPL Licence agreements https://smpl.is.tue.mpg.de/modellicense, https://smpl.is.tue.mpg.de/bodylicense before use.
+   * The shape blenshapes are not included in the resources as they are not allowed for redistribution ( https://smpl.is.tue.mpg.de/modellicense, https://smpl.is.tue.mpg.de/bodylicense), but they are needed for the successful running of the present module. You could get them from SMPL website (non-commertial use only).
+   * Pose blendshapes are not included as they are too large. You could get them from SMPL website, or run the tool without them (when creating SMPLWrapper object)
 
 ## Inputs requirements
 * obj or ply format
