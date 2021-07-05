@@ -38,19 +38,19 @@ In the `./Example Output` we provide an example 3D model and the full logs of th
 1. GeneralMesh (https://github.com/maria-korosteleva/GeneralMesh)
 1. Photographer (https://github.com/maria-korosteleva/Photographer)
 
-#### Libraries    
-1. Eigen (http://eigen.tuxfamily.org/index.php?title=Main_Page)
-1. libigl (https://libigl.github.io/)
+#### Libraries with the versions used during development
+1. Eigen v3.3.7 (http://eigen.tuxfamily.org/index.php?title=Main_Page)
+1. libigl v2.0.0 or 2.1.0 (https://libigl.github.io/)
 *NOTE*: if compilation produces POSIX errors, add the following before including igl headersflags
 '''
 #ifdef _MSC_VER
 #pragma warning(disable:4996)
 #endif
 '''
-1. Ceres (http://ceres-solver.org/index.html) compiled to be used on x64 platform (same goes for the Ceres dependencies).
-1. OpenPose (https://github.com/CMU-Perceptual-Computing-Lab/openpose/). 
+1. Ceres v1.14.0 (http://ceres-solver.org/index.html) compiled to be used on x64 platform (same goes for the Ceres dependencies).
+1. OpenPose v1.4.0 (https://github.com/CMU-Perceptual-Computing-Lab/openpose/). 
     1. *Important* The path to the OpenPose models should be set inside the program
-1. Boost.Filesystem module of Boost library (https://www.boost.org/).
+1. Boost.Filesystem module of Boost library (https://www.boost.org/), v1.68.0.
 
 ## Tips for installing Ceres
 1. Make sure to use x64 compiler for all installations.
