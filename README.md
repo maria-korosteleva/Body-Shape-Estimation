@@ -1,18 +1,33 @@
 # Body shape and pose estimation on 3D scans of people in clothing using Ceres Solver
 
-This project is based on the paper of Zhang et al. "Detailed, accurate, human shape estimation from clothed 3D scan sequences" (https://arxiv.org/abs/1703.04454), but adapted to work on static 3D scans and with a better pose estimation. The project surves the research purposes only. 
-
-The work heavily uses the SMPL body model (refer to http://smpl.is.tue.mpg.de/). 
+This project is an implementation of the fist stage of the Virtual Avatar reconstruction pipeline as presented in [Bang et al., Estimating Garment Patterns from Static Scan Data, CGF 2021](https://doi.org/10.1111/cgf.14272).
 
 ## Disclaimer & Licensing
 
-* This project was created as personal and is not perfectly polished for external use. Please, raise issues if you ran into any problems.
+* The algorithm is based on the paper of Zhang et al. "Detailed, accurate, human shape estimation from clothed 3D scan sequences" (https://arxiv.org/abs/1703.04454), but adapted to work on static 3D scans and with a better pose estimation. The project surves the research purposes only. The work heavily uses the SMPL body model (refer to http://smpl.is.tue.mpg.de/). 
+* This project is not perfectly polished for external use. Please, raise issues if you ran into any problems.
    * VS solution is organized for the convenience of the developer and might take some time to adapt for running on the other computer;
    * the code style and some small architectural decisions might not be consistent throughout the project code (the developer tries out new tricks from time to time). 
 
 * We heavily rely on SMPL model, so please refer to SMPL Licence agreements https://smpl.is.tue.mpg.de/modellicense, https://smpl.is.tue.mpg.de/bodylicense before use.
    * The shape blenshapes are not included in the resources as they are not allowed for redistribution ( https://smpl.is.tue.mpg.de/modellicense, https://smpl.is.tue.mpg.de/bodylicense), but they are needed for the successful running of the present module. You could get them from SMPL website (non-commertial use only).
    * Pose blendshapes are not included as they are too large. You could get them from SMPL website, or run the tool without them (when creating SMPLWrapper object)
+
+### Bibtex
+
+When using our Body Shape Estimation in your research projects, consider citing our paper
+```
+@article{BangEstimating,
+author = {Bang, Seungbae and Korosteleva, Maria and Lee, Sung-Hee},
+title = {Estimating Garment Patterns from Static Scan Data},
+journal = {Computer Graphics Forum},
+volume = {n/a},
+number = {n/a},
+pages = {},
+keywords = {cloth modelling, modelling, curves and surfaces, modeling},
+doi = {https://doi.org/10.1111/cgf.14272}
+}
+```
 
 ## Inputs requirements
 * obj or ply format
